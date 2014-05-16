@@ -1,0 +1,1763 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"ex",
+				"expected_return_fund"
+			],
+			[
+				"LL",
+				"LL"
+			],
+			[
+				"al",
+				"alpha"
+			],
+			[
+				"suppl",
+				"supply_indices"
+			],
+			[
+				"supp",
+				"supply_indices"
+			],
+			[
+				"contra",
+				"contract"
+			],
+			[
+				"dem",
+				"demand_indices"
+			],
+			[
+				"su",
+				"supply_indices"
+			],
+			[
+				"init",
+				"initial"
+			],
+			[
+				"st",
+				"story_mode"
+			],
+			[
+				"gu",
+				"guess_initial_values"
+			],
+			[
+				"mini",
+				"minimize"
+			],
+			[
+				"temp_",
+				"temp_fermi"
+			],
+			[
+				"temp",
+				"temp"
+			],
+			[
+				"method",
+				"minimization_methods"
+			],
+			[
+				"primal",
+				"primal_function"
+			],
+			[
+				"supply",
+				"supply_distr_cste"
+			],
+			[
+				"prop",
+				"prop_col"
+			],
+			[
+				"prp",
+				"prop_col"
+			],
+			[
+				"total_",
+				"total_money"
+			],
+			[
+				"build",
+				"build_reduced_network"
+			],
+			[
+				"market",
+				"market_clearing_part"
+			],
+			[
+				"edges",
+				"edges_full"
+			],
+			[
+				"paras",
+				"paras_firms"
+			],
+			[
+				"need",
+				"need_col"
+			],
+			[
+				"res",
+				"rest_bond"
+			],
+			[
+				"id",
+				"id"
+			],
+			[
+				"remove_",
+				"remove_asset"
+			],
+			[
+				"sys",
+				"system"
+			],
+			[
+				"all",
+				"all_liabilities_value"
+			],
+			[
+				"si",
+				"size_loan"
+			],
+			[
+				"exp",
+				"exp_A"
+			],
+			[
+				"paras_",
+				"paras_firms"
+			],
+			[
+				"mat",
+				"maturity_bonds"
+			],
+			[
+				"intere",
+				"interest_rate"
+			],
+			[
+				"minim",
+				"minimization"
+			],
+			[
+				"risk",
+				"risk_aversion"
+			],
+			[
+				"mar",
+				"market_clearing_part"
+			],
+			[
+				"edge",
+				"edge_on_layer"
+			],
+			[
+				"value",
+				"value_assets"
+			],
+			[
+				"layer",
+				"layers"
+			],
+			[
+				"pars",
+				"paras_funds"
+			],
+			[
+				"matu",
+				"maturity_bond"
+			],
+			[
+				"prod",
+				"productivity_list"
+			],
+			[
+				"mea",
+				"mean_price"
+			],
+			[
+				"pre",
+				"previous_prices"
+			],
+			[
+				"p",
+				"python3"
+			],
+			[
+				"creat",
+				"create_dir"
+			],
+			[
+				"target",
+				"target_ill"
+			],
+			[
+				"B",
+				"B"
+			],
+			[
+				"con",
+				"contracts_temp"
+			],
+			[
+				"pay",
+				"pay_interest_dividends"
+			],
+			[
+				"size",
+				"size_factor"
+			],
+			[
+				"pri",
+				"primal_function"
+			],
+			[
+				"de",
+				"demand"
+			],
+			[
+				"m",
+				"minimization"
+			],
+			[
+				"las",
+				"last_return"
+			],
+			[
+				"re",
+				"returns"
+			],
+			[
+				"return",
+				"returns"
+			],
+			[
+				"in",
+				"investment"
+			],
+			[
+				"inve",
+				"investment_array"
+			],
+			[
+				"inv",
+				"investments"
+			],
+			[
+				"a",
+				"add_node"
+			],
+			[
+				"S",
+				"ShadowBank"
+			],
+			[
+				"typ",
+				"typ_contracts"
+			],
+			[
+				"compute",
+				"compute_size_investment"
+			],
+			[
+				"print",
+				"print_state"
+			],
+			[
+				"prin",
+				"print_state"
+			],
+			[
+				"fir",
+				"first_owner"
+			],
+			[
+				"asse",
+				"assets_for_collateral"
+			],
+			[
+				"en",
+				"end_loan"
+			],
+			[
+				"pay_",
+				"pay_cash"
+			],
+			[
+				"contrac",
+				"contracts"
+			],
+			[
+				"gin",
+				"giving_collateral"
+			],
+			[
+				"gi",
+				"giving_loan"
+			],
+			[
+				"__",
+				"__init__"
+			],
+			[
+				"se",
+				"second_leg"
+			],
+			[
+				"all_",
+				"all_liabilities"
+			],
+			[
+				"alL_",
+				"all_liabilities"
+			],
+			[
+				"ass",
+				"assets_categories"
+			],
+			[
+				"queu",
+				"queue_res"
+			],
+			[
+				"crit",
+				"critical_sectors"
+			],
+			[
+				"ext",
+				"extract_aggregate_values_on_network"
+			],
+			[
+				"sim",
+				"Simulation"
+			],
+			[
+				"buil",
+				"build_path"
+			],
+			[
+				"results",
+				"results_queue_res"
+			],
+			[
+				"Critical",
+				"critical_sectors"
+			],
+			[
+				"max",
+				"max_sat"
+			],
+			[
+				"s",
+				"satisfactions"
+			],
+			[
+				"rou",
+				"route_m1"
+			],
+			[
+				"trajec",
+				"trajectories_real"
+			],
+			[
+				"tra",
+				"trajectories_nav"
+			],
+			[
+				"selec",
+				"flights_selected"
+			],
+			[
+				"flights",
+				"flights_selected"
+			],
+			[
+				"fligh",
+				"flights_selected"
+			],
+			[
+				"real",
+				"real_flights"
+			],
+			[
+				"_name",
+				"_name_network"
+			],
+			[
+				"min",
+				"min_length"
+			],
+			[
+				"airports",
+				"airports"
+			],
+			[
+				"airports_",
+				"airports_iter"
+			],
+			[
+				"airpor",
+				"airports_iter"
+			],
+			[
+				"Real",
+				"Real"
+			],
+			[
+				"consi",
+				"consitency"
+			],
+			[
+				"paths",
+				"paths_init"
+			],
+			[
+				"airports_sec",
+				"airports_sec_from_navs"
+			],
+			[
+				"airport",
+				"airports_from_navs_short"
+			],
+			[
+				"pairs",
+				"pairs_deleted"
+			],
+			[
+				"build_",
+				"build_networ_of_real_traffic"
+			],
+			[
+				"get_",
+				"get_flights_from_flows"
+			],
+			[
+				"fli",
+				"flights_taken_from_flow"
+			],
+			[
+				"idx",
+				"idx_s"
+			],
+			[
+				"cap",
+				"capacity"
+			],
+			[
+				"remove",
+				"remove_pairs_same_sector"
+			],
+			[
+				"ol",
+				"old_behavior"
+			],
+			[
+				"global",
+				"global_shape"
+			],
+			[
+				"new",
+				"newest_fil"
+			],
+			[
+				"read",
+				"read_list_files"
+			],
+			[
+				"capacity_airport",
+				"capacity_airport"
+			],
+			[
+				"capa",
+				"capacity_airport"
+			],
+			[
+				"load",
+				"load_airport"
+			],
+			[
+				"destin",
+				"desetination_overload"
+			],
+			[
+				"source",
+				"source_overload"
+			],
+			[
+				"give",
+				"give_airports_to_network"
+			],
+			[
+				"path",
+				"paths_additional"
+			],
+			[
+				"enough",
+				"enough_paths"
+			],
+			[
+				"giv",
+				"give_airports_to_network"
+			],
+			[
+				"udate",
+				"update_priority"
+			],
+			[
+				"lev",
+				"level_of_priority_required"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "ABMvars.py",
+			"settings":
+			{
+				"buffer_size": 15128,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "analyse_network.py",
+			"settings":
+			{
+				"buffer_size": 10414,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "import_exterior_libs.py",
+			"settings":
+			{
+				"buffer_size": 273,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "iter_simO.py",
+			"settings":
+			{
+				"buffer_size": 7655,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "iter_simO_shocks.py",
+			"settings":
+			{
+				"buffer_size": 2130,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "key_sector_shocks.py",
+			"settings":
+			{
+				"buffer_size": 3019,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "list_of_files.py",
+			"settings":
+			{
+				"buffer_size": 434,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "movie.py",
+			"settings":
+			{
+				"buffer_size": 1461,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "movie2.py",
+			"settings":
+			{
+				"buffer_size": 1357,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "paths.py",
+			"settings":
+			{
+				"buffer_size": 138,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "performance_plots.py",
+			"settings":
+			{
+				"buffer_size": 21172,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "plots.py",
+			"settings":
+			{
+				"buffer_size": 6416,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "prepare_flow.py",
+			"settings":
+			{
+				"buffer_size": 866,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "prepare_navpoint_network.py",
+			"settings":
+			{
+				"buffer_size": 44814,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "prepare_network.py",
+			"settings":
+			{
+				"buffer_size": 6408,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "simAirSpaceO.py",
+			"settings":
+			{
+				"buffer_size": 73373,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "simulationO.html",
+			"settings":
+			{
+				"buffer_size": 10553,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "simulationO.py",
+			"settings":
+			{
+				"buffer_size": 23344,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "study_overlap_and_swap.py",
+			"settings":
+			{
+				"buffer_size": 9019,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "train_ABM.py",
+			"settings":
+			{
+				"buffer_size": 6800,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "utilities.py",
+			"settings":
+			{
+				"buffer_size": 6687,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "voronoi.py",
+			"settings":
+			{
+				"buffer_size": 4665,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+			[
+				"Package",
+				"Package Control: Install Package"
+			],
+			[
+				"Pac",
+				"Package Control: Add Channel"
+			]
+		],
+		"width": 593.0
+	},
+	"console":
+	{
+		"height": 153.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/earendil/Minas_Morgul/CRISIS/Code python/src/import_exterior_libs.py",
+		"/home/earendil/Minas_Morgul/CRISIS/Code python/src/coin.py",
+		"/home/earendil/Minas_Morgul/CRISIS/Code python/src/compute_results.py",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/CompetitionStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/Mark1IntegrationBankStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/MixedStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/TrendFollowerStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/ClearingFundamentalistStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/IBankStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/ClearingStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/FundamentalistStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/IncrementalWeightAdjustmentStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/RandomBankStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/FiresaleStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/BadBankStrategy.java",
+		"/home/earendil/Minas_Morgul/CRISIS/Interbank/interbank/src/eu/crisis_economics/abm/bank/strategies/Mark1BankStrategy.java",
+		"/home/earendil/ABM/ABMv2.9/simAirSpaceO_v2.9.6.py",
+		"/home/earendil/Documents/ELSA/ABM/list_of_files.py",
+		"/home/earendil/Documents/ELSA/ABM/performance_plots.py",
+		"/home/earendil/ABM/ABMv2.9/ABMvars_v2.9.2.py",
+		"/home/earendil/ABM/ABMv2.9/study_overlap_and_swap_v2.9.1.py",
+		"/home/earendil/Documents/ELSA/ABM/ABM.py",
+		"/home/earendil/ABM/ABMv2.9/ABMvars_v2.9.1.py",
+		"/home/earendil/ABM/ABMv2.6_stable/ABMvars_v2.6.3.py",
+		"/home/earendil/Documents/ELSA/ABM/refetch_some_stuff.py",
+		"/home/earendil/Documents/ELSA/ABM/prepare_network.py",
+		"/home/earendil/ABM/ABMv2.6_stable/list_of_files_v2.6.0.py",
+		"/home/earendil/ABM/ABMv2.6_stable/prepare_network_v2.6.0.py",
+		"/home/earendil/ABM/ABMv2.6_stable/performance_plots_v2.6.1.py",
+		"/home/earendil/Programmes/YenKSP-master/algorithms.py",
+		"/home/earendil/Documents/ELSA/Modules/YenKSP-master_agarderunpeu/algorithms.py",
+		"/home/earendil/ABM/ABMv2.9/ABMvars_v2.9.0.py",
+		"/home/earendil/ABM/ABMv2.8/simAirSpaceO_v2.8.2.py",
+		"/home/earendil/Documents/ELSA/ABM/utilities.py",
+		"/home/earendil/Documents/ELSA/ABM/repair_stuff.py",
+		"/home/earendil/ABM/list_of_files.py",
+		"/media/earendil/minas_tirith/Documents/Optimal networks/Old/2.2.1/test.f90",
+		"/home/earendil/Documents/ELSA/Modules/general_tools.py",
+		"/home/earendil/Documents/ELSA/Distance/tools_airports.py",
+		"/media/earendil/minas_tirith/Documents/Optimal networks/Old/2.2.1/run2/mecanic.f90",
+		"/home/earendil/Documents/ELSA/ABM/prepare_flow.py",
+		"/home/earendil/Documents/ELSA/ABM/iter_simO.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.9/iter_simO_v2.9.0.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.6_stable/simAirSpaceO_v2.6.1.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.6_stable/prepare_network_v2.6.0.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.9/simulationO_v2.9.1.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.9/performance_plots_v2.9.0.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.9/ABMvars_v2.9.0.py",
+		"/home/earendil/Documents/ELSA/ABM/paths.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.8/simAirSpaceO_v2.8.2.py",
+		"/tmp/ipython_edit_lO1mNz.py",
+		"/home/earendil/Documents/ELSA/Modules/YenKSP-master_agarderunpeu/graph.py",
+		"/home/earendil/.config/sublime-text-2/Packages/User/Default (Linux).sublime-keymap",
+		"/home/earendil/.config/sublime-text-2/Packages/User/Preferences.sublime-settings",
+		"/tmp/ipython_edit_jkRfCA.py",
+		"/tmp/ipython_edit_gVD3iu.py",
+		"/tmp/ipython_edit_Vg3bA_.py",
+		"/tmp/ipython_edit_v7vU31.py",
+		"/tmp/ipython_edit_fdM_H1.py",
+		"/tmp/ipython_edit_i5T55a.py",
+		"/tmp/ipython_edit_vJcsqj.py",
+		"/tmp/ipython_edit_mhzmkb.py",
+		"/tmp/ipython_edit_VsfeRb.py",
+		"/tmp/ipython_edit_3ze6sV.py",
+		"/tmp/ipython_edit_FBPMFI.py",
+		"/tmp/ipython_edit_y1Vqj_.py",
+		"/tmp/ipython_edit_GPrkHQ.py",
+		"/tmp/ipython_edit_muqJea.py",
+		"/tmp/ipython_edit_KRsess.py",
+		"/tmp/ipython_edit_VXI2bt.py",
+		"/home/earendil/Programmes/SublimeText2/pouet",
+		"/home/earendil/Documents/ELSA/Modules/tools_airports1.0.py",
+		"/home/earendil/Documents/ELSA/ABM/plots.py",
+		"/home/earendil/Documents/ELSA/Distance/extract_start_ends_from_data.py",
+		"/home/earendil/Documents/ELSA/Modules/tools_sectors.py",
+		"/home/earendil/Documents/ELSA/Modules/sec_build.py",
+		"/home/earendil/Documents/ELSA/Modules/build_one_layer_sectors.py",
+		"/home/earendil/.config/sublime-text-2/Packages/Default/Default (Linux).sublime-keymap",
+		"/home/earendil/.config/sublime-text-2/Packages/Default/Preferences.sublime-settings",
+		"/home/earendil/Documents/ELSA/Distance/make_community2.0.py",
+		"/home/earendil/Documents/ELSA/Distance/tools_airports5.7.4.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.6_bk/ABMvars_v2.6.3.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.8/performance_plots_v2.8.0.py",
+		"/home/earendil/Documents/ELSA/STCA/correlation2.py",
+		"/home/earendil/Documents/ELSA/STCA/correlation.py",
+		"/home/earendil/Programmes/Pour Btsync/ExBtSync.py",
+		"/home/earendil/Programmes/Pour Btsync/ExBtSync_engine.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.8/simAirSpaceO_v2.8.1.py",
+		"/home/earendil/Documents/ELSA/ABM/simAirSpaceO.py",
+		"/home/earendil/Documents/ELSA/ABM/simulationO.py",
+		"/home/earendil/Documents/ELSA/Utilities/draw_airspace.py",
+		"/home/earendil/Documents/ELSA/Distance/distance.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.8/ABMvars_v2.8.0.py",
+		"/home/earendil/Downloads/ABMvars_v2.6.2.1.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.6_stable/ABMvars_v2.6.3.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.6/ABMvars_v2.6.3.py",
+		"/home/earendil/Documents/ELSA/ABM/ABMv2.6_stable/ABMvars_v2.6.2.py"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"change_owner",
+			"prepare_banks",
+			"CC_R",
+			"build_reduced_network",
+			"results",
+			"to_record",
+			"n_c",
+			"m",
+			"initial_r",
+			"print",
+			"demand_indices",
+			"edges",
+			"pouet",
+			"edges",
+			"temp_fermi",
+			"temp",
+			"temp_fermi",
+			"temp",
+			"'))",
+			"x_try",
+			"k",
+			"f",
+			"eps",
+			"iter_max",
+			"part",
+			"mod",
+			"dmod",
+			"mod",
+			"iter_max",
+			"minimization_methods",
+			"assets_for_collateral",
+			"results",
+			"0",
+			"supply_distr_cste",
+			"supply_factor_cste",
+			"edges",
+			"R_opt",
+			"edges",
+			"filter_risk_aversion",
+			"_",
+			"mark",
+			"market_clearing",
+			"CC",
+			"i",
+			"r_min",
+			"need",
+			"self.I",
+			"print",
+			"destroy",
+			"rest_bond",
+			"bond",
+			"paras",
+			"print",
+			"i",
+			"print_state",
+			"update",
+			"update.()",
+			"update.",
+			"update",
+			"				\n",
+			"maturity_bond",
+			"maturity_bonds",
+			"tau",
+			"consumption",
+			"rs",
+			"edge_on_layer",
+			"node_on_layer",
+			"edges_B",
+			"cste_demand_repo",
+			"edges",
+			"theta",
+			"edges",
+			"agents",
+			"build_network",
+			"setup_simu",
+			"self.edges_B",
+			"edges",
+			"nodes_on_layer",
+			"correlate_price_prod",
+			"A",
+			"last_production",
+			"vol",
+			"all_assets",
+			"all_assets_value",
+			"make_contract",
+			"supply_indices",
+			"in_degree",
+			"setup_simu",
+			"demand_factor_exp",
+			"results[0].node[n]['cat']",
+			"unit",
+			"correlate_price_prod",
+			"productivity",
+			"expected_IR",
+			"orders",
+			"rep",
+			"price()",
+			"price",
+			"story_mode",
+			"productivity_list",
+			"path",
+			"update",
+			"join",
+			"directory",
+			"join",
+			"typ_contracts",
+			"contextlib",
+			"print",
+			"pledged",
+			"new_bond",
+			"edges",
+			"returns",
+			"_total",
+			"R",
+			"R_min",
+			"initial_r",
+			"make_simu_test",
+			"G",
+			"funf",
+			"demand",
+			"G",
+			"investment",
+			"loans",
+			"investment",
+			"supply",
+			"u",
+			"demand",
+			"summ"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": true,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "ABMvars.py",
+					"settings":
+					{
+						"buffer_size": 15128,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "analyse_network.py",
+					"settings":
+					{
+						"buffer_size": 10414,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "import_exterior_libs.py",
+					"settings":
+					{
+						"buffer_size": 273,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "iter_simO.py",
+					"settings":
+					{
+						"buffer_size": 7655,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "iter_simO_shocks.py",
+					"settings":
+					{
+						"buffer_size": 2130,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "key_sector_shocks.py",
+					"settings":
+					{
+						"buffer_size": 3019,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "list_of_files.py",
+					"settings":
+					{
+						"buffer_size": 434,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "movie.py",
+					"settings":
+					{
+						"buffer_size": 1461,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "movie2.py",
+					"settings":
+					{
+						"buffer_size": 1357,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "paths.py",
+					"settings":
+					{
+						"buffer_size": 138,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "performance_plots.py",
+					"settings":
+					{
+						"buffer_size": 21172,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "plots.py",
+					"settings":
+					{
+						"buffer_size": 6416,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "prepare_flow.py",
+					"settings":
+					{
+						"buffer_size": 866,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "prepare_navpoint_network.py",
+					"settings":
+					{
+						"buffer_size": 44814,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "prepare_network.py",
+					"settings":
+					{
+						"buffer_size": 6408,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "simAirSpaceO.py",
+					"settings":
+					{
+						"buffer_size": 73373,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "simulationO.html",
+					"settings":
+					{
+						"buffer_size": 10553,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "simulationO.py",
+					"settings":
+					{
+						"buffer_size": 23344,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "study_overlap_and_swap.py",
+					"settings":
+					{
+						"buffer_size": 9019,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "train_ABM.py",
+					"settings":
+					{
+						"buffer_size": 6800,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 20,
+					"file": "utilities.py",
+					"settings":
+					{
+						"buffer_size": 6687,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 21,
+					"file": "voronoi.py",
+					"settings":
+					{
+						"buffer_size": 4665,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 232.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"list",
+				"ABM/list_of_files.py"
+			],
+			[
+				"abm",
+				"ABM/ABM.py"
+			],
+			[
+				"algori",
+				"Modules/YenKSP-master_agarderunpeu/algorithms.py"
+			],
+			[
+				"utili",
+				"ABM/utilities.py"
+			],
+			[
+				"per",
+				"ABM/performance_plots.py"
+			],
+			[
+				"prepa",
+				"ABM/prepare_network.py"
+			],
+			[
+				"pre",
+				"ABM/prepare_network.py"
+			],
+			[
+				"path",
+				"ABM/paths.py"
+			],
+			[
+				"pahs",
+				"ABM/paths.py"
+			],
+			[
+				"paths",
+				"ABM/paths.py"
+			],
+			[
+				"graph",
+				"Modules/YenKSP-master_agarderunpeu/graph.py"
+			],
+			[
+				"algor",
+				"Modules/YenKSP-master_agarderunpeu/algorithms.py"
+			],
+			[
+				"iter",
+				"ABM/iter_simO.py"
+			],
+			[
+				"tools",
+				"Modules/tools_airports1.0.py"
+			],
+			[
+				"plot",
+				"ABM/performance_plots.py"
+			],
+			[
+				"plo",
+				"ABM/plots.py"
+			],
+			[
+				"iter_sim",
+				"ABM/iter_simO.py"
+			],
+			[
+				"gene",
+				"Modules/general_tools.py"
+			],
+			[
+				"simai",
+				"ABM/simAirSpaceO.py"
+			],
+			[
+				"",
+				"ABM/ABMvars.py"
+			],
+			[
+				"prepare",
+				"ABM/prepare_network.py"
+			],
+			[
+				"general",
+				"Modules/general_tools.py"
+			],
+			[
+				"tools_sec",
+				"Modules/tools_sectors.py"
+			],
+			[
+				"build",
+				"Modules/sec_build.py"
+			],
+			[
+				"sim",
+				"simulationO.py"
+			],
+			[
+				"navpoint",
+				"prepare_navpoint_network.py"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": false,
+	"side_bar_width": 213.0,
+	"status_bar_visible": true
+}
