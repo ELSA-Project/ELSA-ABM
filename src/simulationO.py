@@ -26,7 +26,7 @@ if 0:
     print 'Caution! Seed:', see
     seed(see)
 
-def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot', 'nA', 'departure_times','Nsp_nav', 'old_style_allocation', 'noise']):
+def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot', 'nA', 'departure_times','Nsp_nav', 'old_style_allocation', 'noise'], only_name = False):
     """
     Used to build a path from a set of paras. 
     Changed 2.2: is only for single simulations.
@@ -35,6 +35,8 @@ def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot',
     """
     
     name='Sim_v' + vers + '_' + paras['G'].name
+    if not only_name:
+        name = '../results/' + name
     
     in_title=list(np.unique(in_title))
         
@@ -507,7 +509,7 @@ if __name__=='__main__':
         
     # # print len(trajectories_real)
     
-    draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_nav', flip_axes=True, trajectories=trajectories_nav, trajectories_type='navpoints')
+    draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_nav', flip_axes=True, trajectories=trajectories_nav, trajectories_type='navpoints', rep = sim.rep)
 
     #draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_real', flip_axes=True, trajectories=trajectories_real, trajectories_type='navpoints', save = True, rep = build_path(sim.paras), dpi = 500)
 
@@ -532,7 +534,7 @@ if __name__=='__main__':
                 print path
         
         #draw_network_and_patches(sim.G,sim.G.G_nav,sim.G.polygons, name='all_possible_trajectories', flip_axes=True, trajectories=all_possible_trajectories, trajectories_type='navpoints')
-        draw_network_and_patches(sim.G,sim.G.G_nav,sim.G.polygons, name='possible_trajectories', flip_axes=False, trajectories=possible_trajectories, trajectories_type='navpoints')
+        draw_network_and_patches(sim.G,sim.G.G_nav,sim.G.polygons, name='possible_trajectories', flip_axes=False, trajectories=possible_trajectories, trajectories_type='navpoints', rep = sim.rep)
         #draw_network_and_patches(sim.G, None, sim.G.polygons, name='numbers', , flip_axes=True, numbers=True)
 
         #draw_network_map(sim.G, title=sim.G.name, load=False, generated=True,\

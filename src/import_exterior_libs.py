@@ -3,8 +3,13 @@
 
 from shutil import copy
 
+"""
+Just a method to copy automatically some other custom libs.
+"""
+
 list_of_external_files = ['/home/earendil/Documents/ELSA/Modules/general_tools.py', 
 							'/home/earendil/Documents/ELSA/Distance/tools_airports.py']
 
-for f in list_of_external_files:
-	copy(f , '.')
+def import_ext_libs():
+	for f in list_of_external_files:
+		copy(f , '.')

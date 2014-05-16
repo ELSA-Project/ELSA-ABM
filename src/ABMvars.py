@@ -2,8 +2,13 @@
 """
 Created on Thu Mar  7 15:15:30 2013
 
-@author: luca
+@author: earendil
 """
+
+# You can safely comment these two lines, it is just for me.
+from import_exterior_libs import import_ext_libs
+import_ext_libs()
+
 import pickle as _pickle
 #from networkx import shortest_path
 import sys as _sys
@@ -108,7 +113,7 @@ if fixnetwork:
         #G=network_whose_name_is('DEL29_C5_65_20_v2')
         #G=_network_whose_name_is('LF29_RC_FL350_DA20_seed15')
         #_name_network = 'LF29_RC_FL350_DA0v2'
-        _name_network = 'LF29_RC_FL350_DA0v3_Strong'
+        _name_network = '../networks/LF29_RC_FL350_DA0v3_Strong'
         G=_network_whose_name_is(_name_network)
         print 'I use the network called', _name_network
         #G=_network_whose_name_is('LF29_R_FL350_DA2_seed15')
@@ -352,7 +357,7 @@ AC_dict=func_AC_dict(nA, ACtot, par)                #number of air companies/ope
 
 # ------------------ From M0 to M1 ------------------- #
 
-mode_M1 = 'sweep' # or standard
+mode_M1 = 'standard' # sweep or standard
 if mode_M1 == 'standard':
     N_shocks=0
     N_shocks_iter=range(0,5,1)
@@ -388,7 +393,7 @@ force = True
 #paras_to_loop = ['airports', 'par', 'Delta_t']
 #paras_to_loop = ['par', 'Delta_t']
 #paras_to_loop = ['noise']
-#paras_to_loop = ['par']
+paras_to_loop = ['par']
 #paras_to_loop = ['nA']
 #paras_to_loop = ['Nsp_nav']
 ####
@@ -404,7 +409,7 @@ force = True
 #paras_to_loop=['par','Delta_t']
 #paras_to_loop=['par', 'N_shocks']#['nA','ACtot']#['par', 'ACtot']
 #paras_to_loop=['nA','N_shocks']
-paras_to_loop = ['STS']
+#paras_to_loop = ['STS']
 
 if paras_to_loop == ['nA'] and par!=tuple([tuple([float(_v) for _v in _p])  for _p in [[1.,0.,0.001], [1.,0.,1000.]]]) :
     assert _yes('The set of par does not seem consistent with the loop on nA. Proceed?')

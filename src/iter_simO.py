@@ -84,11 +84,9 @@ def build_path_average(paras, vers=main_version, in_title=['tau', 'par', 'ACtot'
     if Gname==None:
         Gname=paras['G'].name
     
-    rep='Sim_v' + vers + '_' + Gname
+    rep='../results/Sim_v' + vers + '_' + Gname
     
-    #build_path_single(paras) + '_iter' + str(paras['n_iter']) + '.pic'
-    
-    return rep, '/' + build_path_single(paras,vers=vers) + '_iter' + str(paras['n_iter']) + '.pic'
+    return rep, '/' + build_path_single(paras,vers=vers, only_name = True) + '_iter' + str(paras['n_iter']) + '.pic'
 
 
     
