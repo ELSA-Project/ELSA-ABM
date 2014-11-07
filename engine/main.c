@@ -3,6 +3,7 @@
 #include "mUtility.h"
 #include "mABM.h"
 #include "mTest.h"
+#include <Python.h>
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -42,4 +43,32 @@ int main(int argc,char *argv[]){
 	
 	return 0;
 	
+}
+
+static PyObject* py_iter_sim(PyObject* self, PyObject* args)
+{
+	char x, y;
+	char **argv;
+	PyArg_ParseTuple(args, "ss", &x, &y);
+	argv[0] = x;
+	argv[1] = y;
+	main(2, argv);
+	return Py_BuildValue("d", 0.);
+}
+
+
+/*
+ * Bind Python function name to C function
+ */
+static PyMethodDef ElsaABM_methods[] = {
+	{"iter_sim", py_iter_sim, METH_VARARGS},
+	{NULL}
+};
+
+/*
+ * Python calls this to initialize the module
+ */
+void initElsaABM()
+{
+	(void) Py_InitModule("ElsaABM", ElsaABM_methods);
 }
