@@ -201,7 +201,7 @@ int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_
 	// if t is smaller than t_wind*t_r ,the forecast on position is perfect
 	// because otherwise there could be some actual conflicts.
 	int i_perf_fore = (int)(t_wind*t_r-1);
-	for(i=0,j=(st_indx-1),d=0;i<i_perf_fore;i++){
+	for(i=0,j=(st_indx-1),d=0 ; i<i_perf_fore ; i++){
 		d+=vel[j]*time_step;
 		if(d>l_nvp){
 			d=d-l_nvp;
@@ -245,7 +245,7 @@ int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_
 	//Here there is an error dV (fraction) on velocities. Note that in reality the 
 	// aircraft is always going with the same speed, i.e. the noise is on the
 	// forecast, not on the real speed.
-	for(i=i_perf_fore,j=(st_indx-1),d=0;i<(t_wind-1);i++){
+	for(i=i_perf_fore;i<(t_wind-1);i++){
 		d+=(vel[j]*(1. + dV))*time_step;
 		if(d>l_nvp){
 			d=d-l_nvp;
@@ -602,14 +602,12 @@ int _temp_new_nvp(Aircraft_t *f, int safe, Aircraft_t *new_f,CONF_t conf){
 
 
 int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TOOL_f tl,int unsafe){
-	//plot((*f), conf,"/tmp/old");	
-	//printf("IDold %d\n",(*f).ID);
+
 	long double dV = tl.dV[N_f]; // N_F because we test rerouting against all previous flights.
 	if(conf.shortest_path) _select_candidate_tmp_nvp_shortpath(f,conf,&tl,(*f).st_indx);
 	else 	_select_candidate_tmp_nvp(f,conf,&tl,(*f).st_indx);
 	
 	int i,j;
-	
 	int n_old=unsafe - (*f).st_indx + 1;
 
 	/*Velocity*/
@@ -631,6 +629,7 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 	for(i=0;i<(*f).n_nvp;i++) for(j=0;j<4;j++) old_nvp[i][j]=(*f).nvp[i][j];
 	
 	int rp_temp;
+	
 	for(i=unsafe+1,rp_temp=0;i<(*f).n_nvp;i++,rp_temp++) {
 		for(j=0;j<4;j++) (*f).nvp[i-n_old+1][j]=(*f).nvp[i][j];
 	}
@@ -742,20 +741,12 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 	long double diff[]={0,0};
 	int old_st_indx=(*f).st_indx;
 	int i=(*f).st_indx;
-	//int mynull;
-	//long double t=haversine_distance((*f).pos[0], (*f).nvp[(*f).st_indx])/(*f).vel[(*f).st_indx];
 
-	//t += haversine_distance( (*f).nvp[i], (*f).nvp[i+1] )/(*f).vel[i];
 	long double t=haversine_distance( (*f).pos[0], (*f).nvp[(*f).st_indx+1] )/(*f).vel[i];
 	
 	diff[0]=_calculate_optimum_direct(f, 1);
 	if(diff[0]<1000.) return 0;
 	
-	//printf("st - %d\n",(*f).st_indx);
-	//printf("%Lf\t%Lf\n",t,diff[0]);
-	//plot((*f), conf,"/tmp/old");
-	//plot_pos((*f), conf);
-	//scanf("%d",&mynull);
 	
 	int h;
 	for(i=((*f).st_indx+1),h=1;i<((*f).n_nvp-2)&&t<1200.;i++,h++) {
@@ -765,13 +756,8 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 			i--;
 			break;
 		}
-		//printf("%Lf\t%Lf\n",t,diff[1],diff[1]-diff[0]);
-		//plot((*f), conf,"/tmp/old");
-		//plot_pos((*f), conf);
-		//scanf("%d",&mynull);
 		
 		diff[0]=diff[1];
-		//t+=haversine_distance((*f).nvp[i], (*f).nvp[i+1])/(*f).vel[i];
 		t=haversine_distance((*f).pos[0], (*f).nvp[i+1])/(*f).vel[i];
 
 	}
@@ -795,18 +781,10 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 		(*f).vel[old_st_indx]=newv;
 		(*f).n_nvp=(*f).n_nvp-h;
 		_position(f, (*f).st_point, conf.t_w*2, conf.t_i, conf.t_r, 0.);
-		//printf("Finish %d\n",h);
-		//plot_pos((*f), conf);
-		//plot((*f), conf,"/tmp/tt");
-		//scanf("%d",&mynull);
-		//for(i=((*f).st_indx);i<((*f).n_nvp-1);i++) for(j=0;j<4;j++) {
-		//	(*f).nvp[i-h][j]=(*f).nvp[i][j];
-			
-		
+	
 	}
 		
-		//(*f).st_indx=old_st_indx;
-		//(*f).n_nvp=(*f).n_nvp-h-1;
+
 	return 1;
 }
 
