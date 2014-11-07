@@ -152,6 +152,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).f_lvl[0] = _find_value_string(config_file, "shock_f_lvl_min");
 	(*config).f_lvl[1] = _find_value_string(config_file, "shock_f_lvl_max");
 	(*config).geom = _find_value_string(config_file, "geom");
+	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	return 1;
 }
 

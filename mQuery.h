@@ -106,7 +106,9 @@ typedef struct {
 	
 	/*Boolean 1) Peter-Gall Projection 2) Sferic Geometry*/
 	int geom;
-	
+
+	/*Width of distribution of noise on velocity*/
+	long double sig_V;
 } CONF_t ;
 
 /********************************** FUNCTION *************************************/

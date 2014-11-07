@@ -35,6 +35,8 @@ typedef struct {
 	int n_sel_nvp;
 	
 	long double *temp_angle;
+
+	long double *dV;
 	
 } TOOL_f ;
 
