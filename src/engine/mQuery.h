@@ -109,6 +109,9 @@ typedef struct {
 
 	/*Width of distribution of noise on velocity*/
 	long double sig_V;
+
+	/*Main directory*/
+	char *main_dir;
 } CONF_t ;
 
 /********************************** FUNCTION *************************************/

@@ -99,15 +99,13 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 		
 	_calculate_velocity((*flight),Nflight);
 	
-/*	for(i=0;i<Nflight;i++) if((*flight)[i].n_nvp<=3){
+	/*for(i=0;i<Nflight;i++) if((*flight)[i].n_nvp<=3){
 		remove_aircraft(flight, &Nflight, i--);
 		Nflight--;
 	}*/
 	
 	return Nflight;
 }
-
-
 
 long double _find_value_string(char *config_file,char *label){
 	
@@ -132,8 +130,8 @@ long double _find_value_string(char *config_file,char *label){
 	fclose(rstream);
 	printf("Impossible to fine %s in config-file\n",label);
 	exit(0);
-	
 }
+
 int get_configuration(char *config_file,CONF_t *config){
 	
 	(*config).max_ang = _find_value_string(config_file,"max_ang");
@@ -153,6 +151,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).f_lvl[1] = _find_value_string(config_file, "shock_f_lvl_max");
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
+	(*config).main_dir = "/home/earendil/Documents/ELSA/ABM_Tactic/ABM_FINAL";//TODO: change this. //_find_value_string(config_file, "main_dir");
 	return 1;
 }
 
@@ -185,8 +184,12 @@ int get_boundary( char *bound_file, CONF_t *config ){
 }
 
 int get_temp_shock(CONF_t *conf){
+
+	char* rep_tail = "/config/shock_tmp.dat";
+	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*conf).main_dir, rep_tail) + 1);
+	sprintf(rep, "%s%s", (*conf).main_dir, rep_tail);
 	
-	FILE *rstream=fopen("CONF/shock_tmp.dat","r");
+	FILE *rstream=fopen(rep,"r");
 	if(rstream==NULL) BuG("Impossible to read shock_tmp.dat\n");
 	
 	int i,j,N;
@@ -197,7 +200,7 @@ int get_temp_shock(CONF_t *conf){
 	(*conf).n_point_shock = N;
 	(*conf).point_shock = falloc_matrix(N, 2);
 	
-	rstream=fopen("CONF/shock_tmp.dat","r");
+	rstream=fopen(rep,"r");
 	for(i=0;fgets(c,500,rstream)&&i<N;i++){
 		(*conf).point_shock[i][0]=atof(c);
 		for(j=0;c[j]!='\t'&&c[j]!=' '&&c[j]!='\0';j++);
@@ -205,6 +208,7 @@ int get_temp_shock(CONF_t *conf){
 		(*conf).point_shock[i][1]=atof(&c[++j]);
 	}
 	fclose(rstream);
+	free(rep);
 	return 1;
 	
 }

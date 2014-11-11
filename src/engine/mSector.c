@@ -64,7 +64,12 @@ int generate_temporary_point(CONF_t *config){
 	printf("Attention! read temporary nvp from file\n");
 	int i;
 	char c[500];
-	FILE *rstream=fopen("CONF/temp_nvp.dat","r");
+
+	char* rep_tail = "/config/temp_nvp.dat";
+	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
+	sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
+
+	FILE *rstream=fopen(rep,"r");
 	if(rstream==NULL) BuG("Impossible to open temp_nvp.dat\n");
 	for(n=0;fgets(c,500,rstream);n++){
 		(*config).tmp_nvp[n][0]=atof(c);
@@ -72,6 +77,7 @@ int generate_temporary_point(CONF_t *config){
 		(*config).tmp_nvp[n][1]=atof(&c[++i]);
 	}
 	fclose(rstream);
+	free(rep);
 	return 1;
 #endif
 	
@@ -86,9 +92,11 @@ int generate_temporary_point(CONF_t *config){
 			(*config).tmp_nvp[n][1]=frand(my, My);
 		}while ( _check_tmp_point( (*config).tmp_nvp[n],(*config) ));
 	}
-	FILE *wstream=fopen("CONF/temp_nvp.dat","w");
+	FILE *wstream=fopen(rep,"w");
 	for(n=0;n<(*config).n_tmp_nvp;n++) fprintf(wstream,"%Lf\t%Lf\n",(*config).tmp_nvp[n][0],(*config).tmp_nvp[n][1]);
 	fclose(wstream);
+
+	free(rep);
 	
 	return 1;
 }
@@ -287,9 +295,21 @@ int _alloc_flight_pos(Aircraft_t **f,int N_f,CONF_t *conf){
 }
 
 int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,char *input_ABM){
-	
-	get_boundary("CONF/bound_latlon.dat", config);	
-	get_configuration("CONF/config.cfg", config);
+	//get_boundary("CONF/bound_latlon.dat", config);	
+	char *main_dir = "/home/earendil/Documents/ELSA/ABM_Tactic/ABM_FINAL";
+	char* rep_tail2 = "/config/config.cfg";
+	char * rep2 = malloc(snprintf(NULL, 0, "%s%s", main_dir, rep_tail2) + 1);
+	sprintf(rep2, "%s%s", main_dir, rep_tail2);
+
+	get_configuration(rep2, config);
+
+	char* rep_tail = "/config/bound_latlon.dat";
+	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
+	sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
+	get_boundary(rep, config);	
+
+	free(rep);
+	free(rep2);
 
 	printf("Generate Point\n");
 	generate_temporary_point(config);
