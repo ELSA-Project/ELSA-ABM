@@ -4,6 +4,10 @@
 Created on Tue Apr 30 13:53:44 2013
 
 @author: luca
+
+===========================================================================
+Advanced plots displaying different metrics against each other.
+===========================================================================
 """
 
 #import os

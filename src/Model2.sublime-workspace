@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"import",
+				"import_ext_libs"
+			],
+			[
 				"ex",
 				"expected_return_fund"
 			],
@@ -510,10 +514,6 @@
 			[
 				"udate",
 				"update_priority"
-			],
-			[
-				"lev",
-				"level_of_priority_required"
 			]
 		]
 	},
@@ -523,7 +523,7 @@
 			"file": "ABMvars.py",
 			"settings":
 			{
-				"buffer_size": 15128,
+				"buffer_size": 15283,
 				"line_ending": "Windows"
 			}
 		},
@@ -539,7 +539,7 @@
 			"file": "import_exterior_libs.py",
 			"settings":
 			{
-				"buffer_size": 273,
+				"buffer_size": 367,
 				"line_ending": "Unix"
 			}
 		},
@@ -547,7 +547,7 @@
 			"file": "iter_simO.py",
 			"settings":
 			{
-				"buffer_size": 7655,
+				"buffer_size": 7607,
 				"line_ending": "Unix"
 			}
 		},
@@ -572,22 +572,6 @@
 			"settings":
 			{
 				"buffer_size": 434,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "movie.py",
-			"settings":
-			{
-				"buffer_size": 1461,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "movie2.py",
-			"settings":
-			{
-				"buffer_size": 1357,
 				"line_ending": "Unix"
 			}
 		},
@@ -648,18 +632,18 @@
 			}
 		},
 		{
-			"file": "simulationO.html",
+			"file": "simulationO.py",
 			"settings":
 			{
-				"buffer_size": 10553,
+				"buffer_size": 23451,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "simulationO.py",
+			"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
 			"settings":
 			{
-				"buffer_size": 23344,
+				"buffer_size": 21351,
 				"line_ending": "Unix"
 			}
 		},
@@ -728,6 +712,10 @@
 	},
 	"file_history":
 	[
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/iter_simO_shocks.py",
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/simulationO.html",
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/movie2.py",
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/movie.py",
 		"/home/earendil/Minas_Morgul/CRISIS/Code python/src/import_exterior_libs.py",
 		"/home/earendil/Minas_Morgul/CRISIS/Code python/src/coin.py",
 		"/home/earendil/Minas_Morgul/CRISIS/Code python/src/compute_results.py",
@@ -842,6 +830,11 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"build_path",
+			"plot_times_departure",
+			"draw_network_and_patches",
+			"trajectories",
+			"rep",
 			"change_owner",
 			"prepare_banks",
 			"CC_R",
@@ -964,12 +957,7 @@
 			"demand",
 			"G",
 			"investment",
-			"loans",
-			"investment",
-			"supply",
-			"u",
-			"demand",
-			"summ"
+			"loans"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -995,15 +983,15 @@
 					"file": "ABMvars.py",
 					"settings":
 					{
-						"buffer_size": 15128,
+						"buffer_size": 15283,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								11954,
+								11954
 							]
 						],
 						"settings":
@@ -1013,7 +1001,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 5253.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1050,15 +1038,15 @@
 					"file": "import_exterior_libs.py",
 					"settings":
 					{
-						"buffer_size": 273,
+						"buffer_size": 367,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								141,
+								141
 							]
 						],
 						"settings":
@@ -1076,15 +1064,15 @@
 					"file": "iter_simO.py",
 					"settings":
 					{
-						"buffer_size": 7655,
+						"buffer_size": 7607,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								2537,
+								2537
 							]
 						],
 						"settings":
@@ -1094,7 +1082,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 102.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1111,8 +1099,8 @@
 						"selection":
 						[
 							[
-								0,
-								0
+								501,
+								501
 							]
 						],
 						"settings":
@@ -1139,8 +1127,8 @@
 						"selection":
 						[
 							[
-								0,
-								0
+								1095,
+								1095
 							]
 						],
 						"settings":
@@ -1181,62 +1169,6 @@
 				},
 				{
 					"buffer": 7,
-					"file": "movie.py",
-					"settings":
-					{
-						"buffer_size": 1461,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 8,
-					"file": "movie2.py",
-					"settings":
-					{
-						"buffer_size": 1357,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 9,
 					"file": "paths.py",
 					"settings":
 					{
@@ -1262,7 +1194,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 10,
+					"buffer": 8,
 					"file": "performance_plots.py",
 					"settings":
 					{
@@ -1273,8 +1205,8 @@
 						"selection":
 						[
 							[
-								0,
-								0
+								19198,
+								19198
 							]
 						],
 						"settings":
@@ -1284,13 +1216,13 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1717.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 11,
+					"buffer": 9,
 					"file": "plots.py",
 					"settings":
 					{
@@ -1318,7 +1250,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 12,
+					"buffer": 10,
 					"file": "prepare_flow.py",
 					"settings":
 					{
@@ -1344,7 +1276,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 13,
+					"buffer": 11,
 					"file": "prepare_navpoint_network.py",
 					"settings":
 					{
@@ -1372,7 +1304,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 14,
+					"buffer": 12,
 					"file": "prepare_network.py",
 					"settings":
 					{
@@ -1400,7 +1332,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 15,
+					"buffer": 13,
 					"file": "simAirSpaceO.py",
 					"settings":
 					{
@@ -1428,45 +1360,47 @@
 					"type": "text"
 				},
 				{
-					"buffer": 16,
-					"file": "simulationO.html",
+					"buffer": 14,
+					"file": "simulationO.py",
 					"settings":
 					{
-						"buffer_size": 10553,
+						"buffer_size": 23451,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								21481,
+								21481
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/HTML/HTML.tmLanguage"
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.x": 26.0,
+						"translation.y": 3082.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 17,
-					"file": "simulationO.py",
+					"buffer": 15,
+					"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
 					"settings":
 					{
-						"buffer_size": 23344,
+						"buffer_size": 21351,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								3789,
+								3789
 							]
 						],
 						"settings":
@@ -1476,13 +1410,13 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 408.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 18,
+					"buffer": 16,
 					"file": "study_overlap_and_swap.py",
 					"settings":
 					{
@@ -1509,7 +1443,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 19,
+					"buffer": 17,
 					"file": "train_ABM.py",
 					"settings":
 					{
@@ -1536,7 +1470,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 20,
+					"buffer": 18,
 					"file": "utilities.py",
 					"settings":
 					{
@@ -1564,7 +1498,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 21,
+					"buffer": 19,
 					"file": "voronoi.py",
 					"settings":
 					{

@@ -5,6 +5,12 @@
 Created on Mon Jul  8 07:01:33 2013
 
 @author: earendil
+
+===========================================================================
+This file is used to build a navpoint network with superimposed sector 
+network. The main function is prepare_navpoint_network, with which the 
+user can build a totally new network, or take some data from elsewhere.
+===========================================================================
 """
 import sys
 sys.path.insert(1,'../Distance')
@@ -20,13 +26,13 @@ from general_tools import draw_network_and_patches, silence, counter, delay, dat
 from utilities import restrict_to_connected_components
 from string import split
 
-# A VIRER
 from descartes.patch import PolygonPatch
 import matplotlib.pyplot as plt
 
 #Distance
 from tools_airports import get_paras, extract_flows_from_data#, get_flights
 
+# Manual seed
 #see=1200
 #see_ = 15 #==> the one I used for new, old_good, etc.. 
 #see=2
@@ -46,22 +52,6 @@ def show_polygons(polygons,nodes):
     #plt.show()
     
 def show_everything(polygons,G,save=True,name='network_navpoints', show=True):
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # for pol in polygons.values():
-    #     patch = PolygonPatch(pol,alpha=0.5, zorder=2)
-    #     ax.add_patch(patch) 
-    # ax.scatter([G.node[n]['coord'][0] for n in G.nodes()], [G.node[n]['coord'][1] for n in G.nodes()],c='r', marker='s')
-    # ax.scatter([G.G_nav.node[n]['coord'][0] for n in G.G_nav.nodes()], [G.G_nav.node[n]['coord'][1] for n in G.G_nav.nodes()],c=[_colors[G.G_nav.node[n]['sec']%len(_colors)]\
-    #    for n in G.G_nav.nodes()],marker='o',zorder=6,s=100)
-       
-    # for e in G.G_nav.edges():
-    #     plt.plot([G.G_nav.node[e[0]]['coord'][0],G.G_nav.node[e[1]]['coord'][0]],[G.G_nav.node[e[0]]['coord'][1],G.G_nav.node[e[1]]['coord'][1]],'k-',lw=0.2)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
-        
-       
-    # if save:
-    #     plt.savefig(name +'.png')
-
     draw_network_and_patches(G,G.G_nav,polygons, save=save, name=name,show=show)
 
 def area(p):
@@ -76,7 +66,6 @@ def navpoints_at_borders(G,vor,lin_dens=10.):
     Create navpoints at borders of a Voronoi tesselation.
     """
     navpoints=[]
-    #borders=np.unique([(n1,n2) for for p in vor.point_region])
     borders={}
     for p in vor.point_region:
         r=vor.regions[p]
@@ -84,33 +73,22 @@ def navpoints_at_borders(G,vor,lin_dens=10.):
             borders[tuple(sorted((n1,n2)))]=0
         
     borders=borders.keys()
-   # borders=np.unique([sorted(n1,n2) for p in vor.point_region for n1,n2 in [(vor.regions[p][i],vor.regions[p][i+1])\
-   #     for i in range(len(vor.regions[p])-1)] + [(vor.regions[p][-1],vor.regions[p][0])]])
-   #  j=0
-   # for p in vor.point_region: # For each voronoi cell
-   #     r=vor.regions[p]
-   #     for n1, n2 in :
     for n1,n2 in borders:
-        #for i in range(len(r)-1): # for each vertex
-        #    n1, n2 = r[i], r[i+1]
-            #if -1.<=vor.vertices[n2][0]<=1. and -1.<=vor.vertices[n2][1]<=1. and -1.<=vor.vertices[n1][0]<=1. and -1.<=vor.vertices[n1][1]<=1.:
-            #if n1<n2:
-                a=np.array(vor.vertices[n2] - vor.vertices[n1])
-                l=np.linalg.norm(a) #length of border
-                n_p=max(1,int(l*lin_dens)) # number of points to put on the border
-                d=l/float(n_p+1)
-                k=1
-                change=False
-                while d*k<l-10**(-4.):# put points until vertex is reached
-                    x,y=list(vor.vertices[n1] + k*(d/l)*a +[10**(-5.), 10**(-5.)])
-                    if -1.<x<1. and -1.<y<1.:
-                        change=True
-                        navpoints.append([x,y])
-                    k+=1
-                    #j+=1
-                if not change:
-                    print 'nothing happened:', n1,n2, vor.vertices[n1], vor.vertices[n2]
-    return navpoints#j
+        a=np.array(vor.vertices[n2] - vor.vertices[n1])
+        l=np.linalg.norm(a) #length of border
+        n_p=max(1,int(l*lin_dens)) # number of points to put on the border
+        d=l/float(n_p+1)
+        k=1
+        change=False
+        while d*k<l-10**(-4.):# put points until vertex is reached
+            x,y=list(vor.vertices[n1] + k*(d/l)*a +[10**(-5.), 10**(-5.)])
+            if -1.<x<1. and -1.<y<1.:
+                change=True
+                navpoints.append([x,y])
+            k+=1
+        if not change:
+            print 'nothing happened:', n1,n2, vor.vertices[n1], vor.vertices[n2]
+    return navpoints
    
 def prepare_sectors_network(paras_G, mode = 'fake', generate_new_sectors=False, layer=0, no_airports=False):     
     G=Net()
@@ -121,10 +99,6 @@ def prepare_sectors_network(paras_G, mode = 'fake', generate_new_sectors=False, 
         if mode == 'fake':
             fille='DEL_C_6A'
             G.type_of_net='D'
-            
-        # if 0:
-        #     fille='test_graph_90_weighted_II'
-        #     G.type_of_net='D' 
         else:
             #fille='Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0_undirected_threshold'
             fille='../Modules/' + paras_G['country'] + '_sectors_network_one_layer_FL' + str(layer) + '_A334'
@@ -132,13 +106,10 @@ def prepare_sectors_network(paras_G, mode = 'fake', generate_new_sectors=False, 
             G.airac=paras_G['airac']
             G.country=paras_G['country']
             G.layer=layer #indicates the layer; '0' for full otherwise.
-
-            
+   
         _g=open(fille + '.pic','r')           
         H=pickle.load(_g)
         _g.close()
-        
-        
         
         if G.type_of_net=='R':  # Numberize the sectors (instead of initial names)
             G.idx_sectors={s:i for i,s in enumerate(H.nodes())}
@@ -164,14 +135,6 @@ def prepare_sectors_network(paras_G, mode = 'fake', generate_new_sectors=False, 
             G.polygons={}
             for name, shape in polygons_names.items():
                 G.polygons[G.idx_sectors[name]]=shape
-            # with open('../Modules/All_shapes_334.pic', 'r') as f:
-            #     all_shapes=pickle.load(f)
-            #     G.polygons={}
-            #     for i in G.nodes():
-            #         #print G.node[i]
-            #         G.polygons[i]=all_shapes[G.node[i]['name']]['boundary'][0]
-            # for n in G.nodes():
-            #     G.node[n]['coord']=list(np.array(G.node[n]['coord'])/60.)
             G.global_shape=cascaded_union(G.polygons.values())
                 
     return G
@@ -211,7 +174,7 @@ def extract_airports_from_traffic(G, flows): #,paras_G):
     New in 2.8: gives naiports "airports" among all points of entries and exits from data trajectories.
     Changed in 2.9: gives pairs as well. Gives all airports.
     Changed in 2.9.4: added paras_real.
-    Chanded in 2.9.5: flos are given externally
+    Chanded in 2.9.5: flows are given externally
     """
     # paras['zone']=G.country
     # paras['airac']=G.airac
@@ -503,12 +466,6 @@ def check_everybody_is_attached(G, repair=False):
 
     return G, problem
 
-# def check_sector_is_connected(s, G):
-#     nodes_in_s = [n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s]
-#     H_nav_s = G.G_nav.subgraph(nodes_in_s)
-#     cc = nx.connected_components(H)
-#     if len(cc)>1:
-
 def check_everybody_has_one_cc(G, repair=False):
     problem=False
     for s in G.nodes():
@@ -540,15 +497,6 @@ def give_capacities_and_weights(G, mode, paras_G):
     else:
         capacities = extract_capacity_from_traffic(G, flights_selected)
         G.fix_capacities(capacities)
-        #G.typ_capacities='constant'
-
-    # if 1:
-    #     for a in G.airports:
-    #         G.node[a]['capacity']=100000
-    #         G.node[a]['capacity_airport'] = paras_G['C_airport']
-    # else:
-    #     print 'ALERT: NO INFINITE CAPACITY AT AIRPORTS.'
-
 
     if paras_G['generate_weights']:
         G.G_nav.generate_weights(typ='coords', par=5.)
@@ -587,14 +535,11 @@ def write_down_network(G):
         entry_times=[0.]*(len(p_sec)+1)
         entry_times[0] = f['route_m1t'][0][1]
 
-        #print f['route_m1t'][1]
         road = delay(f['route_m1t'][0][1])
         sec = G.G_nav.node[p_nav[0]]['sec']
         j=0
         for i in range(1,len(p_nav)):
-            #print road, date_st(road)
             w = delay(f['route_m1t'][i][1]) - delay(f['route_m1t'][i-1][1])  #G.G_nav[p_nav[i-1]][p_nav[i]]['weight']
-            #print f['route_m1t'][i][1], f['route_m1t'][i-1][1], w
             if G.G_nav.node[p_nav[i]]['sec']!=sec:
                 j+=1
                 entry_times[j] = date_st(road + w/2.)
@@ -602,15 +547,8 @@ def write_down_network(G):
             road += w
         entry_times[len(p_sec)] = date_st(road)
 
-
         f['sec_path'] = p_sec
         f['sec_path_t'] = entry_times
-
-        # print f['route_m1t']
-        # print p_sec
-        # print entry_times
-
-        #assert 1==0
 
     with open(G.name + '_pieces2.pic', 'w') as f:
         dic = {}
@@ -723,55 +661,6 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
             G.G_nav.fix_airports(airports, paras_G['min_dis'], pairs=pairs, singletons=False)
         G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=False) #singletons = mode=='real'
 
-
-    # if generate_new_navpoints: # Choosing airports
-    #     if mode == 'real' or old_behavior: # old behavior
-    #         if paras_G['airports']!=[]:
-    #             G.G_nav.fix_airports(paras_G['airports'], paras_G['min_dis'], pairs=paras_G['pairs'])
-    #         else:
-    #             G.G_nav.generate_airports(paras_G['nairports'],paras_G['min_dis'], C_airport = paras_G['C_airport'])
-    #     if mode == 'fake' and not old_behavior:# new behavior:
-    #         airports_nav=[choice([n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==sec]) for sec in G.airports]
-    #         G.G_nav.fix_airports(airports_nav, paras_G['min_dis'])# add pairs !!!!!!!!!!!!!!!!1
-    #     print 'G_nav airports:', G.G_nav.airports
-    # else:
-    #     if not airports_from_data:
-    #         G.G_nav.generate_airports(paras_G['nairports'],paras_G['min_dis'])  
-    #     else:
-    #         all_airports, all_pairs=extract_airports_from_traffic(G)
-    #         if paras_G['nairports']==0:
-    #             paras_G['nairports']=len(all_airports)
-    #         airports, pairs = find_pairs(all_airports, all_pairs, paras_G['nairports'], G, remove_pairs_same_sector = True)
-    #         print 'Selected at first', len(airports), 'airports and', len(pairs), 'pairs.'
-    #         #airports_sects=sample(np.unique([G.G_nav.node[n]['sec'] for n in airports_nav]), paras_G['nairports'])
-    #         G.G_nav.fix_airports(airports, paras_G['min_dis'], pairs=pairs)
-
-    # if mode=='real' or old_behavior: # old behavior
-    #     G.infer_airports_from_navpoints(paras_G['C_airport'])
-    # G.G_nav.pairs=[]
-    # for p in G.pairs:
-    #     found=False
-    #     j=-1
-    #     while not found:
-    #         j+=1
-    #         if G.node[p[0]]['navs'][j] in G.G_nav.airports:
-    #             found=True
-    #     p0=G.node[p[0]]['navs'][j]
-    #     G.node[p[0]]['airport_nav']=p0
-    #     found=False
-    #     j=-1
-    #     while not found:
-    #         j+=1
-    #         if G.node[p[1]]['navs'][j] in G.G_nav.airports:
-    #             found=True
-    #     p1=G.node[p[1]]['navs'][j]  
-    #     G.node[p[1]]['airport_nav']=p1
-    
-    #     G.G_nav.pairs.append((p0,p1))
-            
-    #G.G_nav.clean_borders()
-     
-    #show_everything(G.polygons,G, show=True)  
     
     ############# Repair some stuff #############
 
@@ -825,12 +714,22 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
     # We check if every couples of neighbors (sectors) have at least one couple of navpoints which are neighbors.
     G, problem = check_everybody_is_attached(G, repair=True)
     G, problem = check_everybody_is_attached(G, repair=False)
-    assert not problem
+    try:
+        assert not problem
+    except:
+        print "I found some neighbouring sectors which do not have at least one couple of neighbouring navpoints."
+        print "I could not fix it, I stop."
+        raise
 
     # We check if, within each sectors, there is only one connected component
     G, problem = check_everybody_has_one_cc(G, repair=True)
     G, problem = check_everybody_has_one_cc(G, repair=False)
-    assert not problem
+    try:
+        assert not problem
+    except:
+        print "I found at least a sector which does not have only one connected component of napvoint."
+        print "I could not fix it, I stop."
+        raise
                 
     #G.G_nav.show(stack=True, colors=[_colors[G.G_nav.node[n]['sec']%len(_colors)] for n in G.G_nav.nodes()])
     #show_everything(G.polygons,G)    
@@ -865,7 +764,7 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
         if (s1, s2) in pairs_deleted:
             del G.G_nav.short[(p1,p2)]
             #G.G_nav.pairs.remove((p1,p2))
-            print 'I removed the pair of navpoints', (p1,p2), ' because the corresponding pair', (s1, s2), ' has been removed.'
+            print 'I removed the pair of navpoints', (p1,p2), ' because the corresponding pair of sectors', (s1, s2), ' has been removed.'
 
     G.G_nav.infer_airports_from_short_list()
 
@@ -878,8 +777,6 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
     G.check_repair_sector_airports()
 
     print 'Number of pairs before computation:', len(G.G_nav.short.keys())
-    # with silence(False):
-    #     G.G_nav.compute_pairs_based_on_short(paras_G['min_dis'])
     G.check_airports_and_pairs()
 
     if mode == 'real': 
@@ -899,8 +796,6 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
 
     print 'Selected finally', len(G.G_nav.airports), 'airports (navpoints) and', len(G.G_nav.short.keys()), 'pairs.'
 
-    #G.G_nav.compute_shortest_paths(G.G_nav.Nfp)
-    
     ##################### Name #######################
     
     long_name=G.type_of_net + '_N' + str(len(G.nodes()))
@@ -941,9 +836,6 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
         print 'Number of flights selected:', flights_selected
     print 'Done.'
         
-    #draw_network_map(G.G_nav, title=name, trajectories=G.G_nav.short.values()[0])
-    # for p in G.G_nav.short.values()[0]:
-    #     print p
     draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values()[0])
     return G
     

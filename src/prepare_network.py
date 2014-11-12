@@ -3,6 +3,11 @@
 Created on Tue May 21 16:06:18 2013
 
 @author: earendil
+
+===========================================================================
+This file is used to generate a sector network only. Not used in Model 1
+a priori TODO.
+===========================================================================
 """
 #from networkx import shortest_path
 #import numpy as np

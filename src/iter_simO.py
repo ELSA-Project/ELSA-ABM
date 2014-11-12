@@ -4,18 +4,23 @@
 Created on Mon Dec 17 14:38:09 2012
 
 @author: earendil
+
+===========================================================================
+This is the main interface to the model. The main functions are 
+ - do_standard, which makes a single iteration of the model, 
+ - average_sim, which makes several iterations of the model with the same
+parameters, 
+ - iter_sim, which makes iterations over several values of parameters. 
+===========================================================================
 """
 
 from simulationO import Simulation, build_path as build_path_single, post_process_queue, extract_aggregate_values_on_queue, extract_aggregate_values_on_network
-#from random import getstate, setstate, gauss
 import pickle
 import ABMvars
 import os
-#from plots import Plot
 from string import split
 import numpy as np
 import sys
-#from multiprocessing import Pool
 
 from multiprocessing import Process, Pipe
 from itertools import izip
@@ -27,6 +32,7 @@ def yes(question):
         ans=raw_input(question + ' (y/n)\n')
     return ans in ['Y','y','yes','Yes']
 
+# This is for multithreading.
 def spawn(f):
     def fun(pipe,x):
         pipe.send(f(x))
@@ -87,11 +93,10 @@ def build_path_average(paras, vers=main_version, in_title=['tau', 'par', 'ACtot'
     rep='../results/Sim_v' + vers + '_' + Gname
     
     return rep, '/' + build_path_single(paras,vers=vers, only_name = True) + '_iter' + str(paras['n_iter']) + '.pic'
-
-
     
 def loop(a, level, parass, thing_to_do=None, **args):
     """
+    Generic recursive function to make several levels of iterations. 
     New in 2.6: Makes an arbitrary number of loops
     a: dictionnary, with keys as parameters to loop on and values as the values on which to loop.
     level: list of parameters on which to loop. The first one is the most outer loop, the last one is the most inner loop.
@@ -107,19 +112,15 @@ def loop(a, level, parass, thing_to_do=None, **args):
    
 def do_standard((paras, G, i)):
     """
+    Make the simulation and extract aggregate values.
     New in 2.9.2: extracted from average_sim
     """
     results={} 
-    #print "I'm doing iteration number ", i
-    #print 'density:', paras['density'], '; ACsperwave:', paras['ACsperwave'], '; ACtot:', paras['ACtot']
-    #print 'COIN', G.node[80]['load_old']
     sim=Simulation(paras, G=G.copy(), verbose=False)
     sim.make_simu(storymode=False)
     sim.queue=post_process_queue(sim.queue)
-    #print 'COIN', sim.G.node[80]['load_old']
     
     results_queue=extract_aggregate_values_on_queue(sim.queue, paras['par'])
-    #print 'Satisfaction', results_queue['satisfaction']
     results_G=extract_aggregate_values_on_network(sim.G)
     
     for met in results_G:
@@ -135,6 +136,7 @@ def do_standard((paras, G, i)):
  
 def average_sim(paras=None, G=None, save=1, do = do_standard, build_pat = build_path_average):#, mets=['satisfaction', 'regulated_F', 'regulated_FPs']):
     """
+    Average some simulations which have the same 
     New in 2.6: makes a certain number of iterations (given in paras) and extract the averaged mettrics.
     Change in 2.7: parallelized.
     Changed in 2.9.1: added force.
@@ -143,8 +145,7 @@ def average_sim(paras=None, G=None, save=1, do = do_standard, build_pat = build_
 
     rep, name=build_pat(paras, Gname=paras['G'].name)
 
-    if paras['force'] or not os.path.exists(rep + name):
-        #pool = Pool(processes=2)  
+    if paras['force'] or not os.path.exists(rep + name):  
         inputs = [(paras, G, i) for i in range(paras['n_iter'])]
         start_time=time()
         if paras['parallel']:
@@ -162,7 +163,6 @@ def average_sim(paras=None, G=None, save=1, do = do_standard, build_pat = build_
         
         results={}
         for met in results_list[0].keys():
-            #print met, results_list[0][met], type(results_list[0][met]), type(np.float64(1.0))
             if type(results_list[0][met])==type(np.float64(1.0)):
                 results[met]={'avg':np.mean([v[met] for v in results_list]), 'std':np.std([v[met] for v in results_list])}
             elif type(results_list[0][met])==type({}):
@@ -175,11 +175,8 @@ def average_sim(paras=None, G=None, save=1, do = do_standard, build_pat = build_
             os.system('mkdir -p ' + rep)
             with open(rep + name,'w') as f:
                 pickle.dump(results, f)
-                #print 'Saving in', rep + name
     else:
         print 'Skipped this value because the file already exists and parameter force is deactivated.'
-                
-    #return results
 
 def iter_sim(paras, save=1, do = do_standard, build_pat = build_path_average):#, make_plots=True):#la variabile test_airports è stata inserita al solo scopo di testare le rejections
     """
@@ -187,14 +184,16 @@ def iter_sim(paras, save=1, do = do_standard, build_pat = build_path_average):#,
     save can be 0 (no save), 1 (save agregated values) or 2 (save all queues).
     Changed in 2.9.2: added do and build_pat kwargs.
     """
-   # if 0:
-   #     f=open('state.pic','w')
-   #     pickle.dump(getstate(),f)
-   #     f.close()
-   # else:
-   #     f=open('state.pic','r')
-   #     setstate(pickle.load(f))
-   #     f.close()
+
+    # Used for debugging.
+    # if 0:
+    #     f=open('state.pic','w')
+    #     pickle.dump(getstate(),f)
+    #     f.close()
+    # else:
+    #     f=open('state.pic','r')
+    #     setstate(pickle.load(f))
+    #     f.close()
 
     print header(paras)
     

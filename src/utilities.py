@@ -4,7 +4,7 @@ Created on Thu May 23 11:24:00 2013
 
 @author: earendil
 
-Utilies for the ABM.
+Utilies for the ABM. TODO: use general tools?
 """
 
 from mpl_toolkits.basemap import Basemap

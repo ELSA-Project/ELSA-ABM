@@ -4,6 +4,11 @@
 Created on Mon Dec 17 14:38:09 2012
 
 @author: earendil
+
+===========================================================================
+This file contains a alternative to the do_standard procedure of iter_simO
+ in order to study the impact of shocks on sectors.
+===========================================================================
 """
 
 from iter_simO import iter_sim, yes, build_path_average
@@ -26,21 +31,11 @@ def do_shocks((paras, G, i)):
 
     results_queue=extract_aggregate_values_on_queue(sim.queue, paras['par'])
     queue_res = [f for f in sim.queue if G.G_nav.has_node(f.source) and G.G_nav.has_node(f.destination) and G.G_nav.node[f.source]['sec']!=paras['STS'] and G.G_nav.node[f.destination]['sec']!=paras['STS']]
-    print 'len(queue_res):', len(queue_res), 'len(sim.queue)', len(sim.queue)
     results_queue_res=extract_aggregate_values_on_queue(queue_res, paras['par'])
-    #print 'Satisfaction', results_queue['satisfaction']
     results_G=extract_aggregate_values_on_network(sim.G)
-
-    # results_G_details={'load_details':{}, 'load_norm_details':{}}
-    # for n in G:
-
-    #     results_G_details['load_details'][n] = np.mean(G.node[n]['load'])
-    #     results_G_details['load_norm_details'][n] = np.mean(G.node[n]['load'])/float(G.node[n]['capacity'])
 
     for met in results_G:
         results[met]=results_G[met]
-    #for met in results_G_details:
-    #    results[met]=results_G_details[met]
 
     for met in results_queue_res:
         results_queue[met + '_res'] = results_queue_res[met]
@@ -52,7 +47,6 @@ def do_shocks((paras, G, i)):
 
     del sim
     return results
-
 
 if __name__=='__main__':
     if yes('Ready?') or 1:

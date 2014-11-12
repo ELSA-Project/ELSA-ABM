@@ -11,6 +11,12 @@ from descartes.patch import PolygonPatch
 from general_tools import flip_polygon
 import pickle
 
+"""
+========================================================
+Draw a map of the critical sectors
+========================================================
+"""
+
 def linear_mapping(sat, min_sat, max_sat):
 	return ((max_sat - sat)/(max_sat - min_sat), 0., 0.)
 
@@ -18,12 +24,7 @@ def draw_critical_sectors(G, satisfactions,  rep='.', save=True, name='critical_
 	
 	polygons = G.polygons
 
-	#print satisfactions
-
 	if flip_axes:
-		# if G:
-		# 	for n in G.nodes():
-		# 		G.node[n]['coord']=(G.node[n]['coord'][1], G.node[n]['coord'][0])
 		polygons={k:flip_polygon(pol) for k,pol in polygons.items()}
 
 	print  'Drawing critical sectors map...'
@@ -41,10 +42,7 @@ def draw_critical_sectors(G, satisfactions,  rep='.', save=True, name='critical_
 		patch = PolygonPatch(pol, alpha=0.5, zorder=2, color = color)
 		ax.add_patch(patch) 
 
-
-
 	plt.plot([0.6475], [43.4922222222222], 'bs', ms = 0.01)
-
 
 	if save:
 		plt.savefig(rep + '/' + name +'.png', dpi = dpi)
@@ -55,7 +53,6 @@ def draw_critical_sectors(G, satisfactions,  rep='.', save=True, name='critical_
 	return fig
 
 def get_results(paras, vers='2.9'):
-    #results, ={}, {}
     results = loop({p:paras[p + '_iter'] for p in paras['paras_to_loop']}, paras['paras_to_loop'], paras, {}, vers=vers)
     return results
 
@@ -74,7 +71,6 @@ def loop(a, level, parass, results, vers='2.9'):
     else:
         assert level[0] in a.keys()
         for i in a[level[0]]:
-            # print level[0], '=', i
             parass.update(level[0],i)
             results[i]=loop(a, level[1:], parass, {}, vers=vers)
             
@@ -84,7 +80,6 @@ if __name__=='__main__':
 	G = paras['G']
 	results = get_results(paras, vers='2.9')
 
-	#print results[0]
 	rep, name=build_path(paras, Gname = G.name)
 	rep += '/critical_sectors'
 	os.system('mkdir -p ' + rep)

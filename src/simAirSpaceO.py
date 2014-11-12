@@ -25,6 +25,15 @@ version='2.9.7'
 
 class Network_Manager:
     """
+    Class Network_Manager. 
+    =============
+    The network manager receives flihgt plans from air companies anfd tries to
+    fill the best ones on the network, by increasing order of cost. If the 
+    flight plan does not create overeach the capacity of any sector, it is 
+    allocated to the network and the sector loads are updated. 
+    The network manager can also inform the air companies if a shock occurs on
+    the network, i.e if some sectors are shut. It asks for a new bunch of 
+    flights plans from the airlines impacted.
     New in 2.9.2: gather methods coming from class Net (and Simulation) to make a proper agent.
     """
     def __init__(self, old_style=False):
@@ -101,7 +110,7 @@ class Network_Manager:
 
     def allocate_flight(self, G, flight, storymode=False):
         """
-        Tries allcoate the flight by sequentially checking if each flight plan does not overload any sector,
+        Tries to allocate the flights by sequentially checking if each flight plan does not overload any sector,
         beginning with the best ones. The rejection of the flights is kept in memory, as
         well as the first sector overloaded (bottleneck), and the flight plan selected,.
         Changed in 2.2: using intervals.
@@ -350,7 +359,7 @@ class Network_Manager:
         Routine aiming at modelling the shut down of sectors due to bad weather or strikes. Some 
         sectors are shut down at random. Flight plans crossing these sectors are deallocated. 
         Shortest paths are recomputed. Finally, deallocated flights are reallocated on the 
-        new network, with the same initial order. This procedure is repeated afeter each sector 
+        new network, with the same initial order. This procedure is repeated after each sector 
         is shut.
         Changed in 2.9: updated for navpoints and can now shut down sectors containing airports.
         Transferred from simulationO.
@@ -585,7 +594,7 @@ class Flight:
         
     def make_flags(self):
         """
-        Used to remember the flight plans which were overloadong the network, 
+        Used to remember the flight plans which were overloading the network, 
         as well as the first sector to be overloaded on the trajectories.
         """
         try:
@@ -883,7 +892,7 @@ class Net(nx.Graph):
     def infer_airports_from_navpoints(self, C_airport, singletons=False):
         """
         Detects all sectors having at least one navpoint begin a source or a destination. 
-        Mark them as airports, with a given capatity.
+        Mark them as airports, with a given capacity.
         Shouldd only be used by sector networks.
         @input C_airport: capacity of the airports.
         @input singletons: passed to @fix_airports.
@@ -925,7 +934,7 @@ class Net(nx.Graph):
         Pre-Build Nfp weighted shortest paths between each pair of airports. 
         If repetitions is set to True, a path can have a given node twice or more. Otherwise, the function makes
         several iterations, considering longer and longer paths which don't have a repeated sector.
-        If use_sector_path is set to True, then the navpoints paths are generated to that the sector paths do not
+        If use_sector_path is set to True, then the navpoints paths are generated so that the sector paths do not
         have repeated sectors.
         If the function do not find enough paths, the corresponding source/destination pair is deleted.
         Changed in 2.9: added singletons option. Added repetitions options to avoid repeated sectors in paths.

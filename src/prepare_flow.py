@@ -1,6 +1,13 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
+
+"""
+@author: earendil
+
+===========================================================================
+Used to extract flows from data. Needs the Distance library. TODO: in principle, no.
+===========================================================================
+"""
 
 import sys
 sys.path.insert(1,'../Distance')

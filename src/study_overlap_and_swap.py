@@ -2,6 +2,11 @@
 
 # -*- coding: utf-8 -*-
 
+"""
+This file is used to study the relationship between the mean overlap between shortest path 
+and the relative advantage of different types of companies.
+"""
+
 import pickle
 from ABMvars import paras
 from performance_plots import get_results

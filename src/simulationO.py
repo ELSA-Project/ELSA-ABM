@@ -78,16 +78,20 @@ def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot',
 
 def check_object(G):
     """
-    Use to check if you have an old object.
+    Use to check if you have an old object. Used for legacy.
     """
     
     return hasattr(G, 'comments')
         
-#def _read_paras(paras):
-#    return  paras['N'],paras['nairports'],paras['n_AC'],paras['Nfp'],paras['na'],paras['C'],paras['tview'], \
-#        paras['min_dis'],paras['type_of_net'],paras['tau'], paras['departure_times']
 
 class Simulation:
+    """
+    Class Simulation. 
+    =============
+    Main object for the simulation. Initialize loads, prepares air companies, 
+    calls network manager, keeps the M1 queue in memory, calls for possible 
+    shocks.
+    """
     def __init__(self, paras, G=None, verbose=False, make_dir=False):
         """
         Initialize the simulation, build the network if none is given in argument, set the verbosity
@@ -195,7 +199,7 @@ class Simulation:
                 self.ACs[k]=AirCompany(k, self.Nfp, self.na, self.G.G_nav.pairs, par)
                 self.ACs[k].fill_FPs(self.t0sp[k], self.tau, self.G)
                 k+=1
-        # if clean:   
+        # if clean:  # Not sure if this is useful.
         #     self.Netman.initialize_load(self.G)
 
     def build_ACs_from_flows(self):
@@ -205,7 +209,6 @@ class Simulation:
         """
         self.ACs={}
         k=0
-        #self.flights_taken_from_flow = []
         for ((source, destination), times) in self.flows.items():
             idx_s = self.G.G_nav.idx_navs[source]
             idx_d = self.G.G_nav.idx_navs[destination]
@@ -218,7 +221,6 @@ class Simulation:
                 for i, par in enumerate(self.pars):
                     for j in range(AC[i]):
                         time = times[l]
-                        #self.flights_taken_from_flow.append(k_f)
                         self.ACs[k] = AirCompany(k, self.Nfp, self.na, self.G.G_nav.short.keys(), par)
                         time = int(delay(time, starting_date = [time[0], time[1], time[2], 0., 0., 0.])/60.)
                         self.ACs[k].fill_FPs([time], self.tau, self.G, pairs = [(idx_s, idx_d)])
@@ -356,14 +358,11 @@ def post_process_queue(queue):
     Changed in 2.7: best cost is not the first FP's one.
     Changed in 2.9.3: added regulated_1FP
     """
-    #for set_par in self.results.values():
-    #     for it in set_par:
+
     for f in queue:   
         # Make flags
-        f.make_flags()
+        f.make_flags() # Maybe useless
         
-        #Satisfaction
-        #bestcost=f.FPs[0].cost
         bestcost = f.best_fp_cost
         acceptedFPscost = [FP.cost for FP in f.FPs if FP.accepted]
                 
@@ -404,7 +403,6 @@ def extract_aggregate_values_on_network(G):
     coin2=[]
     for n in G.nodes():
         if len(G.node[n]['load'])>2:
-            #weights=[(G.node[n]['load'][i+1][0] - G.node[n]['load'][i][0]) for i in range(len(G.node[n]['load'])-1)]
             avg=np.average(G.node[n]['load'])
             coin1.append(avg)
             coin2.append(avg/float(G.node[n]['capacity']))
@@ -427,6 +425,9 @@ def plot_times_departure(queue, rep='.'):
     plt.show()
         
 if __name__=='__main__': 
+    """
+    Manual single simulation used for "story mode" and debugging.
+    """
     GG = ABMvars.G
     paras = ABMvars.paras.copy()
 

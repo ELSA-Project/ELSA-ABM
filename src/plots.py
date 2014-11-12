@@ -3,36 +3,16 @@
 Created on Mon Jan 14 14:48:19 2013
 
 @author: luca
+Obsolete.
 """
 
-#import matplotlib.pyplot as plt
-
-#import sys
-#sys.path.insert(1,'../Modules')
 import matplotlib.pyplot as plt
 import numpy as np
 from iter_simO import build_path
 import pickle as pk
 import ABMvars
 
-#from iter_simO import make_file_name
-#plt.figure(1)
-#plt.title(str(ABMvars.N)+' nodes - Graph type '+str(ABMvars.type_of_net)+' - Nfp = '+str(ABMvars.Nfp)+' - airport distance = '+str(ABMvars.airport_dis)+' (edges)')
-#plt.xlabel('order of rejection')
-#plt.ylabel('average time of the I rejection')
-
 version='2.9.0'
-
-#def build_path(paras, loop_on='par', in_title=['N', 'Nfp', 'sigma', 'tau', 'par']):
-#    """
-#    Used to build a path from a set of paras. 
-#    New in 2.2.
-#    """
-#    name=build_path_single(paras,in_title=[p for p in in_title if p!=loop_on])
-#    name+='_loop_on_' + loop_on
-#    name+= '_iter'+ str(paras['n_iter'])
-#        
-#    return name
 
 class Plot:
     """
@@ -68,36 +48,6 @@ class Plot:
 #            self.results_processed[set_par]={}
             
         print ' done.'
-#    def post_process_results(self, save=True):
-#        """
-#        Used to post-process results. Every processes between the simulation and 
-#        the plots should be here.
-#        Changed in 2.4: add satisfaction, regulated flight & regulated flight plans. On level of iteration added (on par).
-#        """
-#        print 'Post-processing results...',
-#        for set_par in self.results.values():
-#            for it in set_par:
-#                for f in it:   
-#                    # Make flags
-#                    f.make_flags()
-#                    
-#                    #Satisfaction
-#                    bestcost=f.FPs[0].cost
-#                    acceptedFPscost=[FP.cost for FP in f.FPs if FP.accepted]
-#                    if len(acceptedFPscost)!=0:
-#                        f.satisfaction=bestcost/min(acceptedFPscost)
-#                    else:
-#                        f.satisfaction=0                    
-#                        
-#                    # Regulated flight plans
-#                    f.regulated_FPs=len([FP for FP in f.FPs if not FP.accepted])
-#                    
-#                    # Regulated flights
-#                    f.regulated_F = len([FP for FP in f.FPs if FP.accepted])==0
-#        print ' done.'
-            
-                 
-
                 
     def compute_times(self):
         """

@@ -10,14 +10,11 @@ from import_exterior_libs import import_ext_libs
 import_ext_libs()
 
 import pickle as _pickle
-#from networkx import shortest_path
 import sys as _sys
 import numpy as _np
-#from prepare_network import prepare_network as _prepare_network
 from prepare_navpoint_network import prepare_navpoint_network as _prepare_navpoint_network
 from math import ceil as _ceil
 import networkx as _nx
-#from random import choice as _choice
 
 from tools_airports import get_paras as _get_paras, extract_flows_from_data as _extract_flows_from_data
 
@@ -75,35 +72,7 @@ update_priority=[]
 to_update={}
 unit = 20. # minutes
 
-# ---------------- Network --------------- #
-
-#type_of_net='D'                 #type of graph ('D'=Delaunay triangulation, 'T'=triangular lattice, "E"=Erdos-Renyi random graph)
-#N=30                            #order of the graph (in the case net='T' verify that the order is respected)        
-#airports=[65,20]                #IDs of the nodes used as airports
-   #LFBBN2 (vers Perpignan)
-
-#nairports=2                     #number of airports
-#pairs=[]#[(22,65)]              #available connections between airports
-#[65,20]
-#[65,22]
-#[65,62]
-#min_dis=2                       #minimum number of nodes between two airpors
-
-
-# generate_weights=True
-# typ_weights='coords'
-# sigma=0.01
-# generate_capacities=True
-# typ_capacities='manual'
-# C=5                             #sector capacity
-# C_airport=10
-# compute_areas=True
-# N_by_sectors=10
-# suppl_par_capacity=['sqrt']
-
-#file_capacities='capacities_sectors_Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0.pic'
-
-#paras_G={k:v for k,v in vars().items() if k[:1]!='_' and k!='version'}
+# ---------------- Network Setup --------------- #
 
 fixnetwork=True               #if fixnetwork='True' the graph is loaded from file and is not generated at each iteration
 
@@ -124,9 +93,7 @@ if fixnetwork:
                 G.give_airports_to_network(airports, Nsp_nav, name = 'DEL29_C5_' + str(airports[0]) + '_' + str(airports[1]) + '_v2')
                 return G
 
-            airports = G.airports
-            #airports = [30, 58]
-            #G = give_airports_to_network(G, airports, 1)            
+            airports = G.airports       
 
             print 'Computing possible pairs of airports...'
             distance=7
@@ -183,34 +150,6 @@ with_flows = True
 day=30.*60.
 
 if with_flows:
-    # _paras=_get_paras()
-    # _paras['zone']=G.country
-    # _paras['airac']=G.airac
-    # _paras['type_zone']='EXT'
-    # _paras['filtre']='Strong'
-    # _paras['mode']='navpoints'
-    # _paras['cut_alt']=240.
-    # _paras['both']=False
-    # _paras['n_days']=1
-
-    # try:
-    #     for _k, _v in _paras.items(): 
-    #         assert _v == G.paras_real[_k]
-    # except AssertionError:
-    #     print 'Beware: the parameters of the real network are different for:'
-    #     for _k, _v in _paras.items(): 
-    #         if _v != G.paras_real[_k]:
-    #             print _k, ':', _v, 'in _paras and', G.paras_real[_k], 'for the network.'
-    #     if not _yes('Shall I continue?'):
-    #         raise
-    # except:
-    #     raise
-        
-
-    # _pairs = [(G.G_nav.node[_n1]['name'], G.G_nav.node[_n2]['name']) for _n1,_n2 in G.G_nav.short.keys()]
-    # flows=_extract_flows_from_data(_paras,[G.G_nav.node[_n]['name'] for _n in G.G_nav.nodes()], pairs = _pairs)[1]
-
-
     flows = {}
     for f in G.flights_selected:
         # _entry = G.G_nav.idx_navs[f['route_m1t'][0][0]]
@@ -226,7 +165,6 @@ if with_flows:
     density=func_density_vs_ACtot_na_day(ACtot, na, day)
     to_update['density']=(func_density_vs_ACtot_na_day,('ACtot','na','day'))
 else:
-    #density=20.0
     flows = {}
     density_iter=[2.*_i for _i in range(1,11)]
     #density_iter=[5., 10.]
@@ -237,9 +175,6 @@ else:
     def func_Np(a,b,c):
         return int(_ceil(a/float(b+c)))
         
-    # def func_ACsperwave(a,b):
-    #     return int(a/float(b))
-        
     def func_Delta_t(a):
         return a
 
@@ -249,7 +184,7 @@ else:
             return int(a*b/float(c))
         
         ACtot=func_ACtot(density, day, na)
-        update_priority+=['ACtot']#, 'AC', 'AC_dict']
+        update_priority+=['ACtot']
         to_update['ACtot']=(func_ACtot, ('density', 'day', 'na'))
     elif departure_times=='from_data':
         with open('times_2010_5_6.pic', 'r') as f:
@@ -265,8 +200,7 @@ else:
         Delta_t=unit*1.
         Delta_t=float(Delta_t)
         #Delta_t_iter=range(24)
-        Delta_t_iter=_np.array([0.,1., 5., 23.])#, 6., 8., 10., 12.])
-        #Delta_t_iter=_np.array([0., 23.])#, 6., 8., 10., 12.])
+        Delta_t_iter=_np.array([0.,1., 5., 23.])
         Delta_t_iter=_np.array(Delta_t_iter*unit)
 
         ACsperwave=30
@@ -295,8 +229,6 @@ else:
             ACsperwave=func_ACsperwave_vs_density_day_Np(density, day, Np)
             ACtot=func_ACtot_vs_ACsperwave_Np(ACsperwave, Np)
             to_update['ACsperwave']=(func_ACsperwave_vs_density_day_Np,('density', 'day','Np'))
-                
-    #print Np, ACsperwave, ACtot, density, Delta_t
 
 update_priority+=['AC', 'AC_dict']
 
@@ -315,24 +247,14 @@ _range3=list(_np.arange(0.1,0.9,0.1))
 _range4=list(_np.arange(0., 1.05, 0.1))
 _range5=list(_np.arange(0., 1.,0.2))
 nA_iter=_range5
-#_range1 + _range3 + _range2
 #nA_iter=[0.1,0.5,0.9]
 
 #par_iter=[[[1.,0.,0.001], [1.,0.,1000.]],[[1.,0.,1.], [1.,0.,1.]], [[1.,0.,1000.], [1.,0.,1.]]]
-#par_iter=[[[1.,0.,10.**_e], [1.,0.,1.]] for _e in range(-3,4)]
-par_iter=[[[1.,0.,10.**_e], [1.,0.,1.]] for _e in [-3,3]]
+par_iter=[[[1.,0.,10.**_e], [1.,0.,1.]] for _e in range(-3,4)]
+#par_iter=[[[1.,0.,10.**_e], [1.,0.,1.]] for _e in [-3,3]]
 
-#par_iter=[[[1.,0.,1.], [1.,0.,1.]]]
-#par_iter=[[[1.,0.,1000.**_e], [1.,0,1.]] for _e in [-1,0,1]]
-#par_iter=[[[1.,0.,0.001], [1.,0.,1.]],[[1.,0.,1.], [1.,0.,1.]], [[1.,0.,1000.], [1.,0.,1.]]]
-
-#par_iter=[[[10.**(_e+1.),0,10.**_e], [1.,0,1.]] for _e in range(-4,4)]
 par_iter=tuple([tuple([tuple([float(_v) for _v in _pp])  for _pp in _p])  for _p in par_iter]) # transformation in tuple, because arrays cannot be keys for dictionaries.
-#par=[[1.,0.,1000.], [1.,0.,0.001]]
-par=[[1.,0.,1000.], [1.,0.,1000.]]
-#par=[[1.,0.,0.001], [1.,0.,1000.]]
-#par=[[1.,0.,0.001]]
-#par=tuple([tuple(_p)  for _p in par]) 
+par=[[1.,0.,0.001], [1.,0.,1000.]]
 par=tuple([tuple([float(_v) for _v in _p])  for _p in par]) 
 
 
@@ -357,7 +279,7 @@ AC_dict=func_AC_dict(nA, ACtot, par)                #number of air companies/ope
 
 # ------------------ From M0 to M1 ------------------- #
 
-mode_M1 = 'standard' # sweep or standard
+mode_M1 = 'sweep' # sweep or standard
 if mode_M1 == 'standard':
     N_shocks=0
     N_shocks_iter=range(0,5,1)
@@ -365,18 +287,18 @@ if mode_M1 == 'standard':
 else: 
     N_shocks=0
     STS = None  #Sector to Shut
-    #STS_iter = G.nodes()[30:]
-    #STS_iter = G.nodes()[20:30]
-    #STS_iter = G.nodes()[15:20]
     STS_iter = G.nodes()
 
 # --------------------System parameters -------------------- #
 parallel=False
-n_iter = 1                #number of iterations in the main loop 
+n_iter = 100                #number of iterations in the main loop 
 old_style_allocation = False
-force = True
+force = False
 
 # ---------------------------------------------------- #
+
+#Some possible set of parameters.
+
 #paras_to_loop=['par', 'ACtot']
 #paras_to_loop=['par', 'Delta_t']
 #paras_to_loop=['nA', 'ACtot']
@@ -393,7 +315,7 @@ force = True
 #paras_to_loop = ['airports', 'par', 'Delta_t']
 #paras_to_loop = ['par', 'Delta_t']
 #paras_to_loop = ['noise']
-paras_to_loop = ['par']
+#paras_to_loop = ['par']
 #paras_to_loop = ['nA']
 #paras_to_loop = ['Nsp_nav']
 ####
@@ -409,7 +331,7 @@ paras_to_loop = ['par']
 #paras_to_loop=['par','Delta_t']
 #paras_to_loop=['par', 'N_shocks']#['nA','ACtot']#['par', 'ACtot']
 #paras_to_loop=['nA','N_shocks']
-#paras_to_loop = ['STS']
+paras_to_loop = ['STS']
 
 if paras_to_loop == ['nA'] and par!=tuple([tuple([float(_v) for _v in _p])  for _p in [[1.,0.,0.001], [1.,0.,1000.]]]) :
     assert _yes('The set of par does not seem consistent with the loop on nA. Proceed?')

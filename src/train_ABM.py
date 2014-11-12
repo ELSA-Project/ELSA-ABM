@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+This file is used to calibrate, or train, the ABM. It sweeps some parameter and 
+computes the distance between distributions od degree, strength, betweenness, 
+and weights. The default distance is the kolmogorov distance. The sweep is a 
+brute force sweep and returns the best value of the parameter for each distribution.
+"""
+
 import sys
 sys.path.insert(1,'../Distance')
 #from analyse_network import network_and_trajectories_of_real_traffic, network_and_trajectories_of_simulated_traffic
