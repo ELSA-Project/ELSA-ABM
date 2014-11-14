@@ -4,6 +4,62 @@
 		"selected_items":
 		[
 			[
+				"nei",
+				"neighbors"
+			],
+			[
+				"emp",
+				"empty_sectors"
+			],
+			[
+				"em",
+				"empty_sectors"
+			],
+			[
+				"file",
+				"file_airports"
+			],
+			[
+				"file_",
+				"file_capacities"
+			],
+			[
+				"gene",
+				"generate_capacities_from_traffic"
+			],
+			[
+				"ge",
+				"generate_capacities_from_traffic"
+			],
+			[
+				"_m",
+				"_network_whose_name_is"
+			],
+			[
+				"network",
+				"network_whose_name_is"
+			],
+			[
+				"paras",
+				"paras_G"
+			],
+			[
+				"prepa",
+				"prepare_navpoint_network"
+			],
+			[
+				"type",
+				"type_of_net"
+			],
+			[
+				"Netowk",
+				"Network_Manager"
+			],
+			[
+				"ave",
+				"average_sim"
+			],
+			[
 				"import",
 				"import_ext_libs"
 			],
@@ -98,10 +154,6 @@
 			[
 				"edges",
 				"edges_full"
-			],
-			[
-				"paras",
-				"paras_firms"
 			],
 			[
 				"need",
@@ -462,58 +514,6 @@
 			[
 				"ol",
 				"old_behavior"
-			],
-			[
-				"global",
-				"global_shape"
-			],
-			[
-				"new",
-				"newest_fil"
-			],
-			[
-				"read",
-				"read_list_files"
-			],
-			[
-				"capacity_airport",
-				"capacity_airport"
-			],
-			[
-				"capa",
-				"capacity_airport"
-			],
-			[
-				"load",
-				"load_airport"
-			],
-			[
-				"destin",
-				"desetination_overload"
-			],
-			[
-				"source",
-				"source_overload"
-			],
-			[
-				"give",
-				"give_airports_to_network"
-			],
-			[
-				"path",
-				"paths_additional"
-			],
-			[
-				"enough",
-				"enough_paths"
-			],
-			[
-				"giv",
-				"give_airports_to_network"
-			],
-			[
-				"udate",
-				"update_priority"
 			]
 		]
 	},
@@ -523,16 +523,8 @@
 			"file": "ABMvars.py",
 			"settings":
 			{
-				"buffer_size": 15283,
+				"buffer_size": 10792,
 				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "analyse_network.py",
-			"settings":
-			{
-				"buffer_size": 10414,
-				"line_ending": "Unix"
 			}
 		},
 		{
@@ -544,10 +536,18 @@
 			}
 		},
 		{
+			"file": "analyse_network.py",
+			"settings":
+			{
+				"buffer_size": 10414,
+				"line_ending": "Unix"
+			}
+		},
+		{
 			"file": "iter_simO.py",
 			"settings":
 			{
-				"buffer_size": 7607,
+				"buffer_size": 7687,
 				"line_ending": "Unix"
 			}
 		},
@@ -555,7 +555,7 @@
 			"file": "iter_simO_shocks.py",
 			"settings":
 			{
-				"buffer_size": 2130,
+				"buffer_size": 1920,
 				"line_ending": "Unix"
 			}
 		},
@@ -563,15 +563,7 @@
 			"file": "key_sector_shocks.py",
 			"settings":
 			{
-				"buffer_size": 3019,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "list_of_files.py",
-			"settings":
-			{
-				"buffer_size": 434,
+				"buffer_size": 2966,
 				"line_ending": "Unix"
 			}
 		},
@@ -579,7 +571,7 @@
 			"file": "paths.py",
 			"settings":
 			{
-				"buffer_size": 138,
+				"buffer_size": 167,
 				"line_ending": "Unix"
 			}
 		},
@@ -587,23 +579,7 @@
 			"file": "performance_plots.py",
 			"settings":
 			{
-				"buffer_size": 21172,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "plots.py",
-			"settings":
-			{
-				"buffer_size": 6416,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "prepare_flow.py",
-			"settings":
-			{
-				"buffer_size": 866,
+				"buffer_size": 21389,
 				"line_ending": "Unix"
 			}
 		},
@@ -611,7 +587,15 @@
 			"file": "prepare_navpoint_network.py",
 			"settings":
 			{
-				"buffer_size": 44814,
+				"buffer_size": 58381,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "prepare_flow.py",
+			"settings":
+			{
+				"buffer_size": 1130,
 				"line_ending": "Unix"
 			}
 		},
@@ -619,15 +603,7 @@
 			"file": "prepare_network.py",
 			"settings":
 			{
-				"buffer_size": 6408,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "simAirSpaceO.py",
-			"settings":
-			{
-				"buffer_size": 73373,
+				"buffer_size": 6649,
 				"line_ending": "Unix"
 			}
 		},
@@ -635,7 +611,7 @@
 			"file": "simulationO.py",
 			"settings":
 			{
-				"buffer_size": 23451,
+				"buffer_size": 23245,
 				"line_ending": "Unix"
 			}
 		},
@@ -643,7 +619,7 @@
 			"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
 			"settings":
 			{
-				"buffer_size": 21351,
+				"buffer_size": 19259,
 				"line_ending": "Unix"
 			}
 		},
@@ -651,7 +627,7 @@
 			"file": "study_overlap_and_swap.py",
 			"settings":
 			{
-				"buffer_size": 9019,
+				"buffer_size": 9180,
 				"line_ending": "Unix"
 			}
 		},
@@ -659,15 +635,7 @@
 			"file": "train_ABM.py",
 			"settings":
 			{
-				"buffer_size": 6800,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "utilities.py",
-			"settings":
-			{
-				"buffer_size": 6687,
+				"buffer_size": 7132,
 				"line_ending": "Unix"
 			}
 		},
@@ -678,14 +646,42 @@
 				"buffer_size": 4665,
 				"line_ending": "Unix"
 			}
+		},
+		{
+			"file": "paras_G.py",
+			"settings":
+			{
+				"buffer_size": 5611,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "simAirSpaceO.py",
+			"settings":
+			{
+				"buffer_size": 73861,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "utilities.py",
+			"settings":
+			{
+				"buffer_size": 8344,
+				"line_ending": "Unix"
+			}
 		}
 	],
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 392.0,
+		"height": 369.0,
 		"selected_items":
 		[
+			[
+				"pref",
+				"Preferences: Key Bindings - Default"
+			],
 			[
 				"Package",
 				"Package Control: Install Package"
@@ -695,11 +691,15 @@
 				"Package Control: Add Channel"
 			]
 		],
-		"width": 593.0
+		"width": 467.0
 	},
 	"console":
 	{
-		"height": 153.0
+		"height": 153.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
 	},
 	"distraction_free":
 	{
@@ -712,6 +712,13 @@
 	},
 	"file_history":
 	[
+		"/home/earendil/Documents/ELSA/Distance/tools_airports.py",
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/__init__.py",
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/tools_airports.py",
+		"/home/earendil/.config/sublime-text-3/Packages/Default/Default (Linux).sublime-keymap",
+		"/home/earendil/.config/sublime-text-3/Packages/User/Default (Linux).sublime-keymap",
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/plots.py",
+		"/home/earendil/Documents/ELSA/ABM/Model 2/src/list_of_files.py",
 		"/home/earendil/Documents/ELSA/ABM/Model 2/src/iter_simO_shocks.py",
 		"/home/earendil/Documents/ELSA/ABM/Model 2/src/simulationO.html",
 		"/home/earendil/Documents/ELSA/ABM/Model 2/src/movie2.py",
@@ -754,7 +761,6 @@
 		"/home/earendil/ABM/list_of_files.py",
 		"/media/earendil/minas_tirith/Documents/Optimal networks/Old/2.2.1/test.f90",
 		"/home/earendil/Documents/ELSA/Modules/general_tools.py",
-		"/home/earendil/Documents/ELSA/Distance/tools_airports.py",
 		"/media/earendil/minas_tirith/Documents/Optimal networks/Old/2.2.1/run2/mecanic.f90",
 		"/home/earendil/Documents/ELSA/ABM/prepare_flow.py",
 		"/home/earendil/Documents/ELSA/ABM/iter_simO.py",
@@ -830,6 +836,44 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"check_and_fix_empty_sectors",
+			"centroid",
+			"check_everybody_is_attached",
+			"file_navpoints",
+			"nothing",
+			"prepare_sectors_network",
+			"_colors",
+			"file_net",
+			"extract_capacity_from_traffic",
+			"extract_flows_from_data",
+			"prepare_sectors_network",
+			"default_prepare_sectors_network",
+			"suppl_par_capacity_",
+			"N_by_sectors",
+			"N_by_sectors_",
+			"compute_areas",
+			"toggle",
+			"comment",
+			"\"comment\"",
+			"ctrl+/",
+			"comment",
+			"flights_selected",
+			"infer_airports_from_short_list",
+			"give_capacities_and_weights",
+			"extract_flows_from_data",
+			"give_capacities_and_weights",
+			"G",
+			"R",
+			"paras_G",
+			"prepare_sectors_network",
+			"H",
+			"G",
+			"sys",
+			"DummyFile",
+			"prepare_sectors_network",
+			"PolygonPatch",
+			"do_standard",
+			"_yes",
 			"build_path",
 			"plot_times_departure",
 			"draw_network_and_patches",
@@ -919,45 +963,7 @@
 			"vol",
 			"all_assets",
 			"all_assets_value",
-			"make_contract",
-			"supply_indices",
-			"in_degree",
-			"setup_simu",
-			"demand_factor_exp",
-			"results[0].node[n]['cat']",
-			"unit",
-			"correlate_price_prod",
-			"productivity",
-			"expected_IR",
-			"orders",
-			"rep",
-			"price()",
-			"price",
-			"story_mode",
-			"productivity_list",
-			"path",
-			"update",
-			"join",
-			"directory",
-			"join",
-			"typ_contracts",
-			"contextlib",
-			"print",
-			"pledged",
-			"new_bond",
-			"edges",
-			"returns",
-			"_total",
-			"R",
-			"R_min",
-			"initial_r",
-			"make_simu_test",
-			"G",
-			"funf",
-			"demand",
-			"G",
-			"investment",
-			"loans"
+			"make_contract"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -975,23 +981,24 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 8,
 			"sheets":
 			[
 				{
 					"buffer": 0,
 					"file": "ABMvars.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 15283,
+						"buffer_size": 10792,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								11954,
-								11954
+								553,
+								553
 							]
 						],
 						"settings":
@@ -1000,15 +1007,45 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 0.0,
-						"translation.y": 5253.0,
+						"translation.x": -0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 8,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
+					"file": "import_exterior_libs.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 367,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								367,
+								367
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
 					"file": "analyse_network.py",
+					"semi_transient": false,
 					"settings":
 					{
 						"buffer_size": 10414,
@@ -1031,48 +1068,24 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "import_exterior_libs.py",
-					"settings":
-					{
-						"buffer_size": 367,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								141,
-								141
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
+					"stack_index": 13,
 					"type": "text"
 				},
 				{
 					"buffer": 3,
 					"file": "iter_simO.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 7607,
+						"buffer_size": 7687,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2537,
-								2537
+								472,
+								472
 							]
 						],
 						"settings":
@@ -1082,25 +1095,27 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 102.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 12,
 					"type": "text"
 				},
 				{
 					"buffer": 4,
 					"file": "iter_simO_shocks.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2130,
+						"buffer_size": 1920,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								501,
-								501
+								21,
+								21
 							]
 						],
 						"settings":
@@ -1113,22 +1128,24 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
 					"buffer": 5,
 					"file": "key_sector_shocks.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3019,
+						"buffer_size": 2966,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1095,
-								1095
+								1289,
+								1289
 							]
 						],
 						"settings":
@@ -1139,22 +1156,24 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 6,
 					"type": "text"
 				},
 				{
 					"buffer": 6,
-					"file": "list_of_files.py",
+					"file": "paths.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 434,
+						"buffer_size": 167,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								111,
+								111
 							]
 						],
 						"settings":
@@ -1165,76 +1184,54 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 11,
 					"type": "text"
 				},
 				{
 					"buffer": 7,
-					"file": "paths.py",
+					"file": "performance_plots.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 138,
+						"buffer_size": 21389,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								241,
+								241
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Python/Python.tmLanguage"
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 10,
 					"type": "text"
 				},
 				{
 					"buffer": 8,
-					"file": "performance_plots.py",
+					"file": "prepare_navpoint_network.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 21172,
+						"buffer_size": 58381,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								19198,
-								19198
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 1717.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 9,
-					"file": "plots.py",
-					"settings":
-					{
-						"buffer_size": 6416,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
+								8125,
+								8125
 							]
 						],
 						"settings":
@@ -1247,22 +1244,24 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 10,
+					"buffer": 9,
 					"file": "prepare_flow.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 866,
+						"buffer_size": 1130,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								230,
+								230
 							]
 						],
 						"settings":
@@ -1273,22 +1272,54 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "prepare_network.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6649,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								247,
+								247
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": -0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 17,
 					"type": "text"
 				},
 				{
 					"buffer": 11,
-					"file": "prepare_navpoint_network.py",
+					"file": "simulationO.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 44814,
+						"buffer_size": 23245,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								16415,
+								16415
 							]
 						],
 						"settings":
@@ -1298,25 +1329,27 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1734.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 5,
 					"type": "text"
 				},
 				{
 					"buffer": 12,
-					"file": "prepare_network.py",
+					"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6408,
+						"buffer_size": 19259,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								10961,
+								10961
 							]
 						],
 						"settings":
@@ -1326,180 +1359,74 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 510.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 4,
 					"type": "text"
 				},
 				{
 					"buffer": 13,
-					"file": "simAirSpaceO.py",
+					"file": "study_overlap_and_swap.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 73373,
+						"buffer_size": 9180,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								203,
+								203
 							]
 						],
 						"settings":
 						{
 							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 15,
 					"type": "text"
 				},
 				{
 					"buffer": 14,
-					"file": "simulationO.py",
+					"file": "train_ABM.py",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 23451,
+						"buffer_size": 7132,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								21481,
-								21481
+								852,
+								852
 							]
 						],
 						"settings":
 						{
 							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"translate_tabs_to_spaces": false
 						},
-						"translation.x": 26.0,
-						"translation.y": 3082.0,
+						"translation.x": -0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 16,
 					"type": "text"
 				},
 				{
 					"buffer": 15,
-					"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
-					"settings":
-					{
-						"buffer_size": 21351,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3789,
-								3789
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 408.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 16,
-					"file": "study_overlap_and_swap.py",
-					"settings":
-					{
-						"buffer_size": 9019,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 17,
-					"file": "train_ABM.py",
-					"settings":
-					{
-						"buffer_size": 6800,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 18,
-					"file": "utilities.py",
-					"settings":
-					{
-						"buffer_size": 6687,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 19,
 					"file": "voronoi.py",
+					"semi_transient": false,
 					"settings":
 					{
 						"buffer_size": 4665,
@@ -1509,8 +1436,8 @@
 						"selection":
 						[
 							[
-								0,
-								0
+								2950,
+								2950
 							]
 						],
 						"settings":
@@ -1523,6 +1450,102 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 18,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 16,
+					"file": "paras_G.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5611,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4863,
+								4863
+							]
+						],
+						"settings":
+						{
+							"auto_name": "",
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 1887.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "simAirSpaceO.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 73861,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								29205,
+								29205
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 580.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "utilities.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8344,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6887,
+								6887
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 153.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
 					"type": "text"
 				}
 			]
@@ -1530,7 +1553,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 0.0
+		"height": 25.0
 	},
 	"input":
 	{
@@ -1545,11 +1568,18 @@
 				0,
 				1,
 				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
 			]
 		],
 		"cols":
 		[
 			0.0,
+			0.549404761905,
 			1.0
 		],
 		"rows":
@@ -1563,9 +1593,14 @@
 	{
 		"height": 232.0
 	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "Model2.sublime-project",
 	"replace":
 	{
-		"height": 64.0
+		"height": 46.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -1573,6 +1608,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"simul",
+				"~/Documents/ELSA/ABM/Model 2/src/simulationO.py"
+			],
 			[
 				"list",
 				"ABM/list_of_files.py"
@@ -1688,10 +1727,25 @@
 		],
 		"width": 380.0
 	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
 	"show_minimap": false,
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": false,
 	"side_bar_width": 213.0,
-	"status_bar_visible": true
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
 }

@@ -17,53 +17,10 @@ from math import ceil as _ceil
 import networkx as _nx
 
 from tools_airports import get_paras as _get_paras, extract_flows_from_data as _extract_flows_from_data
+from utilities import Paras as _Paras, network_whose_name_is as _network_whose_name_is
+from general_tools import yes as _yes
 
-version='2.9.4'
-
-def _yes(question):
-    ans=''
-    while not ans in ['Y','y','yes','Yes','N','n','No','no']:
-        ans=raw_input(question + ' (y/n)\n')
-    return ans in ['Y','y','yes','Yes']
-
-class _Paras(dict):
-    def __init__(self, dic):
-        for k,v in dic.items():
-            self[k]=v
-        self.to_update={}
-
-    def update(self, name_para, new_value):
-        """
-        Changed in 2.9.4: self.update_priority instead of update_priority.
-        """
-        paras[name_para]=new_value
-        # Everything before level_of_priority_required should not be updated, given the para being updated.
-        lvl = self.levels.get(name_para, len(self.update_priority)) #level_of_priority_required
-        #print name_para, 'being updated'
-        #print 'level of priority:', lvl, (lvl==len(update_priority))*'(no update)'
-        for j in range(lvl, len(self.update_priority)):
-            k = self.update_priority[j]
-            (f, args)=self.to_update[k]
-            vals=[paras[a] for a in args] 
-            self[k]=f(*vals)
-
-    def analyse_dependance(self):
-        """
-        Detect the first level of priority hit by a dependance in each parameter.
-        Those who don't need any kind of update are not in the dictionnary.
-        """
-        print 'Analysing dependances of the parameter with priorities', self.update_priority
-        self.levels = {}
-        for i, k in enumerate(self.update_priority):
-            (f,args)=self.to_update[k]
-            for arg in args:
-                if arg not in self.levels.keys():
-                    self.levels[arg] = i
- 
-def _network_whose_name_is(name):
-    with open(name + '.pic') as _f:
-        B=_pickle.load(_f)
-    return B
+version='2.9.5'
 
 #--------------------------------------------------------------#
 #--------------------------------------------------------------#
@@ -112,7 +69,7 @@ if fixnetwork:
             #G = give_airports_to_network(G, airports)
     else: # Prepare a new one
         #G=_prepare_network(paras_G)
-        G = _prepare_navpoint_network(paras_G)
+        G = _prepare_navpoint_network(paras_G) #Problem TODO
 else:
     G=None
     

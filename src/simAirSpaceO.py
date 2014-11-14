@@ -21,7 +21,7 @@ from general_tools import counter, silence
 from string import split
 import copy
 
-version='2.9.7'
+version='2.9.8'
 
 class Network_Manager:
     """
@@ -520,7 +520,6 @@ class FlightPlan:
 
     def shift_time(self, shift):
         self.t += shift
-
         
 class Flight:
     """
@@ -688,7 +687,7 @@ class Net(nx.Graph):
     def __init__(self):
         super(Net, self).__init__()
         
-    def import_from(self, G, verb = False):
+    def import_from(self, G, numberize=False, verb = False):
         """
         Used to import the data of an already existing graph (networkx) in a Net obect.
         Weights and directions are conserved.
@@ -697,8 +696,16 @@ class Net(nx.Graph):
         if verb:
             print 'Importing network...'
         if len(G.nodes())!=0:
-            self.add_nodes_from(G.nodes(data=True))
-            self.add_weighted_edges_from([(e[0],e[1],G[e[0]][e[1]]['weight']) for e in G.edges()])
+            if not numberize:
+                self.add_nodes_from(G.nodes(data=True))
+                self.add_weighted_edges_from([(e[0],e[1],G[e[0]][e[1]]['weight']) for e in G.edges()])
+            else:
+                self.idx_sectors={s:i for i,s in enumerate(G.nodes())}
+                for n in G.nodes():
+                    self.add_node(self.idx_sectors[n], name=n, **G.node[n])
+                for e in G.edges():
+                    self.add_edge(self.idx_sectors[e[0]], self.idx_sectors[e[1]])
+
             e1=G.edges()[0]
             e2=G.edges()[1]
             self.weighted=not (self[e1[0]][e1[1]]['weight']==self[e2[0]][e2[1]]['weight']==1.)
@@ -731,13 +738,11 @@ class Net(nx.Graph):
         x,y =  np.array([self.node[n]['coord'][0] for n in self.nodes()]),np.array([self.node[n]['coord'][1] for n in self.nodes()])   
         cens,edg,tri,neig = triang.delaunay(x,y)
         if Gtype=='D':
-            #graphtypeflag='Delaunay'
             for p in tri:
                 self.add_edge(p[0],p[1])#, weight=max(gauss(1., sigma),0.00001)) # generates weigthed links, centered on 1
                 self.add_edge(p[1],p[2])#, weight=max(gauss(1., sigma),0.00001))
                 self.add_edge(p[2],p[0])#, weight=max(gauss(1., sigma),0.00001))
         elif Gtype=='E':  
-            #graphtypeflag='Erdos Renyi'
             prob=mean_degree/float(N-1) # <k> = (N-1)p - 6 is the mean degree in Delaunay triangulation.
             for n in self.nodes():
                 for m in self.nodes():
@@ -749,19 +754,19 @@ class Net(nx.Graph):
         """
         Build a graph of the given type, nodes, edges and possibly airports.
         """
-        print 'Building random network of type ', Gtype
+        print 'Building random network of type', Gtype
         
         self.weighted=sigma==0.
         
         if Gtype=='D' or Gtype=='E':
             self.build_nodes(N, prelist=prelist)
-            self.build_net(self, N, Gtype=Gtype, mean_degree=mean_degree)
-            
+            self.build_net(N, Gtype=Gtype, mean_degree=mean_degree)  
         elif Gtype=='T':
             xAxesNodes=np.sqrt(N/float(1.4))
             self=build_triangular(xAxesNodes)  
-        if generation_of_airports:
-            self.generate_airports(nairports,min_dis) 
+
+        #if generation_of_airports:
+        #    self.generate_airports(nairports,min_dis) 
         
     def generate_weights(self,typ='gauss',par=[1.,0.01]):#,values=[]):
         """
@@ -799,7 +804,7 @@ class Net(nx.Graph):
         self.typ_weights=typ
         self.weighted=True
             
-    def generate_capacities(self, C=5, typ='constant', par=[1], file_capacities=None): #func=lambda a:a):
+    def generate_capacities(self, C=5, typ='constant', par=[1]):#, file_capacities=None): #func=lambda a:a):
         """
         Generates capacities with different distributions.
         If typ is 'constant', all nodes have the same capacity, given by C.
@@ -810,6 +815,7 @@ class Net(nx.Graph):
         If typ is 'areas', the capacities are proportional to the area of the sector, with a mean close to C
         If typ is 'lognormal', the capacities are taken from a lognormal distribution.
         New in 2.7: added lognormal and areas.
+        Changed in 2.9.8: removed "manual"
         """
         assert typ in ['constant', 'gauss', 'uniform', 'time', 'manual', 'lognormal', 'areas']
         self.C, self.typ_capacities, self.par_capacities = C, typ, par
@@ -825,12 +831,12 @@ class Net(nx.Graph):
         elif typ=='lognormal':
             for n in self.nodes():
                 self.node[n]['capacity']=max(1,int(lognormal(log(C),par[0])))
-        elif typ=='manual':
-            f=open(file_capacities,'r')
-            properties=pickle.load(f)
-            f.close()
-            for n in self.nodes():
-                self.node[n]['capacity']=properties[n]['capacity']
+        #elif typ=='manual':
+        #    f=open(file_capacities,'r')
+        #    properties=pickle.load(f)
+        #    f.close()
+        #    for n in self.nodes():
+        #        self.node[n]['capacity']=properties[n]['capacity']
         elif typ=='areas':
             if par[0]=='sqrt':
                 area_avg=np.mean([sqrt(self.node[n]['area']) for n in self.nodes()])
@@ -840,8 +846,8 @@ class Net(nx.Graph):
         
     def fix_capacities(self, capacities, typ='exterior'):
         """
-        Fix the capacities given with the dictionnary capacities.
-        Check if every sector has a capacity.
+        Fix the capacities given with the dictionnary of capacities.
+        Checks if every sector has a capacity.
         New in 2.9.
         """
 
@@ -857,15 +863,15 @@ class Net(nx.Graph):
 
     def generate_airports(self, nairports, min_dis, C_airport=10):
         """
-        Generate nairports airports. Build the accessible pairs of airports for this network
-        with a  minimum distance min_dis. Set the capacity of the airport with the argument C_airport.
+        Generates nairports airports. Builds the accessible pairs of airports for this network
+        with a  minimum distance min_dis. Sets the capacity of the airport with the argument C_airport.
         """
         self.airports=sample(self.nodes(),nairports)
         #self.pairs=[(ai,aj) for ai in self.airports for aj in self.airports if len(nx.shortest_path(self, ai, aj))-2>=min_dis]
-        self.short={(ai,aj) for ai in self.airports for aj in self.airports if len(nx.shortest_path(self, ai, aj))-2>=min_dis}
+        self.short={(ai,aj):[] for ai in self.airports for aj in self.airports if len(nx.shortest_path(self, ai, aj))-2>=min_dis}
         
         for a in self.airports:
-            self.node[a]['capacity']=100000
+            self.node[a]['capacity']=100000                 # TODO: check this.
             self.node[a]['capacity_airport'] = C_airport
 
     def fix_airports(self, airports, min_dis, pairs=[], C_airport=10, singletons=False):
@@ -1101,14 +1107,13 @@ class Net(nx.Graph):
         New in 2.9.0: Computes the k shortest paths of navpoints restricted to shortest path of sectors.
         Changed in 2.9.1: save all Nfp shortest paths of navpoints for each paths of sectors (Nfp also).
         Changed in 2.9.7: added pairs kwarg in order to compute less paths.
+        Note: this is black magic. Don't make any change unless you know what you are doing. And you probably don't.
         """
         class NoShortH(Exception):
             pass
         #self.G_nav.short={}
         if not hasattr(self, 'short_nav'):
             self.short_nav={}
-        # else:
-        #     self.short_nav={k:v for k,v in self.short_nav.items() if not k in pairs}
 
         if pairs ==[]:
             pairs = self.G_nav.short.keys()[:]
@@ -1123,12 +1128,9 @@ class Net(nx.Graph):
             assert len(self.short[(s0,s1)]) == self.Nfp
             try:
                 for idx_sp, sp in enumerate(self.short[(s0,s1)]): # Compute the network of navpoint restricted of each shortest paths.
-                    #print 'puet', len(self.short_nav[(p0,p1)])
                     H_nav=NavpointNet()
                     with silence(silent):
-                        
                         #print 'Shortest path in sectors:', sp
-                        #H_nav.import_from(nx.subgraph(self.G_nav, [n for n in self.G_nav.nodes() if self.G_nav.node[n]['sec'] in sp])) # restrict graph to possible paths of sectors.
                         HH=nx.Graph()
                         # Add every nodes in the sectors of the shortest paths.
                         for n in self.G_nav.nodes(): 
@@ -1148,10 +1150,8 @@ class Net(nx.Graph):
                             elif s0==s1 and s0 in sp: # if both nodes are in the same sector and this sector is in the shortest path, add the edge.
                                 HH.add_edge(*e, weight=self.G_nav[e[0]][e[1]]['weight'])
                         H_nav.import_from(HH)
-                        #print 'len(H_nav), len(HH)', len(H_nav), len(HH.nodes())
                         if len(H_nav.nodes())!=0:
                             try:
-                                #draw_network_and_patches(None, H_nav, self.polygons, show=True, flip_axes=True)#, trajectories=self.G_nav.short.values()[0])
                                 for i in range(len(sp)-1):
                                     found=False
                                     ss1, ss2=sp[i], sp[i+1]
@@ -1468,8 +1468,11 @@ class Net(nx.Graph):
                 del self.short[(s1,s2)]
                 print 'I remove', s1, s2, 'from the airports of sectors because there is no corresponding pairs in navpoints.'
 
-    def check_all_real_flights_are_legitimate(self):
-        for f in self.flights_selected:
+    def check_all_real_flights_are_legitimate(self, flights_selected):
+        """
+        Changed in 2.9.8: flights_selected is an external argument.
+        """
+        for f in flights_selected:
             try:
                 assert (self.G_nav.idx_navs[f['route_m1'][0][0]], self.G_nav.idx_navs[f['route_m1'][-1][0]]) in self.G_nav.short.keys()
             except AssertionError:
@@ -1552,6 +1555,7 @@ class NavpointNet(Net):
         elif Gtype=='T':
             xAxesNodes=np.sqrt(N/float(1.4))
             self=build_triangular(xAxesNodes)  
+
         if generation_of_airports:
             self.generate_airports(nairports,min_dis) 
         
@@ -1562,12 +1566,14 @@ class NavpointNet(Net):
         """
         for e in self.edges():
             if e[0] in self.navpoints_borders and e[1] in self.navpoints_borders:
+                #print "I am removing edge", e, "between two points on the borders"
                 self.remove_edge(*e)
                 
             if self.node[e[0]]['sec']!=self.node[e[1]]['sec']:
-                if (not e[0] in self.navpoints_borders):
-                    if (not e[1] in self.navpoints_borders):
-                        self.remove_edge(*e)  
+                if (not e[0] in self.navpoints_borders) and (not e[1] in self.navpoints_borders):
+                    print "I am removing edge", e, "because node", e[0], "is in sector", self.node[e[0]]['sec'],\
+                     "but node", e[1], "is in sector", self.node[e[1]]['sec'], "and they are not on the borders."
+                    self.remove_edge(*e)  
                        
     # def compute_pairs_based_on_short(self, min_dis):
     #     """

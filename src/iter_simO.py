@@ -10,7 +10,8 @@ This is the main interface to the model. The main functions are
  - do_standard, which makes a single iteration of the model, 
  - average_sim, which makes several iterations of the model with the same
 parameters, 
- - iter_sim, which makes iterations over several values of parameters. 
+ - iter_sim, which makes iterations of average_sim over several values of 
+ parameters. 
 ===========================================================================
 """
 

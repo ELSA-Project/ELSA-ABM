@@ -156,10 +156,54 @@ def draw_zonemap(x_min,y_min,x_max,y_max,res):
 
 def restrict_to_connected_components(G):
     """
-    And keeping all other attributes.
+    Remove all isolated nodes of a networkx graph.
     """
     CC=nx.connected_component_subgraphs(G)[0]
     for n in G.nodes():
         if not n in CC.nodes():
             G.remove_node(n)
     return G
+
+class Paras(dict):
+    """
+    Class Paras
+    =========
+    Custom dictionnary used to update parameters in a controlled way.
+    """
+    def __init__(self, dic):
+        for k,v in dic.items():
+            self[k]=v
+        self.to_update={}
+
+    def update(self, name_para, new_value):
+        """
+        Changed in 2.9.4: self.update_priority instead of update_priority.
+        """
+        paras[name_para]=new_value
+        # Everything before level_of_priority_required should not be updated, given the para being updated.
+        lvl = self.levels.get(name_para, len(self.update_priority)) #level_of_priority_required
+        #print name_para, 'being updated'
+        #print 'level of priority:', lvl, (lvl==len(update_priority))*'(no update)'
+        for j in range(lvl, len(self.update_priority)):
+            k = self.update_priority[j]
+            (f, args)=self.to_update[k]
+            vals=[paras[a] for a in args] 
+            self[k]=f(*vals)
+
+    def analyse_dependance(self):
+        """
+        Detect the first level of priority hit by a dependance in each parameter.
+        Those who don't need any kind of update are not in the dictionnary.
+        """
+        print 'Analysing dependances of the parameter with priorities', self.update_priority
+        self.levels = {}
+        for i, k in enumerate(self.update_priority):
+            (f,args)=self.to_update[k]
+            for arg in args:
+                if arg not in self.levels.keys():
+                    self.levels[arg] = i
+ 
+def network_whose_name_is(name):
+    with open(name + '.pic') as _f:
+        B=_pickle.load(_f)
+    return B

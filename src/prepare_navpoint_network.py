@@ -1,44 +1,45 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Jul  8 07:01:33 2013
 
+"""
 @author: earendil
 
 ===========================================================================
 This file is used to build a navpoint network with superimposed sector 
-network. The main function is prepare_navpoint_network, with which the 
+network. The main function is prepare_hybrid_network, with which the 
 user can build a totally new network, or take some data from elsewhere.
 ===========================================================================
 """
+
 import sys
-sys.path.insert(1,'../Distance')
-from simAirSpaceO import Net, NavpointNet
+#sys.path.insert(1,'../Distance')
 import pickle
 import networkx as nx
+from descartes.patch import PolygonPatch
+import matplotlib.pyplot as plt
 from scipy.spatial import Voronoi
 import numpy as np
 from shapely.geometry import Polygon, Point, LineString
 from shapely.ops import cascaded_union
 from random import choice, seed, sample
-from general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval
-from utilities import restrict_to_connected_components
 from string import split
+from copy import deepcopy
 
-from descartes.patch import PolygonPatch
-import matplotlib.pyplot as plt
+from simAirSpaceO import Net, NavpointNet
+from utilities import restrict_to_connected_components
 
 #Distance
 from tools_airports import get_paras, extract_flows_from_data#, get_flights
+#Modules
+from general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval
 
 # Manual seed
-#see=1200
+see_=0
 #see_ = 15 #==> the one I used for new, old_good, etc.. 
 #see=2
-#seed(see_)
+seed(see_)
 
-version='2.9.5'
+version='2.9.6'
 
 _colors = ('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed')
 
@@ -63,7 +64,7 @@ def segments(p):
     
 def navpoints_at_borders(G,vor,lin_dens=10.):
     """
-    Create navpoints at borders of a Voronoi tesselation.
+    Create navpoints at the bondaries of a Voronoi tesselation.
     """
     navpoints=[]
     borders={}
@@ -87,12 +88,86 @@ def navpoints_at_borders(G,vor,lin_dens=10.):
                 navpoints.append([x,y])
             k+=1
         if not change:
-            print 'nothing happened:', n1,n2, vor.vertices[n1], vor.vertices[n2]
+            print 'Nothing happened:', n1,n2, vor.vertices[n1], vor.vertices[n2]
+
     return navpoints
-   
-def prepare_sectors_network(paras_G, mode = 'fake', generate_new_sectors=False, layer=0, no_airports=False):     
+    
+def default_prepare_sectors_network(paras_G, generate_new_sectors=False, mode = "fake", no_airports=False):
+    """
+    New in 2.9.6: refactorization.
+    """
+    file_net = None
+    if not generate_new_sectors:
+        if mode == 'fake':
+            file_net = 'DEL_C_6A.pic'
+            #G.type_of_net='D'
+        else:
+            #fille='Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0_undirected_threshold'
+            file_net='../Modules/' + paras_G['country'] + '_sectors_network_one_layer_FL' + str(layer) + '_A334.pic'
+
+    file_polygons = None
+
+    if mode!="fake":
+        file_polygons = '../Modules/sectors_network_one_layer_FL' + str(layer) + '_A334_polygons.pic'
+
+    paras_G['file_net'] = file_net
+    paras_G['file_polygons'] = file_net
+
+    return prepare_navpoint_network(paras_G, no_airports=no_airports)
+
+def prepare_sectors_network(paras_G, no_airports=False):  
+    """
+    New in 2.9.6: refactorization.
+    """
     G=Net()
-    G.type='sec'
+    G.type='sec' #for sectors
+    G.type_of_net = paras_G['type_of_net']
+
+    if paras_G['net_sec'] !=None:
+        G.import_from(paras_G['net_sec'], numberize = ((type(G.nodes()[0])!=type(1.)) and (type(G.nodes()[0])!=type(1))))
+    else:
+        G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'])
+
+    if paras_G['polygons']!=None:
+        G.polygons={}
+        for name, shape in paras_G['polygons'].items():
+            G.polygons[G.idx_sectors[name]]=shape
+    else:
+        G, vor= compute_voronoi(G)
+        G.vor = vor #I should remove this. It is useful for navpoints_at_borders only, and I am sure I could do without it.
+
+    
+    # Check if every sector has a polygon
+    for n in G.nodes():
+        try:
+            assert G.polygons.has_key(n)
+        except:
+            print "Sector", n, "doesn't have any polygon associated!"
+            raise
+
+    check_empty_polygon(G, repair = True)
+    check_empty_polygon(G, repair = False)
+
+    recompute_neighbors(G)
+
+    G.global_shape=cascaded_union(G.polygons.values())
+
+    if not no_airports:
+        if paras_G['airports']!=[]:
+            G.fix_airports(paras_G['airports'], paras_G['min_dis'], pairs=paras_G['pairs'])
+        else:
+            G.generate_airports(paras_G['nairports'],paras_G['min_dis'])
+
+    return G
+        
+def prepare_sectors_network_bis(paras_G, mode = 'fake', generate_new_sectors=False, layer=0, no_airports=False):  
+    """
+    Prepare a sector network.
+    Changed in 2.9.6: obsolete.
+    """   
+    G=Net()
+    G.type='sec' #for sectors
+
     if generate_new_sectors:
         G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'])
     else:
@@ -107,9 +182,8 @@ def prepare_sectors_network(paras_G, mode = 'fake', generate_new_sectors=False, 
             G.country=paras_G['country']
             G.layer=layer #indicates the layer; '0' for full otherwise.
    
-        _g=open(fille + '.pic','r')           
-        H=pickle.load(_g)
-        _g.close()
+        with open(fille + '.pic','r') as _g:           
+            H=pickle.load(_g)
         
         if G.type_of_net=='R':  # Numberize the sectors (instead of initial names)
             G.idx_sectors={s:i for i,s in enumerate(H.nodes())}
@@ -144,11 +218,8 @@ def compute_voronoi(G):
     vor = Voronoi(np.array([G.node[n]['coord'] for n in G.nodes()]))
     for i,p in enumerate(vor.point_region):
         r = vor.regions[p]
-        #coords=[[vor.vertices[n][1], vor.vertices[n][0]] for n in  r + [r[0]] if n!=-1]#-1<=vor.vertices[n][0]<=1 and -1<=vor.vertices[n][1]<=1]
-        coords=[vor.vertices[n] for n in  r + [r[0]] if n!=-1]#-1<=vor.vertices[n][0]<=1 and -1<=vor.vertices[n][1]<=1]
+        coords=[vor.vertices[n] for n in  r + [r[0]] if n!=-1]
         if len(coords)>2:
-           
-            # print coords
             G.node[i]['area']=area(coords)
             polygons[i]=Polygon(coords)
             try:
@@ -159,16 +230,54 @@ def compute_voronoi(G):
     eps=0.1
     minx,maxx,miny,maxy=min([n[0] for n in vor.vertices]) -eps, max([n[0] for n in vor.vertices]) +eps, min([n[1] for n in vor.vertices]) -eps, max([n[1] for n in vor.vertices]) +eps
     
-    #big_square=Polygon([[minx,miny], [minx,maxy], [maxx,maxy], [maxx,miny],[minx,miny]], [[[-1,-1],[-1,1],[1,1],[1,-1],[-1,-1]]])
     square=Polygon([[-1,-1],[-1,1],[1,1],[1,-1],[-1,-1]])
 
     for n,pol in polygons.items():
-        #polygons[n]=pol.difference(big_square)
         polygons[n]=pol.intersection(square)
         
     G.polygons=polygons
     return G, vor
         
+def check_empty_polygon(G, repair = False):
+    for n in G.nodes():
+        try:
+            assert len(G.polygons[n].representative_point().coords) != 0 
+        except AssertionError:
+            print "Sector", n, "has no surface. I delete it from the network."
+            if repair:
+                G.remove_node(n)
+                del G.polygons[n]
+
+def recompute_neighbors(G):
+    """
+    New in 2.9.6: Checks if neighbouring sectors have a common boundary. Disconnects them otherwise.
+    """
+
+    for n1 in G.nodes():
+        neighbors = G.neighbors(n1)[:]
+        for n2 in neighbors:
+            if n1<n2:
+                try:
+                    assert G.polygons[n1].touches(G.polygons[n2])
+                except AssertionError:
+                    print "The two sectors", n1, "and", n2, "are neighbors but does not touch each other. I cut the link."
+                    G.remove_edge(n1,n2)
+
+def erase_small_sectors(G, thr):
+    """
+    New in 2.9.6: reomve sectos havin a small number of navpoints.
+    """
+
+    nodes = G.nodes()[:]
+
+    for n in nodes:
+        if len(G.node[n]['navs'])<=thr:
+            for np in G.node[n]['navs']:
+                G.G_nav.remove_node(np)
+            G.remove_node(n)
+
+    return G
+
 def extract_airports_from_traffic(G, flows): #,paras_G):
     """
     New in 2.8: gives naiports "airports" among all points of entries and exits from data trajectories.
@@ -230,12 +339,11 @@ def extract_capacity_from_traffic(G, flights, date = [2010, 5, 6, 0, 0, 0]):
     Changed in 2.9.4: added paras_real.
     Changed in 2.9.5: fligths are given externally.
     """
-    print 'Extracting the capacities...'
+    print 'Extracting the capacities from traffic...'
 
-    #flights=get_flights(paras_real)
     weights={}
     pop={}
-    loads = {n:[0 for i in range(48)] for n in G.nodes()}
+    loads = {n:[0 for i in range(48)] for n in G.nodes()}  # why 48? TODO.
     for f in flights:
         hours = {}
         r = f['route_m1t']
@@ -336,113 +444,120 @@ def find_pairs(all_airports, all_pairs, nairports, G, remove_pairs_same_sector =
         assert len(candidates)==nairports
         return candidates, pairs
 
-def compute_sp_restricted(G, Nfp, silent=True):
-    """
-    New in 2.9.0: Computes the k shortest paths of navpoints restricted to shortest path of sectors.
-    Changed in 2.9.1: save all Nfp shortest paths of navpoints for each paths of sectors (Nfp also).
-    """
-    G.G_nav.short={}
-    G.short_nav={}
-    for idx,(p0,p1) in enumerate(G.G_nav.pairs):
-        counter(idx, len(G.G_nav.pairs), message='Computing shortest paths...')
-        s0,s1=G.G_nav.node[p0]['sec'], G.G_nav.node[p1]['sec']
-        G.short_nav[(p0,p1)]={}
-        for idx_sp,sp in enumerate(G.short[(s0,s1)]): # Compute the network of navpoint restricted of each shortest paths.
-            print 'shortest path in sectors:', sp
-            H_nav=NavpointNet()
-            with silence(silent):
-                #H_nav.import_from(nx.subgraph(G.G_nav, [n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec'] in sp])) # restrict graph to possible paths of sectors.
-                HH=nx.Graph()
-                # Add every nodes in the sectors of the shortest paths.
-                for n in G.G_nav.nodes(): 
-                    if G.G_nav.node[n]['sec'] in sp:
-                        HH.add_node(n, **G.G_nav.node[n])
+# def compute_sp_restricted(G, Nfp, silent=True):
+#     """
+#     New in 2.9.0: Computes the k shortest paths of navpoints restricted to shortest path of sectors.
+#     Changed in 2.9.1: save all Nfp shortest paths of navpoints for each paths of sectors (Nfp also).
+#     """
+#     G.G_nav.short={}
+#     G.short_nav={}
+#     for idx,(p0,p1) in enumerate(G.G_nav.pairs):
+#         counter(idx, len(G.G_nav.pairs), message='Computing shortest paths...')
+#         s0,s1=G.G_nav.node[p0]['sec'], G.G_nav.node[p1]['sec']
+#         G.short_nav[(p0,p1)]={}
+#         for idx_sp,sp in enumerate(G.short[(s0,s1)]): # Compute the network of navpoint restricted of each shortest paths.
+#             print 'shortest path in sectors:', sp
+#             H_nav=NavpointNet()
+#             with silence(silent):
+#                 #H_nav.import_from(nx.subgraph(G.G_nav, [n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec'] in sp])) # restrict graph to possible paths of sectors.
+#                 HH=nx.Graph()
+#                 # Add every nodes in the sectors of the shortest paths.
+#                 for n in G.G_nav.nodes(): 
+#                     if G.G_nav.node[n]['sec'] in sp:
+#                         HH.add_node(n, **G.G_nav.node[n])
 
-                for e in G.G_nav.edges():
-                    s0=G.G_nav.node[e[0]]['sec']
-                    s1=G.G_nav.node[e[1]]['sec']
-                    if s0!=s1 and s0 in sp and s1 in sp:
-                        idxs_s0=np.where(np.array(sp)==s0)[0]
-                        idxs_s1=np.where(np.array(sp)==s1)[0]
-                        for idx_s0 in idxs_s0: # In case there is a repetition of s0 in sp.
-                            for idx_s1 in idxs_s1:
-                                if ((idx_s0<len(sp)-1 and sp[idx_s0+1]==s1) or (idx_s1<len(sp)-1 and sp[idx_s1+1]==s0)):
-                                    HH.add_edge(*e, weight=G.G_nav[e[0]][e[1]]['weight'])
-                    elif s0==s1 and s0 in sp: # if both nodes are in the same sector and this sector is in the shortest path, add the edge.
-                        HH.add_edge(*e, weight=G.G_nav[e[0]][e[1]]['weight'])
-                H_nav.import_from(HH)
-                #print 'len(H_nav), len(HH)', len(H_nav), len(HH.nodes())
+#                 for e in G.G_nav.edges():
+#                     s0=G.G_nav.node[e[0]]['sec']
+#                     s1=G.G_nav.node[e[1]]['sec']
+#                     if s0!=s1 and s0 in sp and s1 in sp:
+#                         idxs_s0=np.where(np.array(sp)==s0)[0]
+#                         idxs_s1=np.where(np.array(sp)==s1)[0]
+#                         for idx_s0 in idxs_s0: # In case there is a repetition of s0 in sp.
+#                             for idx_s1 in idxs_s1:
+#                                 if ((idx_s0<len(sp)-1 and sp[idx_s0+1]==s1) or (idx_s1<len(sp)-1 and sp[idx_s1+1]==s0)):
+#                                     HH.add_edge(*e, weight=G.G_nav[e[0]][e[1]]['weight'])
+#                     elif s0==s1 and s0 in sp: # if both nodes are in the same sector and this sector is in the shortest path, add the edge.
+#                         HH.add_edge(*e, weight=G.G_nav[e[0]][e[1]]['weight'])
+#                 H_nav.import_from(HH)
+#                 #print 'len(H_nav), len(HH)', len(H_nav), len(HH.nodes())
 
-                if len(H_nav.nodes())!=0:
-                    try:
-                        #draw_network_and_patches(None, H_nav, G.polygons, show=True, flip_axes=True)#, trajectories=G.G_nav.short.values()[0])
-                        for i in range(len(sp)-1):
-                            found=False
-                            ss1, ss2=sp[i], sp[i+1]
-                            for n1, n2 in G.G_nav.edges():
-                                if (G.G_nav.node[n1]['sec']==ss1 and G.G_nav.node[n2]['sec']==ss2) or (G.G_nav.node[n1]['sec']==ss2 and G.G_nav.node[n2]['sec']==ss1):
-                                    found=True
-                                    if ss1==0 and ss2==31:
-                                        print n1, n2, G.G_nav.node[n1]['sec'], G.G_nav.node[n2]['sec'], H_nav.has_node(n1), H_nav.has_node(n1), H_nav.has_edge(n1,n2)
-                            if found==False:
-                                print 'Problem: sectors', ss1, 'and', ss2, 'are not adjacent in terms of navpoints.'
-                            else:
-                                print 'sectors', ss1 , 'and', ss2, 'are adjacent.'
-                        for i in range(len(sp)-1):
-                            found=False
-                            ss1, ss2=sp[i], sp[i+1]
-                            for n1, n2 in H_nav.edges():
-                                if (G.G_nav.node[n1]['sec']==ss1 and G.G_nav.node[n2]['sec']==ss2) or (G.G_nav.node[n1]['sec']==ss2 and G.G_nav.node[n2]['sec']==ss1):
-                                    found=True
-                            if found==False:
-                                print 'Problem: sectors', ss1, 'and', ss2, 'are not adjacent in terms of navpoints (H).'
-                            else:
-                                print 'sectors', ss1 , 'and', ss2, 'are adjacent (H).'
+#                 if len(H_nav.nodes())!=0:
+#                     try:
+#                         #draw_network_and_patches(None, H_nav, G.polygons, show=True, flip_axes=True)#, trajectories=G.G_nav.short.values()[0])
+#                         for i in range(len(sp)-1):
+#                             found=False
+#                             ss1, ss2=sp[i], sp[i+1]
+#                             for n1, n2 in G.G_nav.edges():
+#                                 if (G.G_nav.node[n1]['sec']==ss1 and G.G_nav.node[n2]['sec']==ss2) or (G.G_nav.node[n1]['sec']==ss2 and G.G_nav.node[n2]['sec']==ss1):
+#                                     found=True
+#                                     if ss1==0 and ss2==31:
+#                                         print n1, n2, G.G_nav.node[n1]['sec'], G.G_nav.node[n2]['sec'], H_nav.has_node(n1), H_nav.has_node(n1), H_nav.has_edge(n1,n2)
+#                             if found==False:
+#                                 print 'Problem: sectors', ss1, 'and', ss2, 'are not adjacent in terms of navpoints.'
+#                             else:
+#                                 print 'sectors', ss1 , 'and', ss2, 'are adjacent.'
+#                         for i in range(len(sp)-1):
+#                             found=False
+#                             ss1, ss2=sp[i], sp[i+1]
+#                             for n1, n2 in H_nav.edges():
+#                                 if (G.G_nav.node[n1]['sec']==ss1 and G.G_nav.node[n2]['sec']==ss2) or (G.G_nav.node[n1]['sec']==ss2 and G.G_nav.node[n2]['sec']==ss1):
+#                                     found=True
+#                             if found==False:
+#                                 print 'Problem: sectors', ss1, 'and', ss2, 'are not adjacent in terms of navpoints (H).'
+#                             else:
+#                                 print 'sectors', ss1 , 'and', ss2, 'are adjacent (H).'
 
-                        H_nav.fix_airports([p0,p1], 0.)
-                        H_nav.build_H()
-                        H_nav.compute_shortest_paths(Nfp, repetitions=False, use_sector_path=True, old=True)
+#                         H_nav.fix_airports([p0,p1], 0.)
+#                         H_nav.build_H()
+#                         H_nav.compute_shortest_paths(Nfp, repetitions=False, use_sector_path=True, old=True)
 
-                        for k, p in enumerate(H_nav.short[(p0,p1)]):
-                            if G.convert_path(p)!=sp:
-                                print 'Alert: discrepancy between theoretical path of sectors and final one!'
-                                print 'Path number', k
-                                print 'Theoretical one:', sp, G.weight_path(sp)
-                                print 'Actual one:',  G.convert_path(p), G.weight_path(G.convert_path(p))        
-                                raise                           
+#                         for k, p in enumerate(H_nav.short[(p0,p1)]):
+#                             if G.convert_path(p)!=sp:
+#                                 print 'Alert: discrepancy between theoretical path of sectors and final one!'
+#                                 print 'Path number', k
+#                                 print 'Theoretical one:', sp, G.weight_path(sp)
+#                                 print 'Actual one:',  G.convert_path(p), G.weight_path(G.convert_path(p))        
+#                                 raise                           
 
-                        shorts=[p for p in  H_nav.short[(p0,p1)] if G.convert_path(p)==sp]
-                        G.G_nav.short[(p0,p1)] = G.G_nav.short.get((p0,p1),[]) + shorts
-                        G.short_nav[(p0,p1)][tuple(sp)] = shorts
-                        # if shorts==[]:
-                        #     print 'Alert, discrepancy between theoretical path of sectors and final one!'
-                    except nx.NetworkXNoPath:
-                        print 'No restricted shortest path between' ,p0, 'and', p1, 'but I carry on'
-                        cc=nx.connected_components(H_nav)
-                        print 'Composition of connected components (sectors):'
-                        for c in cc:
-                            print np.unique([G.G_nav.node[n]['sec'] for n in c])
-                        #print 'Everybody is attached:', check_everybody_is_attached(H_nav)
-                        #print H_nav.nodes()
-                        #print H_nav.edges()
-                        raise
-                    except:
-                        print 'Unexpected error:', sys.exc_info()[0]
-                        raise 
-                else:
-                    print 'The subgraph was empty, I carry on.'
-            print
-        # if G.G_nav.short.has_key((p0,p1)):
-        #     G.G_nav.short[(p0,p1)] = sorted(list(set([tuple(o) for o in G.G_nav.short[(p0,p1)]])), key= lambda p: G.G_nav.weight_path(p))[:Nfp]
-    return G
+#                         shorts=[p for p in  H_nav.short[(p0,p1)] if G.convert_path(p)==sp]
+#                         G.G_nav.short[(p0,p1)] = G.G_nav.short.get((p0,p1),[]) + shorts
+#                         G.short_nav[(p0,p1)][tuple(sp)] = shorts
+#                         # if shorts==[]:
+#                         #     print 'Alert, discrepancy between theoretical path of sectors and final one!'
+#                     except nx.NetworkXNoPath:
+#                         print 'No restricted shortest path between' ,p0, 'and', p1, 'but I carry on'
+#                         cc=nx.connected_components(H_nav)
+#                         print 'Composition of connected components (sectors):'
+#                         for c in cc:
+#                             print np.unique([G.G_nav.node[n]['sec'] for n in c])
+#                         #print 'Everybody is attached:', check_everybody_is_attached(H_nav)
+#                         #print H_nav.nodes()
+#                         #print H_nav.edges()
+#                         raise
+#                     except:
+#                         print 'Unexpected error:', sys.exc_info()[0]
+#                         raise 
+#                 else:
+#                     print 'The subgraph was empty, I carry on.'
+#             print
+#         # if G.G_nav.short.has_key((p0,p1)):
+#         #     G.G_nav.short[(p0,p1)] = sorted(list(set([tuple(o) for o in G.G_nav.short[(p0,p1)]])), key= lambda p: G.G_nav.weight_path(p))[:Nfp]
+#     return G
 
 def attach_two_sectors(s1, s2, G):
+    """
+    Attach two sectors by attaching two navpoints in each of them.
+    Closest navpoints to each other are chosen.
+    """
     navs_in_s1=[n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s1]
     navs_in_s2=[n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s2]
     pairs=[(n1, n2) for n1 in navs_in_s1 for n2 in navs_in_s2]
+    #print "Pairs:", pairs
     distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
+    #print "Distances:", distances
     n1_selected, n2_selected = pairs[np.argmin(distances)]
-    G.G_nav.add_edge(n1,n2, weight=np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])))
+    #print "Selected:", 
+    G.G_nav.add_edge(n1_selected,n2_selected, weight=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord'])))
     return G
 
 def check_two_sectors_attached(s1, s2, G):
@@ -467,47 +582,136 @@ def check_everybody_is_attached(G, repair=False):
     return G, problem
 
 def check_everybody_has_one_cc(G, repair=False):
+    """
+    Changed in 2.9.6: we attach the nodes to the closest. Recursive check
+    """
     problem=False
     for s in G.nodes():
         nodes_in_s = [n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s]
         H_nav_s = G.G_nav.subgraph(nodes_in_s)
         cc = nx.connected_components(H_nav_s)
-        if len(cc)>1:
-            print 'Problem: sector', s, 'has more than one connected component (' + str(len(cc)) + ') exactly.'
+        while len(cc)>1:
+            print 'Problem: sector', s, 'has more than one connected component (' + str(len(cc)) + ' exactly).'
+            #cc.sort(key=lambda c:len(c))
+            #cc = cc[::-1] # sort the components by decreasing size
             problem=True
             if repair:
                 print "I'm fixing this."
-                for j in range(len(cc)-1):
-                    c1, c2 = cc[j], cc[j+1]
-                    pairs=[(n1, n2) for n1 in c1 for n2 in c2]
-                    distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
-                    n1_selected, n2_selected = pairs[np.argmin(distances)]
-                    w=np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord']))
-                    G.G_nav.add_edge(n1,n2, weight=w)
-                    H_nav_s.add_edge(n1,n2, weight=w)
+                c1 = cc[0] # we attach everyone to the biggest cc.
+                #for j in range(len(cc)):
+                #c1 = cc[j]
+                all_other_nodes = [n for c in cc for n in c if c!=c1]
+                print "all_other_nodes", all_other_nodes
+                pairs=[(n1, n2) for n1 in c1 for n2 in all_other_nodes]
+                distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
+                n1_selected, n2_selected = pairs[np.argmin(distances)]
+                w=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord']))
+                G.G_nav.add_edge(n1_selected,n2_selected, weight=w)
+                H_nav_s.add_edge(n1_selected,n2_selected, weight=w)
+            cc = nx.connected_components(H_nav_s)
+
     return G, problem
 
-def give_capacities_and_weights(G, mode, paras_G):
-    if mode == 'real':
-        flights_selected = G.flights_selected
+def attach_termination_nodes(G):
+    """
+    New in 2.9.6: attach nodes with degree 1 to closest node in the same sector.
+    """
+    changed = True
+    while changed:
+        changed = False
+        for n in G.G_nav.nodes():
+            sec = G.G_nav.node[n]['sec']
+            if G.G_nav.degree(n)==1:
+                changed = True
+                pairs = [(n, n2) for n2 in G.node[sec]['navs'] if n2!=n and (not n2 in G.G_nav.neighbors(n)) and (not n in G.G_nav.navpoints_borders or not n2 in G.G_nav.navpoints_borders)]
+                distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
+                n1_selected, n2_selected = pairs[np.argmin(distances)]
+                print "I attached node", n1_selected, "with degree 1 to node", n2_selected
+                G.G_nav.add_edge(n1_selected, n2_selected)
+    return G
 
-    if paras_G['generate_capacities']:
-        G.generate_capacities(typ=paras_G['typ_capacities'], C=paras_G['C'], par=paras_G['suppl_par_capacity'], file_capacities=paras_G['file_capacities'])
-        G.typ_capacities=paras_G['typ_capacities']
-    else:
-        capacities = extract_capacity_from_traffic(G, flights_selected)
+def check_and_fix_empty_sectors(G, checked, repair=False):
+    # Check if every sectors have at least one navpoint left. 
+    # TODO: another way to go would be to add a constant number of navpoints per sector. On the other
+    # hand, having exactly the same number of navpoints per sector might not be really realistic.
+    problem = False
+    try:
+        empty_sectors = [k for k,v in checked.items() if not v]
+        assert len(empty_sectors)==0
+    except AssertionError:
+        print "The following sectors do not have any navpoint left:", empty_sectors
+        if repair:
+            print "I add a navpoint at the centroid for them."
+            print "I add also some links with the closest points of neighboring sectors."
+            for sec in empty_sectors:
+                nav = len(G.G_nav.nodes())
+                print G.polygons
+                RP = G.polygons[sec].representative_point()
+                print RP.wkt
+                coords = RP.coords
+                print coords
+                G.G_nav.add_node(nav, coord = coords)
+
+                if G.polygons[sec].contains(Point(np.array(coords))):
+                    G.G_nav.node[nav]['sec']=sec
+                    G.node[sec]['navs'].append(nav)
+                else:
+                    Exception("The representative point in not in the shape!")
+                
+                for sec2 in G.neighbors(sec):
+                    pairs = []
+                    for nav2 in G.node[sec2]['navs']:
+                        pairs.append((nav, nav2))
+                    distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
+                    n1_selected, n2_selected = pairs[np.argmin(distances)]
+                    G.G_nav.add_edge(n1, n2, weight=np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])))
+        problem = True
+    except:
+        raise
+
+    return G, problem
+
+def give_capacities_and_weights(G, paras_G):
+    if paras_G['generate_capacities_from_traffic']:
+        capacities = extract_capacity_from_traffic(G, paras_G['flights_selected'])
         G.fix_capacities(capacities)
-
-    if paras_G['generate_weights']:
-        G.G_nav.generate_weights(typ='coords', par=5.)
     else:
-        G.G_nav.fix_weights(extract_weights_from_traffic(G.G_nav, flights_selected), typ='data')
-        for e in G.G_nav.edges():
-            if not G.G_nav[e[0]][e[1]].has_key('weight'):
-                print e
+        if paras_G['capacities']==None:
+            G.generate_capacities(typ=paras_G['typ_capacities'], C=paras_G['C'], par=paras_G['suppl_par_capacity'])
+            #G.typ_capacities=paras_G['typ_capacities']
+        else:
+            G.fix_capacities(paras_G['capacities'])
 
-    G.generate_weights(typ=paras_G['typ_weights'], par=20.)
-    G.build_H()
+    for n in G.nodes():
+        try:
+            assert G.node[n].has_key('capacity')
+        except AssertionError:
+            print "This node did not receive any capacity:", n
+            raise
+        except:
+            raise
+
+
+    if paras_G['generate_weights_from_traffic']:
+        weights = extract_weights_from_traffic(G.G_nav, paras_G['flights_selected'])
+        G.G_nav.fix_weights(weights, typ='traffic')
+    else:
+        if paras_G['weights']==None:
+            G.G_nav.generate_weights(typ='coords', par=paras_G['par_weights'])
+        else:
+            G.G_nav.fix_weights(paras_G['weights'], typ='data')
+    
+    for e in G.G_nav.edges():
+        try:
+            assert G.G_nav[e[0]][e[1]].has_key('weight')
+        except AssertionError:
+            print "This edge did not receive any weight:", e
+            raise
+        except:
+            raise    
+
+    G.generate_weights(typ='coords', par=20.) #That's for sector network... should go in the preparation of the sector network probably.
+    G.build_H() #This is the graph used for shortest_path
     G.G_nav.build_H()
 
     return G
@@ -515,7 +719,7 @@ def give_capacities_and_weights(G, mode, paras_G):
 def write_down_network(G):
     """
     New in 2.9.4: write down the atributes, nodes and edges of the sector network.
-    Used in particular to convert 2.9 graph to 2.6.
+    Used in particular to convert 2.9 graphs (model 2) to 2.6 (model 1).
     """
     with open(G.name + '_pieces.txt', 'w') as f:
         for n in G.nodes():
@@ -561,61 +765,48 @@ def write_down_network(G):
 
         pickle.dump(dic, f)
 
-def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=False, generate_new_sectors=False, layer=0, airports_from_data=False):
+#def build_name_real_network():
 
-    ######### Prepare network of sectors ################
-    G=prepare_sectors_network(paras_G, mode = mode, generate_new_sectors=generate_new_sectors, layer=layer, no_airports=airports_from_data)
+def prepare_hybrid_network(paras_G):
+    """
+    New in 2.9.6: refactorization.
+    """
+    print
 
-    ############ Prepare nodes and edges of network fo navpoints ###########
+
+    ############ Prepare network of sectors #############
+    print "Preparing network of sector..."
+    G=prepare_sectors_network(paras_G, no_airports=paras_G['file_airports']==None)
+    print
+
+
+    ############ Prepare nodes and edges of network of navpoints ###########
+    print "Preparing nodes and edges of network of navpoints..."
     for n in G.nodes():
         G.node[n]['navs']=[]
         G.G_nav=NavpointNet()
         G.G_nav.type='nav'
-        
-    if generate_new_navpoints:
-        #G.G_nav.navpoints_borders=navpoints_at_borders(G.G_nav, vor)#,lin_dens=20.)
-        G.G_nav.build((paras_G['N_by_sectors']-1)*len(G.nodes()),paras_G['nairports'],paras_G['min_dis'],generation_of_airports=False, \
-                sector_list=[G.node[n]['coord'] for n in G.nodes()], navpoints_borders=navpoints_at_borders(G.G_nav, G.vor), shortcut=0.01) #ATTENTION: min_dis is not the right one.
-                
-       # G.G_nav.show()
-       # plt.show()
-                
+
+    if paras_G['net_nav']==None:
+        G.G_nav.build((paras_G['N_by_sectors']-1)*len(G.nodes()),paras_G['nairports'],paras_G['min_dis'], generation_of_airports=False, \
+                sector_list=[G.node[n]['coord'] for n in G.nodes()], navpoints_borders=navpoints_at_borders(G.G_nav, G.vor), shortcut=0.01) #ATTENTION: min_dis is not the right one. TODO
         #G.G_nav.show(stack=True)
-        
     else:
-        if mode == 'real':
-            paras_real = paras_G['paras_real']
-            G.paras_real = paras_real
+        G.G_nav.import_from(paras_G['net_nav'], numberize = ((type(G.G_nav.nodes()[0])!=type(1.)) and (type(G.G_nav.nodes()[0])!=type(1))))
 
-            if 1:
-                fille='Weak_EXTLF_2010-5-6_directed_navpoints_threshold'
-                G.G_nav.type_of_net='R' 
-                
-            with open(fille + '.pic','r') as _g:           
-                H=pickle.load(_g)
-            
-            G.G_nav.idx_navs={s:i for i,s in enumerate(H.nodes())}
-            for n in H.nodes():
-                G.G_nav.add_node(G.G_nav.idx_navs[n], name=n, **H.node[n])
-            for e in H.edges():
-                G.G_nav.add_edge(G.G_nav.idx_navs[e[0]], G.G_nav.idx_navs[e[1]])
-            #G.global_shape = H.global_shape
-            G.country = paras_G['country']
-            G.airac = paras_G['airac']
-                
-            if G.G_nav.type_of_net=='R':  
-                G.G_nav.country=paras_G['country']
-                G.G_nav.airac=paras_G['country']
-                for n in G.G_nav.nodes():
-                    G.G_nav.node[n]['coord']=list(np.array(G.G_nav.node[n]['coord'])/60.) #Convert minutes in degrees
-                for e in G.G_nav.edges(): # remove all edges which are geometrically outside of the global shape
-                    if not G.global_shape.contains(LineString([G.G_nav.node[e[0]]['coord'], G.G_nav.node[e[1]]['coord']])):
-                        G.G_nav.remove_edge(*e)
-                G.G_nav=restrict_to_connected_components(G.G_nav)
-            
+        #for n in G.G_nav.nodes():
+        #    G.G_nav.node[n]['coord']=list(np.array(G.G_nav.node[n]['coord'])/60.) #Convert minutes in degrees
+        for e in G.G_nav.edges(): # remove all edges which are geometrically outside of the global shape
+            if not G.global_shape.contains(LineString([G.G_nav.node[e[0]]['coord'], G.G_nav.node[e[1]]['coord']])):
+                G.G_nav.remove_edge(*e)
+        G.G_nav=restrict_to_connected_components(G.G_nav)
+    print
+
+
     ######### Linking the two networks together ##########
-
+    print "Linking the networks together..."
     not_found=[]
+    checked = {sec:False for sec in G.nodes()}
     for nav in G.G_nav.nodes(): # Finding to which sector each navpoint belongs.
         found=False
         i=0
@@ -623,50 +814,60 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
             sec=G.nodes()[i]
             if G.polygons.has_key(sec) and G.polygons[sec].contains(Point(np.array(G.G_nav.node[nav]['coord']))):
                 found=True
+                checked[sec] = True
             i+=1
         if not found:
+            #print "I could not find a polygon for point:", nav, "of coordinates:", G.G_nav.node[nav]['coord']
             not_found.append(nav)
             G.G_nav.remove_node(nav)
         else:
             G.G_nav.node[nav]['sec']=sec
             G.node[sec]['navs'].append(nav)
     print 'Navpoints for which I did not find a matching sector (I removed them from the network):', not_found
-            
+
+    G, problem = check_and_fix_empty_sectors(G, checked, repair = True)
+    G, problem = check_and_fix_empty_sectors(G, checked, repair = False)
+
+    G = erase_small_sectors(G, paras_G['small_sec_thr'])
+    print
+
 
     ########### Choose the airports #############
+    print "Choosing the airports..."
+    # Old_behavior: choose airport sectors first and find navpoints airports then.
+    # New behavior: choose first the airports for sectors.
+    #old_behavior = False or mode=='real'
 
-    #Old_behavior: choose airport sectors first and find navpoints airports then.
-    # New behavior: 
-    old_behavior = False or mode=='real'
-
-    if not old_behavior: # new behavior (choose first the airports for sectors.)
-        if paras_G['airports']!=[]:
-            G.fix_airports(paras_G['airports'], -10, pairs=paras_G['pairs'], C_airport = paras_G['C_airport'])
-        else:
-            G.generate_airports(paras_G['nairports'], -10, C_airports = paras_G['C_airport'])
-        print 'G airports:', G.airports
-        G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
-        
+    #if not old_behavior: # new behavior (choose first the airports for sectors.)
+    if paras_G['airports']!=None:
+        G.fix_airports(paras_G['airports'], -10, pairs=paras_G['pairs'], C_airport = paras_G['C_airport'])
     else:
-        if not airports_from_data:
-            G.G_nav.generate_airports(paras_G['nairports'],paras_G['min_dis'])  
-        else:
-            flows = extract_flows_from_data(paras_real, [G.G_nav.node[n]['name'] for n in G.G_nav.nodes()])[0]
-            all_airports, all_pairs=extract_airports_from_traffic(G, flows)
-            if paras_G['nairports']==0:
-                paras_G['nairports']=len(all_airports)
-            airports, pairs = find_pairs(all_airports, all_pairs, paras_G['nairports'], G, remove_pairs_same_sector = True)
-            print 'Selected at first', len(airports), 'airports and', len(pairs), 'pairs.'
-            #airports_sects=sample(np.unique([G.G_nav.node[n]['sec'] for n in airports_nav]), paras_G['nairports'])
-            G.G_nav.fix_airports(airports, paras_G['min_dis'], pairs=pairs, singletons=False)
-        G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=False) #singletons = mode=='real'
+        G.generate_airports(paras_G['nairports'], -10, C_airport = paras_G['C_airport'])
+    print 'Airports (sectors):', G.airports
+    G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
+        
+    #old stuff, but might be useful in the future.
+    #else:
+    #    if paras_G['file_airports']==None:
+    #        G.G_nav.generate_airports(paras_G['nairports'],paras_G['min_dis'])  
+    #    else:
+    #        flows = extract_flows_from_data(paras_real, [G.G_nav.node[n]['name'] for n in G.G_nav.nodes()])[0]
+    #        all_airports, all_pairs=extract_airports_from_traffic(G, flows)
+    #        if paras_G['nairports']==0:
+    #            paras_G['nairports']=len(all_airports)
+    #        airports, pairs = find_pairs(all_airports, all_pairs, paras_G['nairports'], G, remove_pairs_same_sector = True)
+    #        print 'Selected at first', len(airports), 'airports and', len(pairs), 'pairs.'
+    #        #airports_sects=sample(np.unique([G.G_nav.node[n]['sec'] for n in airports_nav]), paras_G['nairports'])
+    #        G.G_nav.fix_airports(airports, paras_G['min_dis'], pairs=pairs, singletons=False)
+    #    G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=False) #singletons = mode=='real'
+    print
 
-    
+
     ############# Repair some stuff #############
-
+    print "Repairing mutiple issues..."
     idx=max(G.G_nav.nodes())
     #change=True
-    change=generate_new_navpoints
+    change=paras_G['file_net_nav']==None
     
     # We check if edges of navpoints are crossing sectors other than the two sectors of the two nodes.
     while change:
@@ -699,8 +900,9 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
                         G.G_nav.add_edge(idxx,n2)
                     G.G_nav.remove_edge(nav,neigh)           
                
-    if generate_new_navpoints: #Check
-        #G.G_nav.clean_borders()
+    if paras_G['file_net_nav']==None: #generate_new_navpoints: #Check if the previous operations went well.
+        print "Cleaning borders..."
+        G.G_nav.clean_borders()
         for nav in G.G_nav.nodes():
             sec1=G.G_nav.node[nav]['sec']
             for neigh in G.G_nav.neighbors(nav):
@@ -711,15 +913,20 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
                          LineString([G.G_nav.node[nav]['coord'], G.G_nav.node[neigh]['coord']]).intersects(G.polygons[s])]
                     raise Exception('Problem:',sec1, sec2, sects, nav, neigh, G.G_nav.node[nav]['coord'], G.G_nav.node[neigh]['coord'])
 
+    #draw_network_and_patches(None, G.G_nav, G.polygons, name = 'network1', show=False, flip_axes=True, dpi = 300)
+
     # We check if every couples of neighbors (sectors) have at least one couple of navpoints which are neighbors.
-    G, problem = check_everybody_is_attached(G, repair=True)
-    G, problem = check_everybody_is_attached(G, repair=False)
+    G, problem = check_everybody_is_attached(G, repair=True) # Try to repair it
+    G, problem = check_everybody_is_attached(G, repair=False) # Check if the reparation worked.
     try:
         assert not problem
     except:
         print "I found some neighbouring sectors which do not have at least one couple of neighbouring navpoints."
         print "I could not fix it, I stop."
         raise
+
+    #draw_network_and_patches(None, G.G_nav, G.polygons, name = 'network2', show=False, flip_axes=True, dpi = 300)
+
 
     # We check if, within each sectors, there is only one connected component
     G, problem = check_everybody_has_one_cc(G, repair=True)
@@ -730,32 +937,35 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
         print "I found at least a sector which does not have only one connected component of napvoint."
         print "I could not fix it, I stop."
         raise
-                
-    #G.G_nav.show(stack=True, colors=[_colors[G.G_nav.node[n]['sec']%len(_colors)] for n in G.G_nav.nodes()])
-    #show_everything(G.polygons,G)    
-    #plt.show()
-            
+
+    G = attach_termination_nodes(G)
+
+    #draw_network_and_patches(None, G.G_nav, G.polygons, name = 'network3', show=False, flip_axes=True, dpi = 300)
+    #assert 1==0
+    print
+
+
     ########## Generate Capacities and weights ###########
+    print "Choosing capacities and weights..."
+    #if mode == 'real':
+        #flows, times, flights_selected = extract_flows_from_data(paras_real, [G.G_nav.node[n]['name'] for n in G.G_nav.nodes()]) #put in the preparation of paras_G
+        #G.flights_selected = flights_selected
+        #print 'Selected at first:', len(flights_selected), 'flights.'
+    #else:
+    #    flights_selected = []
 
-    if mode == 'real':
-        flows, times, flights_selected = extract_flows_from_data(paras_real, [G.G_nav.node[n]['name'] for n in G.G_nav.nodes()])
-        G.flights_selected = flights_selected
-        print 'Selected at first:', len(flights_selected), 'flights.'
-    else:
-        flights_selected = []
+    G = give_capacities_and_weights(G, paras_G)
+    print
 
-    G = give_capacities_and_weights(G, mode, paras_G)
-    
+
     ############# Computing shortest paths ###########
     
     G.Nfp=paras_G['Nfp']   
     G.G_nav.Nfp=G.Nfp
     
     print 'Computing shortest_paths (sectors) ...'
-    #G.initialize_load()
     pairs_deleted = G.compute_shortest_paths(G.Nfp, repetitions=False, old=False)   
-    G.infer_airports_from_short_list()
-    #G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
+    G.infer_airports_from_short_list() # This could be removed in principle, because G.airports is not used anymore, only short.keys()
 
     pairs = G.G_nav.short.keys()[:]
     for (p1,p2) in pairs:
@@ -766,7 +976,7 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
             #G.G_nav.pairs.remove((p1,p2))
             print 'I removed the pair of navpoints', (p1,p2), ' because the corresponding pair of sectors', (s1, s2), ' has been removed.'
 
-    G.G_nav.infer_airports_from_short_list()
+    G.G_nav.infer_airports_from_short_list() # Same remark
 
     #G=compute_sp_restricted(G, G.Nfp, silent=False)
      
@@ -776,33 +986,39 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
     G.G_nav.infer_airports_from_short_list()
     G.check_repair_sector_airports()
 
-    print 'Number of pairs before computation:', len(G.G_nav.short.keys())
-    G.check_airports_and_pairs()
+    print 'Number of pairs entry/exit before checking flights:', len(G.G_nav.short.keys())
+    G.check_airports_and_pairs() # No action here
 
-    if mode == 'real': 
+    if paras_G['flights_selected']!=None:
+        flights_selected = deepcopy(paras_G["flights_selected"])
+    #if mode == 'real': 
         # we remove from the selected flights all those which are not valid anymore, because of the airports we deleted.
-        fl_s = G.flights_selected[:]
+        fl_s = flights_selected[:]
 
         for f in fl_s:
             if not (G.G_nav.idx_navs[f['route_m1'][0][0]], G.G_nav.idx_navs[f['route_m1'][-1][0]]) in G.G_nav.short.keys():
-                G.flights_selected.remove(f)
+                flights_selected.remove(f)
                 print 'I remove a flights because it was flying from', G.G_nav.idx_navs[f['route_m1'][0][0]], 'to', G.G_nav.idx_navs[f['route_m1'][-1][0]]
 
         # readjust capacities and weights based on the new set of flights
         G = give_capacities_and_weights(G, mode, paras_G)
-        print 'Selected finally', len(G.flights_selected)
+        print 'Selected finally', len(flights_selected)
 
-        G.check_all_real_flights_are_legitimate()
+        G.check_all_real_flights_are_legitimate(flights_selected) # no action taken here
 
     print 'Selected finally', len(G.G_nav.airports), 'airports (navpoints) and', len(G.G_nav.short.keys()), 'pairs.'
+    print
 
-    ##################### Name #######################
+
+    ##################### Automatic Name #######################
     
     long_name=G.type_of_net + '_N' + str(len(G.nodes()))
     
-    if paras_G['airports']!=[]:
-       long_name+='_airports' +  str(paras_G['airports'][0]) + '_' + str(paras_G['airports'][1])
-    if paras_G['pairs']!=[] and len(paras_G['airports'])==2:
+    if G.airports!=[] and len(G.airports)==2:
+       long_name+='_airports' +  str(G.airports[0]) + '_' + str(G.airports[1])
+    elif G.airports>2:
+        long_name+='_nairports' + str(len(G.airports))
+    if paras_G['pairs']!=[] and len(G.airports)==2:
         long_name+='_direction_' + str(paras_G['pairs'][0][0]) + '_' + str(paras_G['pairs'][0][1])
     long_name+='_cap_' + G.typ_capacities
     
@@ -814,11 +1030,13 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
         long_name+='sig' + str(paras_G['sigma'])
     long_name+='_Nfp' + str(G.Nfp)
     
+
+
     ##################### Manual name #################
-    if paras_G['name']!='':
+    if paras_G['name']!='': 
         name=paras_G['name']
     else:
-        name=long_name
+        name=long_name #Automatic is used only if the name is not specified otherwise
         
     G.name=name
     G.comments={'long name':long_name, 'made with version':version}
@@ -832,67 +1050,363 @@ def prepare_navpoint_network(paras_G, mode = 'fake', generate_new_navpoints=Fals
     
     print 'Number of sectors:', len(G.nodes())
     print 'Number of navpoints:', len(G.G_nav.nodes())
-    if mode == 'real':
-        print 'Number of flights selected:', flights_selected
+    #if mode == 'real':
+    #    print 'Number of flights selected:', flights_selected
     print 'Done.'
         
     draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values()[0])
     return G
+
+# def prepare_navpoint_network_old(paras_G, mode = 'fake', generate_new_navpoints=False, generate_new_sectors=False, layer=0, airports_from_data=False):
+#     """
+#     This function generates a navpoint network.
+#     Changed in 2.9.6: obsolete.
+#     """
+
+#     ######### Prepare network of sectors ################
+#     G=default_prepare_sectors_network(paras_G, mode = mode, generate_new_sectors=generate_new_sectors, layer=layer, no_airports=airports_from_data)
+
+
+#     ############ Prepare nodes and edges of network fo navpoints ###########
+#     for n in G.nodes():
+#         G.node[n]['navs']=[]
+#         G.G_nav=NavpointNet()
+#         G.G_nav.type='nav'
+        
+#     if generate_new_navpoints:
+#         #G.G_nav.navpoints_borders=navpoints_at_borders(G.G_nav, vor)#,lin_dens=20.)
+#         G.G_nav.build((paras_G['N_by_sectors']-1)*len(G.nodes()),paras_G['nairports'],paras_G['min_dis'],generation_of_airports=False, \
+#                 sector_list=[G.node[n]['coord'] for n in G.nodes()], navpoints_borders=navpoints_at_borders(G.G_nav, G.vor), shortcut=0.01) #ATTENTION: min_dis is not the right one.
+                
+#        # G.G_nav.show()
+#        # plt.show()
+                
+#         #G.G_nav.show(stack=True)
+        
+#     else:
+#         if mode == 'real':
+#             paras_real = paras_G['paras_real']
+#             G.paras_real = paras_real
+
+#             if 1:
+#                 fille='Weak_EXTLF_2010-5-6_directed_navpoints_threshold'
+#                 G.G_nav.type_of_net='R' 
+                
+#             with open(fille + '.pic','r') as _g:           
+#                 H=pickle.load(_g)
+            
+#             G.G_nav.idx_navs={s:i for i,s in enumerate(H.nodes())}
+#             for n in H.nodes():
+#                 G.G_nav.add_node(G.G_nav.idx_navs[n], name=n, **H.node[n])
+#             for e in H.edges():
+#                 G.G_nav.add_edge(G.G_nav.idx_navs[e[0]], G.G_nav.idx_navs[e[1]])
+#             #G.global_shape = H.global_shape
+#             G.country = paras_G['country']
+#             G.airac = paras_G['airac']
+                
+#             if G.G_nav.type_of_net=='R':  
+#                 G.G_nav.country=paras_G['country']
+#                 G.G_nav.airac=paras_G['country']
+#                 for n in G.G_nav.nodes():
+#                     G.G_nav.node[n]['coord']=list(np.array(G.G_nav.node[n]['coord'])/60.) #Convert minutes in degrees
+#                 for e in G.G_nav.edges(): # remove all edges which are geometrically outside of the global shape
+#                     if not G.global_shape.contains(LineString([G.G_nav.node[e[0]]['coord'], G.G_nav.node[e[1]]['coord']])):
+#                         G.G_nav.remove_edge(*e)
+#                 G.G_nav=restrict_to_connected_components(G.G_nav)
+            
+#     ######### Linking the two networks together ##########
+
+#     not_found=[]
+#     for nav in G.G_nav.nodes(): # Finding to which sector each navpoint belongs.
+#         found=False
+#         i=0
+#         while not found and i<len(G.nodes()):
+#             sec=G.nodes()[i]
+#             if G.polygons.has_key(sec) and G.polygons[sec].contains(Point(np.array(G.G_nav.node[nav]['coord']))):
+#                 found=True
+#             i+=1
+#         if not found:
+#             not_found.append(nav)
+#             G.G_nav.remove_node(nav)
+#         else:
+#             G.G_nav.node[nav]['sec']=sec
+#             G.node[sec]['navs'].append(nav)
+#     print 'Navpoints for which I did not find a matching sector (I removed them from the network):', not_found
+            
+
+#     ########### Choose the airports #############
+
+#     #Old_behavior: choose airport sectors first and find navpoints airports then.
+#     # New behavior: 
+#     old_behavior = False or mode=='real'
+
+#     if not old_behavior: # new behavior (choose first the airports for sectors.)
+#         if paras_G['airports']!=[]:
+#             G.fix_airports(paras_G['airports'], -10, pairs=paras_G['pairs'], C_airport = paras_G['C_airport'])
+#         else:
+#             G.generate_airports(paras_G['nairports'], -10, C_airports = paras_G['C_airport'])
+#         print 'G airports:', G.airports
+#         G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
+        
+#     else:
+#         if not airports_from_data:
+#             G.G_nav.generate_airports(paras_G['nairports'],paras_G['min_dis'])  
+#         else:
+#             flows = extract_flows_from_data(paras_real, [G.G_nav.node[n]['name'] for n in G.G_nav.nodes()])[0]
+#             all_airports, all_pairs=extract_airports_from_traffic(G, flows)
+#             if paras_G['nairports']==0:
+#                 paras_G['nairports']=len(all_airports)
+#             airports, pairs = find_pairs(all_airports, all_pairs, paras_G['nairports'], G, remove_pairs_same_sector = True)
+#             print 'Selected at first', len(airports), 'airports and', len(pairs), 'pairs.'
+#             #airports_sects=sample(np.unique([G.G_nav.node[n]['sec'] for n in airports_nav]), paras_G['nairports'])
+#             G.G_nav.fix_airports(airports, paras_G['min_dis'], pairs=pairs, singletons=False)
+#         G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=False) #singletons = mode=='real'
+
+    
+#     ############# Repair some stuff #############
+
+#     idx=max(G.G_nav.nodes())
+#     #change=True
+#     change=generate_new_navpoints
+    
+#     # We check if edges of navpoints are crossing sectors other than the two sectors of the two nodes.
+#     while change:
+#         change=False
+#         for nav in G.G_nav.nodes():
+#             sec1=G.G_nav.node[nav]['sec']
+#             for neigh in G.G_nav.neighbors(nav):
+#                 sec2=G.G_nav.node[neigh]['sec']
+#                 if sec1<sec2 and not G[sec1].has_key(sec2): # If sec1 the first node is different from sec2 and they are not neighbors, we have a problem.
+#                     sects=[s for s in G.nodes() if s!=sec1 and s!=sec2 and \
+#                          LineString([G.G_nav.node[nav]['coord'], G.G_nav.node[neigh]['coord']]).intersects(G.polygons[s])] # List of sectors geometrically crossed by the edge
+#                     idxs=[]
+#                     for s in sects:
+#                         l_inter=LineString([G.G_nav.node[nav]['coord'], G.G_nav.node[neigh]['coord']]).intersection(G.polygons[s]) # piece of line in the sector s
+#                         if type(l_inter)==type(LineString([G.G_nav.node[nav]['coord'], G.G_nav.node[neigh]['coord']])): # Check if it's a simple line or a multiline.
+#                             print 'Adding node ', idx + 1
+#                             l_inter_coords=np.array(l_inter.coords)
+#                             idx+=1 
+#                             idxs.append(idx)
+#                             G.G_nav.add_node(idx, coord=(l_inter_coords[0] + l_inter_coords[1])/2., sec=s) # add a node in s on the piece of line.
+#                             assert G.polygons[s].contains(Point((l_inter_coords[0] + l_inter_coords[1])/2.))
+#                             change=True 
+#                         else:
+#                             raise Exception('Problem: multi line detected.')
+#                     for idxx in idxs: # Detach the two nodes, attach all intermediate created nodes together.
+#                         n1,n2=tuple(sorted([idx2 for idx2 in idxs + [nav,neigh] if idx2!=idxx],\
+#                             key= lambda idx2:np.linalg.norm(np.array(G.G_nav.node[idxx]['coord']) - np.array(G.G_nav.node[idx2]['coord'])))[:2])
+                        
+#                         G.G_nav.add_edge(idxx,n1)
+#                         G.G_nav.add_edge(idxx,n2)
+#                     G.G_nav.remove_edge(nav,neigh)           
+               
+#     if generate_new_navpoints: #Check
+#         #G.G_nav.clean_borders()
+#         for nav in G.G_nav.nodes():
+#             sec1=G.G_nav.node[nav]['sec']
+#             for neigh in G.G_nav.neighbors(nav):
+#                 sec2=G.G_nav.node[neigh]['sec']
+#                 if sec1<sec2 and not G[sec1].has_key(sec2):   
+#                     sects=[s for s in G.nodes() if s!=sec1 and s!=sec2 and \
+#                     #G.neighbors(sec1) if s in G.neighbors(sec2) \
+#                          LineString([G.G_nav.node[nav]['coord'], G.G_nav.node[neigh]['coord']]).intersects(G.polygons[s])]
+#                     raise Exception('Problem:',sec1, sec2, sects, nav, neigh, G.G_nav.node[nav]['coord'], G.G_nav.node[neigh]['coord'])
+
+#     # We check if every couples of neighbors (sectors) have at least one couple of navpoints which are neighbors.
+#     G, problem = check_everybody_is_attached(G, repair=True)
+#     G, problem = check_everybody_is_attached(G, repair=False)
+#     try:
+#         assert not problem
+#     except:
+#         print "I found some neighbouring sectors which do not have at least one couple of neighbouring navpoints."
+#         print "I could not fix it, I stop."
+#         raise
+
+#     # We check if, within each sectors, there is only one connected component
+#     G, problem = check_everybody_has_one_cc(G, repair=True)
+#     G, problem = check_everybody_has_one_cc(G, repair=False)
+#     try:
+#         assert not problem
+#     except:
+#         print "I found at least a sector which does not have only one connected component of napvoint."
+#         print "I could not fix it, I stop."
+#         raise
+                
+#     #G.G_nav.show(stack=True, colors=[_colors[G.G_nav.node[n]['sec']%len(_colors)] for n in G.G_nav.nodes()])
+#     #show_everything(G.polygons,G)    
+#     #plt.show()
+            
+#     ########## Generate Capacities and weights ###########
+
+#     if mode == 'real':
+#         flows, times, flights_selected = extract_flows_from_data(paras_real, [G.G_nav.node[n]['name'] for n in G.G_nav.nodes()])
+#         G.flights_selected = flights_selected
+#         print 'Selected at first:', len(flights_selected), 'flights.'
+#     else:
+#         flights_selected = []
+
+#     G = give_capacities_and_weights(G, mode, paras_G)
+    
+#     ############# Computing shortest paths ###########
+    
+#     G.Nfp=paras_G['Nfp']   
+#     G.G_nav.Nfp=G.Nfp
+    
+#     print 'Computing shortest_paths (sectors) ...'
+#     #G.initialize_load()
+#     pairs_deleted = G.compute_shortest_paths(G.Nfp, repetitions=False, old=False)   
+#     G.infer_airports_from_short_list()
+#     #G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
+
+#     pairs = G.G_nav.short.keys()[:]
+#     for (p1,p2) in pairs:
+#         s1=G.G_nav.node[p1]['sec']
+#         s2=G.G_nav.node[p2]['sec']
+#         if (s1, s2) in pairs_deleted:
+#             del G.G_nav.short[(p1,p2)]
+#             #G.G_nav.pairs.remove((p1,p2))
+#             print 'I removed the pair of navpoints', (p1,p2), ' because the corresponding pair of sectors', (s1, s2), ' has been removed.'
+
+#     G.G_nav.infer_airports_from_short_list()
+
+#     #G=compute_sp_restricted(G, G.Nfp, silent=False)
+     
+#     print 'Computing shortest_paths (navpoints) ...'
+#     print 'Number of pairs before computation:', len(G.G_nav.short.keys())  
+#     G.compute_sp_restricted(G.Nfp, silent = True)
+#     G.G_nav.infer_airports_from_short_list()
+#     G.check_repair_sector_airports()
+
+#     print 'Number of pairs before computation:', len(G.G_nav.short.keys())
+#     G.check_airports_and_pairs()
+
+#     if mode == 'real': 
+#         # we remove from the selected flights all those which are not valid anymore, because of the airports we deleted.
+#         fl_s = G.flights_selected[:]
+
+#         for f in fl_s:
+#             if not (G.G_nav.idx_navs[f['route_m1'][0][0]], G.G_nav.idx_navs[f['route_m1'][-1][0]]) in G.G_nav.short.keys():
+#                 G.flights_selected.remove(f)
+#                 print 'I remove a flights because it was flying from', G.G_nav.idx_navs[f['route_m1'][0][0]], 'to', G.G_nav.idx_navs[f['route_m1'][-1][0]]
+
+#         # readjust capacities and weights based on the new set of flights
+#         G = give_capacities_and_weights(G, mode, paras_G)
+#         print 'Selected finally', len(G.flights_selected)
+
+#         G.check_all_real_flights_are_legitimate()
+
+#     print 'Selected finally', len(G.G_nav.airports), 'airports (navpoints) and', len(G.G_nav.short.keys()), 'pairs.'
+
+#     ##################### Name #######################
+    
+#     long_name=G.type_of_net + '_N' + str(len(G.nodes()))
+    
+#     if paras_G['airports']!=[]:
+#        long_name+='_airports' +  str(paras_G['airports'][0]) + '_' + str(paras_G['airports'][1])
+#     if paras_G['pairs']!=[] and len(paras_G['airports'])==2:
+#         long_name+='_direction_' + str(paras_G['pairs'][0][0]) + '_' + str(paras_G['pairs'][0][1])
+#     long_name+='_cap_' + G.typ_capacities
+    
+#     if G.typ_capacities!='manual':
+#         long_name+='_C' + str(paras_G['C'])
+#     long_name+='_w_' + G.typ_weights
+    
+#     if G.typ_weights=='gauss':
+#         long_name+='sig' + str(paras_G['sigma'])
+#     long_name+='_Nfp' + str(G.Nfp)
+    
+#     ##################### Manual name #################
+#     if paras_G['name']!='':
+#         name=paras_G['name']
+#     else:
+#         name=long_name
+        
+#     G.name=name
+#     G.comments={'long name':long_name, 'made with version':version}
+#     G.basic_statistics(rep=name  + '_')
+    
+#     with open(name + '.pic','w') as f:
+#         pickle.dump(G, f)
+
+#     print 'Network saved as', name + '.pic'
+#     #show_everything(G.polygons,G,save=True,name=name,show=False)       
+    
+#     print 'Number of sectors:', len(G.nodes())
+#     print 'Number of navpoints:', len(G.G_nav.nodes())
+#     if mode == 'real':
+#         print 'Number of flights selected:', flights_selected
+#     print 'Done.'
+        
+#     draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values()[0])
+#     return G
     
 if  __name__=='__main__':
-    country_='LF'
-    airac_='334'
-    #type_of_net='D'                 #type of graph ('D'=Delaunay triangulation, 'T'=triangular lattice, "E"=Erdos-Renyi random graph)
-    #N=30                            #order of the graph (in the case net='T' verify that the order is respected)        
-    airports_=[65,20]                #IDs of the nodes used as airports
-    #airports=['LFMME3', 'LFFFTB']   #LFBBN2 (vers Perpignan)
-    #airports=[65,22,10,45, 30, 16]
-    #airports=[]
-    nairports_=len(airports_)         #0 for all airports (real network)                  #number of airports
-    nairports_=0#0                  #number of airports
-    pairs_=[]#[(22,65)]              #available connections between airports
-    #[65,20]
-    #[65,22]
-    #[65,62]
-    min_dis_=2                       #minimum number of nodes between two airpors
-    airports_from_data_=True#True
-    
-    Nfp_=10
-    
-    generate_weights_=True
-    typ_weights_='coords'
-    sigma_=0.01
-    generate_capacities_=False
-    typ_capacities_='constant'
-    C_=5                             #sector capacity
-    C_airport_=20
-    compute_areas_=True
-    N_by_sectors_=10
-    #suppl_par_capacity=[0.3]
-    suppl_par_capacity_=['sqrt']
 
-    mode_ = 'real' #real for real network, fake for generated network.
+    #Manual entry.
 
-    layer_ = 350
+    # country_='LF'
+    # airac_='334'
+    # #type_of_net='D'                 #type of graph ('D'=Delaunay triangulation, 'T'=triangular lattice, "E"=Erdos-Renyi random graph)
+    # #N=30                            #order of the graph (in the case net='T' verify that the order is respected)        
+    # airports_=[65,20]                #IDs of the nodes used as airports
+    # #airports=['LFMME3', 'LFFFTB']   #LFBBN2 (vers Perpignan)
+    # #airports=[65,22,10,45, 30, 16]
+    # #airports=[]
+    # nairports_=len(airports_)         #0 for all airports (real network)                  #number of airports
+    # nairports_=0#0                  #number of airports
+    # pairs_=[]#[(22,65)]              #available connections between airports
+    # #[65,20]
+    # #[65,22]
+    # #[65,62]
+    # min_dis_=2                       #minimum number of nodes between two airpors
+    # airports_from_data_=True#True
     
-    file_capacities_ = 'capacities_sectors_Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0.pic'
+    # Nfp_=10
+    
+    # generate_weights_=True
+    # typ_weights_='coords'
+    # sigma_=0.01
+    # generate_capacities_=False
+    # typ_capacities_='constant'
+    # C_=5                             #sector capacity
+    # C_airport_=20
+    # compute_areas_=True
+    # N_by_sectors_=10
+    # #suppl_par_capacity=[0.3]
+    # suppl_par_capacity_=['sqrt']
 
-    paras_real_ = get_paras()
-    paras_real_['zone'] = country_
-    paras_real_['airac'] = airac_
-    paras_real_['type_zone'] ='EXT'
-    paras_real_['filtre'] ='Weak'
-    paras_real_['mode'] ='navpoints'
-    paras_real_['cut_alt'] = 240.
-    paras_real_['both'] = False
-    paras_real_['n_days'] = 1
-    
-    #name='DEL29_C5_44_26_Nfp10_cross5_natural_sector_paths_ICA'#_borders_clean' ICA=infinit capacity airport
-    #name='DEL29_C5_65_20_v2'#_borders_clean' ICA=infinit capacity airport
-    name_ = country_ + '29_RC' + (layer_!=0)*('_FL' + str(layer_)) + airports_from_data_*('_DA' + str(nairports_)) + (nairports_!=0)*('_seed' +str(see_)) + 'v3_' + paras_real_['filtre'] #DA stands for Data airports (airports from data).
-    
-    paras_G={k[:-1]:v for k,v in vars().items() if k[-1]=='_' and k[0]!='_' and k!='version'}
-    
-    print 'paras_G:', paras_G
+    # mode_ = 'real' #real for real network, fake for generated network.
 
-    G = prepare_navpoint_network(paras_G, mode = mode_, generate_new_navpoints=False, generate_new_sectors=False, layer=layer_, airports_from_data=airports_from_data_)
+    # layer_ = 350
+    
+    # file_capacities_ = 'capacities_sectors_Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0.pic'
+
+    # paras_real_ = get_paras()
+    # paras_real_['zone'] = country_
+    # paras_real_['airac'] = airac_
+    # paras_real_['type_zone'] ='EXT'
+    # paras_real_['filtre'] ='Weak'
+    # paras_real_['mode'] ='navpoints'
+    # paras_real_['cut_alt'] = 240.
+    # paras_real_['both'] = False
+    # paras_real_['n_days'] = 1
+    
+    # #name='DEL29_C5_44_26_Nfp10_cross5_natural_sector_paths_ICA'#_borders_clean' ICA=infinit capacity airport
+    # #name='DEL29_C5_65_20_v2'#_borders_clean' ICA=infinit capacity airport
+    # name_ = country_ + '29_RC' + (layer_!=0)*('_FL' + str(layer_)) + airports_from_data_*('_DA' + str(nairports_)) + (nairports_!=0)*('_seed' +str(see_)) + 'v3_' + paras_real_['filtre'] #DA stands for Data airports (airports from data).
+    
+    # paras_G={k[:-1]:v for k,v in vars().items() if k[-1]=='_' and k[0]!='_' and k!='version'}
+    
+    # print 'paras_G:', paras_G
+
+    # G = prepare_navpoint_network(paras_G, mode = mode_, generate_new_navpoints=False, generate_new_sectors=False, layer=layer_, airports_from_data=airports_from_data_)
+    
+
+    #paras_G = 
+
+    from paras_G import paras_G
+    
+    print 'Building hybrid network with paras_G:'
+    print paras_G
+
+    G = prepare_hybrid_network(paras_G)
