@@ -20,8 +20,15 @@ from utilities import draw_network_map
 from general_tools import counter, silence
 from string import split
 import copy
+from os.path import join
 
 version='2.9.8'
+
+class NoShortH(Exception):
+    """ 
+    Exception just to detect problems in shortest path computation.
+    """
+    pass        
 
 class Network_Manager:
     """
@@ -874,27 +881,55 @@ class Net(nx.Graph):
             self.node[a]['capacity']=100000                 # TODO: check this.
             self.node[a]['capacity_airport'] = C_airport
 
-    def fix_airports(self, airports, min_dis, pairs=[], C_airport=10, singletons=False):
+    def fix_airports(self, *args, **kwargs):
         """
-        Fix airports given by user. The pairs can be given also by the user, 
+        Used to reset the airports and then add the new airports.
+        """
+        if hasattr(self, "airports"):
+            self.airports = []
+            self.short = {}
+
+        self.add_airports(*args, **kwargs)
+
+    def add_airports(self, airports, min_dis, pairs=[], C_airport=10, singletons=False):
+        """
+        Add airports given by user. The pairs can be given also by the user, 
         or generated automatically, with minimum distance min_dis.
+        Changed in 2.9.8: changed name to add_airports. Now the airports are added
+        to the existing airports instead of overwriting the list.
         @input min_dis: minimum distance -- in nodes, excluding the airports -- betwen a pair of airports.
         @input pairs: pairs can be given by user, or computed automatically if set to [].
-        @input C_airport: capatity of airports.
+        @input C_airport: capacity of airports.
         @input singletons: if set to True, pairs in which the source is identical to the destination are authorized (but min_dis has to be smaller or equal to 2.)
         """
-        self.airports=airports
+        if not hasattr(self, "airports"):
+            self.airports = airports
+        else:
+            self.airports = np.array(list(set(list(self.airports) + list(airports))))
+            
+        if not hasattr(self, "short"):
+            self.short = {}
+
         if pairs==[]:
-            self.short = {(ai,aj):[] for ai in self.airports for aj in self.airports if len(nx.shortest_path(self, ai, aj))-2>=min_dis and ((not singletons and ai!=aj) or singletons)}
+            for ai in self.airports:
+                for aj in self.airports:
+                    if len(nx.shortest_path(self, ai, aj))-2>=min_dis and ((not singletons and ai!=aj) or singletons):
+                        if not self.short.has_key((ai,aj)):
+                            self.short[(ai, aj)] = []
+            #self.short = {(ai,aj):[] for ai in self.airports for aj in self.airports if len(nx.shortest_path(self, ai, aj))-2>=min_dis and ((not singletons and ai!=aj) or singletons)}
             #self.pairs=[(ai,aj) for ai in self.airports for aj in self.airports if len(nx.shortest_path(self, ai, aj))-2>=min_dis]
         else:
-            self.short = {(ai,aj):[] for (ai,aj) in pairs if ((not singletons and ai!=aj) or singletons)}# if len(nx.shortest_path(self, ai, aj))-2>=min_dis and ((not singletons and ai!=aj) or singletons)}
+            for (ai,aj) in pairs:
+                 if ((not singletons and ai!=aj) or singletons):
+                    if not self.short.has_key((ai,aj)):
+                        self.short[(ai, aj)] = []
+            #self.short = {(ai,aj):[] for (ai,aj) in pairs if ((not singletons and ai!=aj) or singletons)}# if len(nx.shortest_path(self, ai, aj))-2>=min_dis and ((not singletons and ai!=aj) or singletons)}
             #self.pairs=pairs
 
-        for a in self.airports:
+        for a in airports:
             #self.node[a]['capacity']=100000
             self.node[a]['capacity_airport'] = C_airport
- 
+    
     def infer_airports_from_navpoints(self, C_airport, singletons=False):
         """
         Detects all sectors having at least one navpoint begin a source or a destination. 
@@ -908,7 +943,7 @@ class Net(nx.Graph):
             s1 = self.G_nav.node[p1]['sec']
             s2 = self.G_nav.node[p2]['sec']
             pairs.append((s1,s2))
-        pairs = list(np.unique(pairs))
+        pairs = list(set(pairs))
         self.fix_airports(np.unique([self.G_nav.node[n]['sec'] for n in self.G_nav.airports]), -10, C_airport = C_airport, pairs=pairs, singletons=singletons)
 
     def infer_airports_from_short_list(self):
@@ -947,6 +982,7 @@ class Net(nx.Graph):
         Changed in 2.9.4: added procedure to have always 10 distinct paths (in sectors).
         Changed in 2.9.7: modified the location of the not enough_path loop to speed up the process. Added
         pairs_to_compute, so that it does not necesseraly recompute every shortest paths.
+        Changed in 2.9.8: Added n_tries in case of use_sector_path.
         """
         if use_sector_path:
             try:
@@ -1023,8 +1059,10 @@ class Net(nx.Graph):
                                 deleted_pairs.append((a,b))
                                 del self.short[(a,b)]
                                 #self.pairs = list(self.pairs)
+                                raise
                             except:
                                 raise
+                            print "I don't have enough paths, I make another turn. Nfp=", Nfp
                         Nfp = Nfp_init
                         if self.short.has_key((a,b)):
                             self.short[(a,b)] = paths[:]
@@ -1033,18 +1071,21 @@ class Net(nx.Graph):
                 for it, (a,b) in enumerate(pairs):
                     #if verb:
                     #    counter(it, len(pairs), message='Computing shortest paths...')
+                    print "Computing shortest path for pair", a, b
                     if a!=b:
                         enough_paths=False
                         Nfp_init=Nfp
+                        i=0
                         while not enough_paths:
                             enough_paths=True
-                        #duplicates=[]
+                            #duplicates=[]
                             paths_nav = self.kshortestPath(a, b, Nfp, old=old)
                             paths = [self.convert_path(p) for p in paths_nav]
                             previous_duplicates=1
                             duplicates=[]
                             duplicates_nav=[]
-                            while len(duplicates)!=previous_duplicates:
+                            n_tries = 0
+                            while len(duplicates)!=previous_duplicates and n_tries<10:
                                 previous_duplicates=len(duplicates)
                                 duplicates=[]
                                 duplicates_nav=[]
@@ -1057,13 +1098,16 @@ class Net(nx.Graph):
                                     paths_nav=self.kshortestPath(a, b, Nfp+len(duplicates))
                                     paths = [self.convert_path(p) for p in paths_nav]
 
+                                print "I don't have enough paths, I make another turn. n_tries=", n_tries
+                                n_tries += 1
+
                             for path in duplicates_nav:
                                 paths_nav.remove(path)
                                 #print len(self.short[(a,b)])
                             #self.short[(a,b)]=paths_nav[:]
 
                             try:
-                                assert len(paths_nav)==Nfp
+                                assert len(paths_nav)==Nfp and len(duplicates)==previous_duplicates
                                 enough_paths=True
                                 paths_nav = [list(vvv) for vvv in set([tuple(vv) for vv in paths_nav])][:Nfp_init]
                                 if len(paths_nav) < Nfp_init:
@@ -1081,6 +1125,8 @@ class Net(nx.Graph):
                                 raise
                             except:
                                 raise  
+                            
+                            i+=1
                         Nfp = Nfp_init
                         if self.short.has_key((a,b)):
                             #assert len(paths_nav) == Nfp_init
@@ -1109,9 +1155,8 @@ class Net(nx.Graph):
         Changed in 2.9.7: added pairs kwarg in order to compute less paths.
         Note: this is black magic. Don't make any change unless you know what you are doing. And you probably don't.
         """
-        class NoShortH(Exception):
-            pass
-        #self.G_nav.short={}
+
+
         if not hasattr(self, 'short_nav'):
             self.short_nav={}
 
@@ -1121,7 +1166,8 @@ class Net(nx.Graph):
             pairs = [p for p in pairs if p in self.G_nav.short.keys()]
 
         for idx,(p0,p1) in enumerate(pairs):
-            #counter(idx, len(pairs), message='Computing shortest paths (navpoints)...')
+            counter(idx, len(pairs), message='Computing shortest paths (navpoints)...')
+            print
             s0,s1=self.G_nav.node[p0]['sec'], self.G_nav.node[p1]['sec']
             self.G_nav.short[(p0,p1)] = []
             self.short_nav[(p0,p1)] = {}
@@ -1130,7 +1176,7 @@ class Net(nx.Graph):
                 for idx_sp, sp in enumerate(self.short[(s0,s1)]): # Compute the network of navpoint restricted of each shortest paths.
                     H_nav=NavpointNet()
                     with silence(silent):
-                        #print 'Shortest path in sectors:', sp
+                        print 'Shortest path in sectors:', sp
                         HH=nx.Graph()
                         # Add every nodes in the sectors of the shortest paths.
                         for n in self.G_nav.nodes(): 
@@ -1181,8 +1227,6 @@ class Net(nx.Graph):
                                     H_nav.compute_shortest_paths(Nfp, repetitions=False, use_sector_path=True, old=False, verb = 0)
                                 except AssertionError:
                                     raise NoShortH('')
-                                except:
-                                    raise
                                 # try:
                                 #     for v in H_nav.short.values():
                                 #         assert len(v) == Nfp
@@ -1337,7 +1381,7 @@ class Net(nx.Graph):
             
     def basic_statistics(self, rep='.'):
         os.system('mkdir -p ' + rep)
-        f=open(rep + '/basic_stats_net.txt','w')
+        f=open(join(rep,'basic_stats_net.txt'),'w')
         print >>f, 'Mean/std degree:', np.mean([self.degree(n) for n in self.nodes()]), np.std([self.degree(n) for n in self.nodes()])
         print >>f, 'Mean/std weight:', np.mean([self[e[0]][e[1]]['weight'] for e in self.edges()]), np.std([self[e[0]][e[1]]['weight'] for e in self.edges()])
         print >>f, 'Mean/std capacity:', np.mean([self.node[n]['capacity'] for n in self.nodes() if not n in self.airports]),\
@@ -1377,6 +1421,7 @@ class Net(nx.Graph):
     def give_airports_to_network(self, airports, Nsp_nav, min_dis = 2, C_airport=None, singletons=False, repetitions=False, old=False, name=None):
         """
         New in 2.9.4: Gather several methods of net. Used to give a new pair of airports to the network.
+        Probably obsolete.
         """
         if C_airport == None:
             for a in self.airports:
@@ -1406,10 +1451,10 @@ class Net(nx.Graph):
         """
 
         try:
-            airports_from_sector_short = list(set([a for b in self.short.keys() for a in b]))
+            airports_from_sector_short = set([a for b in self.short.keys() for a in b])
             try:
                 print 'Checking consistency of sector airports...'
-                assert airports_from_sector_short == list(self.airports)
+                assert airports_from_sector_short == set(self.airports)
             except AssertionError:
                 print 'Airports of sectors from short and airports list are not consistent:'
                 for p in airports_from_sector_short:
@@ -1424,10 +1469,10 @@ class Net(nx.Graph):
                 raise
 
 
-            airports_from_navs_short = list(set([a for b in self.G_nav.short.keys() for a in b]))
+            airports_from_navs_short = set([a for b in self.G_nav.short.keys() for a in b])
             try:
                 print 'Checking consistency of navpoints airports...'
-                assert airports_from_navs_short == list(self.G_nav.airports)
+                assert airports_from_navs_short == set(self.G_nav.airports)
             except AssertionError:
                 print 'Airports of navpoints from short and airports list are not consistent:'
                 for p in airports_from_navs_short:
@@ -1441,11 +1486,11 @@ class Net(nx.Graph):
             except:
                 raise
 
-            airports_sec_from_navs = list(set([self.G_nav.node[a]['sec'] for b in self.G_nav.short.keys() for a in b]))
+            airports_sec_from_navs = set([self.G_nav.node[a]['sec'] for b in self.G_nav.short.keys() for a in b])
 
             try:
                 print 'Checking consistency between sector and navpoints airports...'
-                assert airports_sec_from_navs == list(self.airports)
+                assert airports_sec_from_navs == set(self.airports)
             except AssertionError:
                 print 'Airports of sectors infered from short of navpoints is not consistent with list of sector airports:'
                 for p in airports_sec_from_navs:
@@ -1453,7 +1498,9 @@ class Net(nx.Graph):
                         print 'Pair', p, 'is in airports of sectors based on navpoints but not in airports of sectors.'
                 for p in self.airports:
                     if not p in airports_sec_from_navs:
-                        print 'Pair', p, 'is in airports of sectors but not in airports of sectors based on navpoints.'  
+                        print 'Pair', p, 'is in airports of sectors but not in airports of sectors based on navpoints.' 
+                print "airports_sec_from_navs:", airports_sec_from_navs
+                print "list(self.airports)", list(self.airports)
                 print          
                 raise
             except:
@@ -1506,6 +1553,13 @@ class Net(nx.Graph):
                 except:
                     raise
 
+    def connections(self):
+        """
+        New in 2.9.8: compute the possible connections between airports.
+        """
+
+        return self.short.keys()
+
 class NavpointNet(Net):
     """
     Dedicated class for navpoint networks.
@@ -1513,6 +1567,12 @@ class NavpointNet(Net):
     """
     def __init__(self):
         super(NavpointNet, self).__init__()
+
+    def remove_node(self, n):
+        if hasattr(self, "navpoints_borders"):
+            if n in self.navpoints_borders:
+               self.navpoints_borders.remove(n)
+        super(NavpointNet, self).remove_node(n)
         
     def build_nodes(self,N, sector_list=[],navpoints_borders=[], shortcut=0.):
         """
@@ -1602,7 +1662,7 @@ class NavpointNet(Net):
 
     def infer_airports_from_sectors(self, airports_sec, min_dis):
         airports_nav=[choice([n for n in self.nodes() if self.node[n]['sec']==sec]) for sec in airports_sec]
-        self.fix_airports(airports_nav, min_dis)# add pairs !!!!!!!!!!!!!!!!1
+        self.fix_airports(airports_nav, min_dis)# add pairs !!!!!!!!!!!!!!!! TODO Not important?
 
 def utility(par, Lsp, t0sp, L, t0):
 

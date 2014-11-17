@@ -47,22 +47,6 @@ def extract_data_from_files(paras_G):
 
 paras_G = {}
 
-# --------------- Distance ---------------- #
-# This block is useful if you use the Distance library to select
-# sectors, navpoints, polygons, or traffic.
-#layer_ = 350
-
-# paras_real_ = get_paras()
-# paras_real_['zone'] = country_
-# paras_real_['airac'] = airac_
-# paras_real_['type_zone'] ='EXT'
-# paras_real_['filtre'] ='Weak'
-# paras_real_['mode'] ='navpoints'
-# paras_real_['cut_alt'] = 240.
-# paras_real_['both'] = False
-# paras_real_['n_days'] = 1
-
-
 # ----------- Network of sector ------------
 # Leave "None" for generation of a new network
 # Input should be a pickle file with a networkx object.
@@ -122,7 +106,7 @@ paras_G['file_airports'] = None
 if paras_G['file_airports'] == None:
 	paras_G['nairports'] = 2 	#number of airports, set to 0 for all airports (i.e. all sectors).
 	# Manual selection of airports. Choose [] for random generation of airports with the previous number as parameter.
-	paras_G['airports']=[65,20]      #IDs of the nodes used as airports
+	#paras_G['airports']=[]#[65,20]      #IDs of the nodes used as airports
 	#airports=['LFMME3', 'LFFFTB']   #LFBBN2 (vers Perpignan)
 	#airports=[65,22,10,45, 30, 16]
 	#airports=[]
@@ -131,7 +115,7 @@ paras_G['pairs']=[]#[(22,65)]              #available connections between airpor
 #[65,20]
 #[65,22]
 #[65,62]
-paras_G['min_dis']=2                       #minimum number of nodes (sectors: check TODO) between two airports
+paras_G['min_dis']=5                       #minimum number of nodes (navpoints) between two airports (for a connection).
 
 
 # ------------- Navpoints ----------------
@@ -149,7 +133,26 @@ if paras_G['file_net_nav'] == None:
 paras_G['Nfp']=10		
 
 # This is if you want to remove sectors with too few navpoints
-paras_G['small_sec_thr'] = 4  # number of navpoints under which you remove the sector.					
+paras_G['small_sec_thr'] = 4  # number of navpoints under which you remove the sector.	
+
+# This is to transform all outer nodes (nodes on the outer boundary of the airspace)
+paras_G['make_entry_exit_points'] = True			
+
+
+# --------------- Distance ---------------- #
+# This block is useful if you use the Distance library to select
+# sectors, navpoints, polygons, or traffic data
+#layer_ = 350
+
+# paras_real_ = get_paras()
+# paras_real_['zone'] = country_
+# paras_real_['airac'] = airac_
+# paras_real_['type_zone'] ='EXT'
+# paras_real_['filtre'] ='Weak'
+# paras_real_['mode'] ='navpoints'
+# paras_real_['cut_alt'] = 240.
+# paras_real_['both'] = False
+# paras_real_['n_days'] = 1
 
 # ----------- Checks -------------
 
@@ -159,7 +162,6 @@ if paras_G['generate_weights_from_traffic'] or paras_G['generate_capacities_from
 	except:
 		print "You asked to generate weights or capacities but did not provide traffic data."
 		raise
-
 
 # -------------- Read files --------------
 # For now, only pickle files are supported.
