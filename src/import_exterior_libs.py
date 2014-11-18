@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from shutil import copy
+#from shutil import copy
+import os
 
 """
 Just a method to copy automatically some other custom libs.
@@ -12,4 +13,5 @@ list_of_external_files = ['/home/earendil/Documents/ELSA/Modules/general_tools.p
 
 def import_ext_libs():
 	for f in list_of_external_files:
-		copy(f , '.')
+		#copy(f , '.')
+		os.system("cp " + f + " .")

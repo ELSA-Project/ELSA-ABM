@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+This is a general tool file.
+"""
+
 import numpy as np
 #from string import split
 import os
@@ -33,9 +37,27 @@ my_conv = { FIELD_TYPE.LONG: int, FIELD_TYPE.FLOAT: float, FIELD_TYPE.DOUBLE: fl
 _colors=('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed')
 
 def flip_polygon(pol):
+    """
+    Flip x and y axis for a polygon.
+    """
     return Polygon([(p[1], p[0]) for p in list(pol.exterior.coords)])
 
-def draw_network_and_patches(G,G_nav,polygons,draw_navpoints_edges=True, draw_sectors_edges=False, rep='.', save=True, name='network', show=True, flip_axes=False, trajectories=[], trajectories_type='navpoints', dpi = 100):
+def draw_network_and_patches(G,G_nav,polygons,draw_navpoints_edges=True, 
+            draw_sectors_edges=False, rep='.', save=True, name='network', 
+            show=True, flip_axes=False, trajectories=[], 
+            trajectories_type='navpoints', dpi = 100, figsize = None):
+    """
+    Quite general functions used to draw navigations points, sectors, and trajectories.
+    """
+
+    # print "trajectories:"
+    # for t in trajectories:
+    #     print t
+    # print
+    # for i,pairs in enumerate(trajectories):
+    #     for j, t in enumerate(pairs):
+    #         trajectories[i][j] = tuple(t)
+
     if flip_axes:
         if G:
             for n in G.nodes():
@@ -46,7 +68,7 @@ def draw_network_and_patches(G,G_nav,polygons,draw_navpoints_edges=True, draw_se
         polygons={k:flip_polygon(pol) for k,pol in polygons.items()}
 
     print  'Drawing networks and patches...'
-    fig = plt.figure()
+    fig = plt.figure(figsize = figsize)
     ax = fig.add_subplot(111)
     for pol in polygons.values():
         patch = PolygonPatch(pol,alpha=0.5, zorder=2)
@@ -97,6 +119,9 @@ def draw_network_and_patches(G,G_nav,polygons,draw_navpoints_edges=True, draw_se
     return fig
 
 def range_congru(start,end,cong):
+    """
+    Create a list from start to end with a congruence. TODO: could be much quicker.
+    """
     a=[]
     i=start
     while i<end:
@@ -104,7 +129,11 @@ def range_congru(start,end,cong):
         i+=1
     return a
 
-def delay(date,starting_date=np.array([2010,1,1,0,0,0])): #convert date into time elapsed (in seconds) since starting date
+def delay(date,starting_date=np.array([2010,1,1,0,0,0])): 
+    """
+    Convert date into time elapsed (in seconds) since starting date. DO NOT take into 
+    account bissextile years. 
+    """
     date=np.array(date)
     starting_date=np.array(starting_date)
     da=date[0]-starting_date[0]
@@ -181,6 +210,9 @@ def date_st(delay,starting_date=[2010,1,1,0,0,0]): #contrary of delay. Positive 
 #    return y,m,d,h,mi,s
 
 def date_generation(first_date,n_days):
+    """"
+    DO NOT take into account bissextile years. 
+    """
     i=0
     y,m,d=first_date
     dates=[]
@@ -216,6 +248,9 @@ def date_generation(first_date,n_days):
 #    return dates
 
 def date_db(date,dateonly=False): # y,m,d,h,m,
+    """
+    For mysql database.
+    """
     if dateonly:
         return str(date[0]) + '-' + str(date[1])  + '-' + str(date[2])
     else:
@@ -227,8 +262,11 @@ def date_human(date,dateonly=False): # y,m,d,h,m,
     else:
         return str(date[0]) + '-' + str(date[1])  + '-' + str(date[2]) + '_' + str(date[3]) + ':' + str(date[4]) + ':' + str(date[5])
         
-        
 def header(paras,name_prog,version,paras_to_display=[]):
+    """
+    Generic header of a program, displaying some parameters and the 
+    starting time.
+    """
     if paras_to_display==[]:
         paras_to_display=paras.keys()
     first_line='------------------------ Program ' + name_prog + ' version ' + version + ' ------------------------'
@@ -265,6 +303,9 @@ def make_rep(paras, prefix='',suffix='', par=[]):
     return rep 
     
 def cumulative(a):
+    """
+    Used to go from pdf to cdf.
+    """
     b=sorted(a)
     cdf=[[],[]]
     n=0
@@ -278,8 +319,6 @@ def cumulative(a):
     return cdf
     
 def hyper_test(X,K,n,N):
-    #print X,K,n,N
-    
     return (1 -  sum([comb(K,x)*comb(N-K,n-x)/float(comb(N,n)) for x in range(X)]))
     
 def draw_zonemap(x_min,y_min,x_max,y_max,res):
@@ -291,22 +330,22 @@ def draw_zonemap(x_min,y_min,x_max,y_max,res):
     m.drawmeridians(np.arange(-180, 180, 5), color='#bbbbbb')
     m.drawparallels(np.arange(-90, 90, 5), color='#bbbbbb')
     return m
-
     
-def save(stuff, name='stuff.pic', rep='.'):
-    f=open(rep + '/' + name,'w')
-    pickle.dump(stuff,f)
-    f.close()
+def save(stuff, name='stuff.pic', rep='.'): # why did I make this function? I am so lazy.
+    with open(rep + '/' + name,'w') as f:
+        pickle.dump(stuff,f)
     return rep + '/' + name
     
-def load(name, rep='.'):
-    f=open(rep + '/' + name,'r')
-    stuff=pickle.load(f)
-    f.close()
+def load(name, rep='.'): # same remark.
+    with open(rep + '/' + name,'r') as f:
+        stuff=pickle.load(f)
     return stuff
     
-    
 def loading(func):   #decorator
+    """
+    This is useful when you want to compute something, but you might already have
+    it on the disk, in which case you might want to load it from it.
+    """
     def wrapper(*args, **kwargs):
         if kwargs.has_key('path'):
             if type(kwargs['path'])==type('p'):
@@ -317,7 +356,7 @@ def loading(func):   #decorator
                 path= kwargs['path'][0] + '/' + kwargs['path'][1]
                 rep=kwargs['path'][0]
         else:
-            path='pouet' # A changer (mettre le nom de la fonction).
+            path='pouet' # A changer (mettre le nom de la fonction). TODO
         if kwargs.has_key('force'):
             force=kwargs['force']
         else:
@@ -356,11 +395,14 @@ def loading(func):   #decorator
             return something
     return wrapper
 
-class DummyFile(object):
+class DummyFile(object): # used for silence
     def write(self, x): pass
 
 @contextlib.contextmanager
 def silence(silent):
+    """
+    Silence you program :).
+    """
     if silent:
         save_stdout = sys.stdout
         sys.stdout = DummyFile()
@@ -370,13 +412,18 @@ def silence(silent):
 
 @contextlib.contextmanager
 def clock_time():
-    #start = time.time()
+    """
+    Time your program.
+    """
     start=datetime.datetime.now()
     yield
     elapsed = datetime.datetime.now() - start
     print 'Executed in ', str(elapsed)
 
 def counter(i, end, start=0, message=''):
+    """
+    Count the number of iterations, that's all.
+    """
     sys.stdout.write('\r' + message + str(int(100*(abs(i-start)+1)/float(abs(end-start)))) + '%')
     sys.stdout.flush() 
     if i==end-1:
@@ -384,6 +431,9 @@ def counter(i, end, start=0, message=''):
 
 @contextlib.contextmanager
 def write_on_file(name_file):
+    """
+    Useful  for logs.
+    """
     if name_file!=None:
         with open(name_file, 'w') as f:
             save_stdout = sys.stdout
@@ -395,6 +445,9 @@ def write_on_file(name_file):
 
 #decorator
 def save_fig(plot):
+    """
+    Automatic saving for plots.
+    """
     def wrapper(*args, **kwargs):
         rep = kwargs['rep']
         kwargs.pop('rep', None)
@@ -408,6 +461,9 @@ def save_fig(plot):
     return wrapper
 
 def make_union_interval(intervals):
+    """
+    Used to make union of intervals.
+    """
     list_debut = [ interv[0] for interv in intervals ]
     list_fin = [ interv[1] for interv in intervals ]
     list_debut.sort()
@@ -415,93 +471,25 @@ def make_union_interval(intervals):
     list_final = []
     nb_superposition = 0
 
-    #debut_intervalle_courant = 0
  
     while list_debut:
-       # print 'debut',list_debut
-       # print 'fin',list_fin
-        # Le premier élément de list_debut, c'est le premier début 
-        # d'intervalle qu'on rencontrera. Le premier élément de list_fin,
-        # c'est la première fin d'intervalle qu'on rencontrera. On 
-        # détermine, parmi ces deux événements, lequel on rencontrera en 
-        # tout premier.
-        #
-        # La fonction cmp renvoie -1, 0, ou 1, selon la comparaison 
-        # effectuée entre les deux valeurs passées en paramètre.
-        # Faire un petit help(cmp) pour connaître les détails.
         ordre_debut_fin = cmp(list_debut[0], list_fin[0])
         if ordre_debut_fin == -1:
-            # L'événement rencontré est un début d'intervalle.
-            # On enlève l'événement de la liste, puisqu'on va le traiter,
-            # là, tout de suite.
             pos_debut = list_debut.pop(0)
-            #if nb_superposition == 0:
-                # On était dans aucun intervalle, et on vient d'en 
-                # rencontrer un. Dans la liste finale d'intervalles, 
-                # ça va donc compter comme un début. On retient 
-                # cette info.
-                #debut_intervalle_courant = pos_debut
-                
-            # Dans tous les cas, on ajoute une superposition d'intervalle
-            # (le bonhomme monte d'un étage).
             nb_superposition += 1
             list_final.append((pos_debut,nb_superposition))
         elif ordre_debut_fin == +1:
-            # L'événement rencontré est une fin d'intervalle.
-            # On l'enlève de la liste.
             pos_fin = list_fin.pop(0)
-            # On enlève une superposition d'intervalle.
             nb_superposition -= 1
             list_final.append((pos_fin,nb_superposition))
-           # if nb_superposition == 0:
-           #     # Après avoir enlevé la superposition, on se retrouve
-           #     # avec 0 intervalle superposé. 
-           #     # (Le bonhomme est redescendu jusqu'au niveau du sol).
-           #     # Il faut donc enregistrer ça comme une fin d'intervalle 
-           #     # final. Tant qu'on y est, on crée tout de suite ce nouvel
-           #     # intervalle final et on le met dans la liste.
-           #     nouvel_intervalle = (debut_intervalle_courant, pos_fin)
-           #     list_intervalle_final.append(nouvel_intervalle)
         else:
-            # On rencontre à la fois un début et une fin d'intervalle.
-            # Rien de spécial à faire. Faut juste virer les 2 événements 
-            # traités de leur liste respectives.
             list_debut.pop(0)
             list_fin.pop(0)
-            
- 
-        # Durant toute cette boucle, la variable nb_superposition augmente
-        # et diminue. Mais elle n'est jamais censée devenir négative.
-        # Si ça arrive, c'est que les données d'entrées sont mal foutues.
-        # On entre dans un cas d'indétermination. 
- 
-    # Arrivé à la fin de la boucle, il peut rester, ou pas des éléments
-    # dans list_fin. Ce qui est sûr, c'est que list_debut se vide
-    # avant list_fin. Si ce n'est pas le cas, c'est encore un cas
-    # d'indétermination.
     
     while list_fin:
         pos_fin = list_fin.pop(0)
-        # On enlève une superposition d'intervalle.
         nb_superposition -= 1
         list_final.append((pos_fin,nb_superposition))
-       
-   # if list_fin:
-   #     # On a passé tous les débuts d'intervalle, mais il reste des
-   #     # fins. Ça veut dire qu'on est encore dans un ou plusieurs
-   #     # intervalles. On devrait normalement avoir :
-   #     # len(list_fin) == nb_superposition. Si c'est pas le cas, c'est
-   #     # un cas d'indétermination.
-   #     #
-   #     # On pourrait traiter les événements de fin d'intervalle un par un,
-   #     # et diminuer progressivement nb_superposition. Mais on s'en fout,
-   #     # c'est pas nécessaire. On prend juste la fin d'intervalle qui 
-   #     # supprimera la dernière superposition (c'est à dire la dernière
-   #     # fin d'intervalle), et on construit un dernier intervalle final
-   #     # avec ça.
-   #     pos_fin = list_fin[-1]
-   #     nouvel_intervalle = (debut_intervalle_courant, pos_fin)
-   #     list_intervalle_final.append(nouvel_intervalle)
  
     return list_final
 
@@ -512,6 +500,9 @@ def sort_lists(list1, list2):
     return zip(*sorted(zip(list1, list2), key = lambda pair: pair[0]))
 
 def fit(x, y, first_point = 0, last_point = -1, f_fit = None):
+    """
+    Simple function for linear fit.
+    """
     if f_fit ==None:
         def f_fit(x,a,b):
             return a + b*x
@@ -617,7 +608,14 @@ def merge_dict(a, b):
 
     return d
 
+def yes(question):
+    ans=''
+    while not ans in ['Y','y','yes','Yes','N','n','No','no']:
+        ans=raw_input(question + ' (y/n)\n')
+    return ans in ['Y','y','yes','Yes']
+
 if __name__=='__main__':
+    #Tests-
     print 'n_days=', (delay([2011,3,1,0,0,0]) - delay([2010,12,1,0,0,0]))/(24*3600)
     print date_st(delay([2011,3,1,0,0,0]))
     print

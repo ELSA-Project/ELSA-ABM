@@ -65,7 +65,7 @@ ICAO={'LE':'Spain', 'LP':'Portugal', 'LX':'Gibraltar', 'DA':'Algeria', 'GM':'Mor
         'BI':'Iceland', 'EG':'United Kingdom', 'EI':'Ireland', 'EK':'Danemark', 'ES':'Sweden', 'EP':'Poland', 'EY':'Lithuania', 'UK':'Ukraine', 'LU':'Moldova',\
         'UM':'Belarus', 'UU':'Russia', 'UL':'Russia', 'UR':'Russia', 'UD':'Armenia', 'LT':'Turkey', 'UB':'Azerbaijan', 'UG':'Georgia', 'OI':'Iran',\
         'LY':'Serbia and Montenegro', 'LW':'Macedonia'}
-        
+    
 def country_of_ICAO(icao):
     return ICAO[icao]
     

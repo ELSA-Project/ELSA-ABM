@@ -1053,7 +1053,7 @@ class Net(nx.Graph):
                                 paths = [list(vvv) for vvv in set([tuple(vv) for vv in paths])][:Nfp_init]
                                 if len(paths) < Nfp_init:
                                     enough_paths = False
-                                    print 'Not enough paths, doing another round (' + str(Nfp +1 - Nfp_init), 'additional paths).'
+                                    print 'Not enough paths, doing another round (' + str(Nfp +1 - Nfp_init), 'additional path(s)).'
                                 #paths_additional += 1
                                 Nfp += 1
                             except AssertionError:
@@ -1067,7 +1067,6 @@ class Net(nx.Graph):
                                 raise
                             except:
                                 raise
-                            print "I don't have enough paths, I make another turn. Nfp=", Nfp
                         Nfp = Nfp_init
                         if self.short.has_key((a,b)):
                             self.short[(a,b)] = paths[:]
@@ -1076,7 +1075,7 @@ class Net(nx.Graph):
                 for it, (a,b) in enumerate(pairs):
                     #if verb:
                     #    counter(it, len(pairs), message='Computing shortest paths...')
-                    print "Computing shortest path for pair", a, b
+                    #print "Computing shortest path for pair", a, b
                     if a!=b:
                         enough_paths=False
                         Nfp_init=Nfp
@@ -1091,6 +1090,7 @@ class Net(nx.Graph):
                             duplicates_nav=[]
                             n_tries = 0
                             while len(duplicates)!=previous_duplicates and n_tries<10:
+                                if n_tries!=0: print "I don't have enough paths, I make another turn. n_tries=", n_tries
                                 previous_duplicates=len(duplicates)
                                 duplicates=[]
                                 duplicates_nav=[]
@@ -1103,7 +1103,6 @@ class Net(nx.Graph):
                                     paths_nav=self.kshortestPath(a, b, Nfp+len(duplicates))
                                     paths = [self.convert_path(p) for p in paths_nav]
 
-                                print "I don't have enough paths, I make another turn. n_tries=", n_tries
                                 n_tries += 1
 
                             for path in duplicates_nav:
@@ -1172,7 +1171,6 @@ class Net(nx.Graph):
 
         for idx,(p0,p1) in enumerate(pairs):
             counter(idx, len(pairs), message='Computing shortest paths (navpoints)...')
-            print
             s0,s1=self.G_nav.node[p0]['sec'], self.G_nav.node[p1]['sec']
             self.G_nav.short[(p0,p1)] = []
             self.short_nav[(p0,p1)] = {}
@@ -1626,19 +1624,21 @@ class NavpointNet(Net):
         
     def clean_borders(self):
         """
-        Remove all links between border points. Remover all links between navpoints in two different sectors
+        Remove all links between border points. 
+        Previously: Remover all links between navpoints in two different sectors
         which are both non border points.
+        Changed in 2.9.8: don't do the second operation anymore. 
         """
         for e in self.edges():
             if e[0] in self.navpoints_borders and e[1] in self.navpoints_borders:
                 #print "I am removing edge", e, "between two points on the borders"
                 self.remove_edge(*e)
                 
-            if self.node[e[0]]['sec']!=self.node[e[1]]['sec']:
-                if (not e[0] in self.navpoints_borders) and (not e[1] in self.navpoints_borders):
-                    print "I am removing edge", e, "because node", e[0], "is in sector", self.node[e[0]]['sec'],\
-                     "but node", e[1], "is in sector", self.node[e[1]]['sec'], "and they are not on the borders."
-                    self.remove_edge(*e)  
+            # if self.node[e[0]]['sec']!=self.node[e[1]]['sec']:
+            #     if (not e[0] in self.navpoints_borders) and (not e[1] in self.navpoints_borders):
+            #         print "I am removing edge", e, "because node", e[0], "is in sector", self.node[e[0]]['sec'],\
+            #          "but node", e[1], "is in sector", self.node[e[1]]['sec'], "and they are not on the borders."
+            #         self.remove_edge(*e)  
                        
     # def compute_pairs_based_on_short(self, min_dis):
     #     """

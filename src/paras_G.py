@@ -130,7 +130,7 @@ if paras_G['file_net_nav'] == None:
 # It is the number of shortest paths computed for each pair of entry/exit
 # Don't worry about this if you are not using the Strategic part of the ABM. 
 
-paras_G['Nfp']=10		
+paras_G['Nfp']=2		
 
 # This is if you want to remove sectors with too few navpoints
 paras_G['small_sec_thr'] = 0  # number of navpoints under which you remove the sector. 0: no threshold.
@@ -140,7 +140,7 @@ paras_G['make_entry_exit_points'] = True
 
 # This is to create navpoints on each border of sector. Note that even False will trigger the
 # creation of border points on the outer boundary.
-paras_G['make_borders_points'] = True
+paras_G['make_borders_points'] = False
 
 # Linear density of points on the borders
 paras_G['lin_dens_borders'] = 5

@@ -72,7 +72,6 @@ def navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-
     """
     shape = G.global_shape
     if only_outer_boundary:
-        print "Selecting only outer boundaries for additional points."
         borders_coords = list(shape.exterior.coords)
         borders = [(borders_coords[i], borders_coords[i+1]) for i in range(len(borders_coords)-1)]
     else:
@@ -83,13 +82,9 @@ def navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-
                 if not (seg in borders or seg[::-1] in borders): # this is to ensure non-redundancy of the borders.
                     borders.append(seg)
 
-
-    print "Selected borders:"
-    for seg in borders:
-        print seg
-    print
     navpoints = compute_navpoints_borders(borders, shape, lin_dens = lin_dens, only_outer_boundary = only_outer_boundary, thr = thr)
 
+    print "I will create", len(navpoints), "navpoints on the borders."
     return navpoints
 
 def compute_navpoints_borders(borders_coordinates, shape, lin_dens = 10, only_outer_boundary = False, thr = 1e-2):
@@ -126,9 +121,12 @@ def compute_navpoints_borders(borders_coordinates, shape, lin_dens = 10, only_ou
                 if not only_outer_boundary or shape.exterior.distance(P)<thr:
                     changed = True
                     navpoints.append(c)
-                    print "New border point with this coordinate:", c
-                    if not shape.contains(P):
-                        print "WARNING: The selected node is not contained in the global shape." # Or exception?
+                    #print "New border point with this coordinate:", c
+                    try:
+                        assert shape.contains(P)
+                    except AssertionError:
+                        print "The selected node is not contained in the global shape."
+                        raise
             k+=1
 
     return navpoints
@@ -759,22 +757,25 @@ def write_down_network(G):
 
         pickle.dump(dic, f)
 
-def detect_nodes_on_boundaries(G, thr = 1e-2):
+def detect_nodes_on_boundaries(paras_G, G, thr = 1e-2):
     """
     Detects the nodes on the OUTER boundary of the airspace.
     New in 2.9.6.
     """
-    shape = G.global_shape
-    nodes = G.G_nav.navpoints_borders
+    if paras_G['make_borders_points']:
+        shape = G.global_shape
+        nodes = G.G_nav.navpoints_borders
 
-    outer_nodes = []
-    for n in nodes:
-        coords = G.G_nav.node[n]['coord']
-        P = Point(np.array(coords))
-        if shape.exterior.distance(P)<thr:
-            outer_nodes.append(n)
+        outer_nodes = []
+        for n in nodes:
+            coords = G.G_nav.node[n]['coord']
+            P = Point(np.array(coords))
+            if shape.exterior.distance(P)<thr:
+                outer_nodes.append(n)
 
-    G.G_nav.outer_nodes = outer_nodes
+        G.G_nav.outer_nodes = outer_nodes
+    else:
+        G.G_nav.outer_nodes = G.G_nav.navpoints_borders
 
     return G
 
@@ -863,24 +864,22 @@ def prepare_hybrid_network(paras_G, rep = '.'):
     G = erase_small_sectors(G, paras_G['small_sec_thr'])
     print
 
-    draw_network_and_patches(None, G.G_nav, G.polygons, show=True, flip_axes=True, rep = rep)
-    assert False
+    #draw_network_and_patches(None, G.G_nav, G.polygons, show=True, flip_axes=True, rep = rep)
 
 
     ########### Choose the airports #############
     print "Choosing the airports..."
+    # TODO: shall I put something about not having a navpoint on a border as airport?
 
     if paras_G['airports']!=None:
         G.add_airports(paras_G['airports'], -10, pairs=paras_G['pairs'], C_airport = paras_G['C_airport'])
     else:
         G.generate_airports(paras_G['nairports'], -10, C_airport = paras_G['C_airport'])
 
-
-
     G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
 
     if paras_G['make_entry_exit_points']: # not really optimal...
-        G = detect_nodes_on_boundaries(G)
+        G = detect_nodes_on_boundaries(paras_G, G)
         pairs_outer = compute_possible_outer_pairs(G)
         print "Found outer nodes:", G.G_nav.outer_nodes
         print "With", len(pairs_outer), "corresponding pairs."
@@ -998,7 +997,7 @@ def prepare_hybrid_network(paras_G, rep = '.'):
         if (s1, s2) in pairs_deleted:
             del G.G_nav.short[(p1,p2)]
             #G.G_nav.pairs.remove((p1,p2))
-            print 'I removed the pair of navpoints', (p1,p2), ' because the corresponding pair of sectors', (s1, s2), ' has been removed.'
+            print 'I removed the pair of navpoints', (p1,p2), 'because the corresponding pair of sectors', (s1, s2), 'has been removed.'
 
     G.G_nav.infer_airports_from_short_list() # Same remark
 
@@ -1006,7 +1005,7 @@ def prepare_hybrid_network(paras_G, rep = '.'):
      
     print 'Computing shortest_paths (navpoints) ...'
     print 'Number of pairs before computation:', len(G.G_nav.short.keys())  
-    G.compute_sp_restricted(G.Nfp, silent = False)
+    G.compute_sp_restricted(G.Nfp, silent = True)
     G.G_nav.infer_airports_from_short_list()
     G.check_repair_sector_airports()
 
@@ -1079,7 +1078,7 @@ def prepare_hybrid_network(paras_G, rep = '.'):
     print 'Number of navpoints:', len(G.G_nav.nodes())
     print 'Done.'
         
-    draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values()[0], rep = rep)
+    draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values(), rep = rep)
     return G
 
 if  __name__=='__main__':
