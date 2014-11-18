@@ -726,7 +726,7 @@ class Net(nx.Graph):
         else:
             print 'Network was found empty!'   
             
-    def build_nodes(self, N, prelist=[]):
+    def build_nodes(self, N, prelist=[], put_nodes_at_corners = False, small = 1.e-5):
         """
         Add N nodes to the network, with coordinates taken uniformly in a square. 
         Alternatively, prelist gives the list of coordinates.
@@ -736,7 +736,12 @@ class Net(nx.Graph):
             self.add_node(i,coord=[uniform(-1.,1.),uniform(-1.,1.)])  
         for j,cc in enumerate(prelist):
             self.add_node(N+j,coord=cc)
-            
+        if put_nodes_at_corners:
+            self.add_node(N+len(prelist), coord=[1.-small, 1.-small])
+            self.add_node(N+len(prelist)+1, coord=[-1.+small, 1.-small])
+            self.add_node(N+len(prelist)+2, coord=[-1.+small, -1.+small])
+            self.add_node(N+len(prelist)+3, coord=[1.-small, -1.+small])
+
     def build_net(self, N, Gtype='D',mean_degree=6):
         """
         Build edges, based on Delaunay triangulation or Erdos-Renyi graph. 
@@ -757,7 +762,7 @@ class Net(nx.Graph):
                         if np.random.rand()<=prob:
                             self.add_edge(n,m)
             
-    def build(self, N, nairports, min_dis, generation_of_airports=True, Gtype='D', sigma=1., mean_degree=6, prelist=[]):
+    def build(self, N, nairports, min_dis, generation_of_airports=True, Gtype='D', sigma=1., mean_degree=6, prelist=[], put_nodes_at_corners = False):
         """
         Build a graph of the given type, nodes, edges and possibly airports.
         """
@@ -766,7 +771,7 @@ class Net(nx.Graph):
         self.weighted=sigma==0.
         
         if Gtype=='D' or Gtype=='E':
-            self.build_nodes(N, prelist=prelist)
+            self.build_nodes(N, prelist=prelist, put_nodes_at_corners = put_nodes_at_corners)
             self.build_net(N, Gtype=Gtype, mean_degree=mean_degree)  
         elif Gtype=='T':
             xAxesNodes=np.sqrt(N/float(1.4))

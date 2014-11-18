@@ -133,11 +133,17 @@ if paras_G['file_net_nav'] == None:
 paras_G['Nfp']=10		
 
 # This is if you want to remove sectors with too few navpoints
-paras_G['small_sec_thr'] = 4  # number of navpoints under which you remove the sector.	
+paras_G['small_sec_thr'] = 0  # number of navpoints under which you remove the sector. 0: no threshold.
 
 # This is to transform all outer nodes (nodes on the outer boundary of the airspace)
-paras_G['make_entry_exit_points'] = True			
+paras_G['make_entry_exit_points'] = True
 
+# This is to create navpoints on each border of sector. Note that even False will trigger the
+# creation of border points on the outer boundary.
+paras_G['make_borders_points'] = True
+
+# Linear density of points on the borders
+paras_G['lin_dens_borders'] = 5
 
 # --------------- Distance ---------------- #
 # This block is useful if you use the Distance library to select

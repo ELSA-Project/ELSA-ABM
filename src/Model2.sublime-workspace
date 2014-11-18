@@ -4,6 +4,106 @@
 		"selected_items":
 		[
 			[
+				"add",
+				"add_node"
+			],
+			[
+				"put",
+				"put_nodes_at_corners"
+			],
+			[
+				"only",
+				"only_outer_boundary"
+			],
+			[
+				"ou",
+				"only_outer_boundary"
+			],
+			[
+				"lin",
+				"lin_dens"
+			],
+			[
+				"onl",
+				"only_outer_boundary"
+			],
+			[
+				"on",
+				"only_outer_boundary"
+			],
+			[
+				"G",
+				"G_nav"
+			],
+			[
+				"pairs",
+				"pairs_outer"
+			],
+			[
+				"glo",
+				"global_shape"
+			],
+			[
+				"our",
+				"outer_nodes"
+			],
+			[
+				"navpoint",
+				"navpoints_borders"
+			],
+			[
+				"out",
+				"outer_nodes"
+			],
+			[
+				"has",
+				"hasattr"
+			],
+			[
+				"oue",
+				"outer_nodes"
+			],
+			[
+				"inter",
+				"intersects"
+			],
+			[
+				"sae",
+				"save_path"
+			],
+			[
+				"airpor",
+				"airports_sec_from_navs"
+			],
+			[
+				"remo",
+				"remove_node"
+			],
+			[
+				"n2",
+				"n2_selected"
+			],
+			[
+				"al",
+				"all_other_nodes"
+			],
+			[
+				"all",
+				"all_other_nodes"
+			],
+			[
+				"remove",
+				"remove_edge"
+			],
+			[
+				"reom",
+				"remove_node"
+			],
+			[
+				"rep",
+				"representative_point"
+			],
+			[
 				"nei",
 				"neighbors"
 			],
@@ -70,10 +170,6 @@
 			[
 				"LL",
 				"LL"
-			],
-			[
-				"al",
-				"alpha"
 			],
 			[
 				"suppl",
@@ -174,10 +270,6 @@
 			[
 				"sys",
 				"system"
-			],
-			[
-				"all",
-				"all_liabilities_value"
 			],
 			[
 				"si",
@@ -422,98 +514,6 @@
 			[
 				"trajec",
 				"trajectories_real"
-			],
-			[
-				"tra",
-				"trajectories_nav"
-			],
-			[
-				"selec",
-				"flights_selected"
-			],
-			[
-				"flights",
-				"flights_selected"
-			],
-			[
-				"fligh",
-				"flights_selected"
-			],
-			[
-				"real",
-				"real_flights"
-			],
-			[
-				"_name",
-				"_name_network"
-			],
-			[
-				"min",
-				"min_length"
-			],
-			[
-				"airports",
-				"airports"
-			],
-			[
-				"airports_",
-				"airports_iter"
-			],
-			[
-				"airpor",
-				"airports_iter"
-			],
-			[
-				"Real",
-				"Real"
-			],
-			[
-				"consi",
-				"consitency"
-			],
-			[
-				"paths",
-				"paths_init"
-			],
-			[
-				"airports_sec",
-				"airports_sec_from_navs"
-			],
-			[
-				"airport",
-				"airports_from_navs_short"
-			],
-			[
-				"pairs",
-				"pairs_deleted"
-			],
-			[
-				"build_",
-				"build_networ_of_real_traffic"
-			],
-			[
-				"get_",
-				"get_flights_from_flows"
-			],
-			[
-				"fli",
-				"flights_taken_from_flow"
-			],
-			[
-				"idx",
-				"idx_s"
-			],
-			[
-				"cap",
-				"capacity"
-			],
-			[
-				"remove",
-				"remove_pairs_same_sector"
-			],
-			[
-				"ol",
-				"old_behavior"
 			]
 		]
 	},
@@ -587,7 +587,7 @@
 			"file": "prepare_navpoint_network.py",
 			"settings":
 			{
-				"buffer_size": 58381,
+				"buffer_size": 44382,
 				"line_ending": "Unix"
 			}
 		},
@@ -612,14 +612,6 @@
 			"settings":
 			{
 				"buffer_size": 23245,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
-			"settings":
-			{
-				"buffer_size": 19259,
 				"line_ending": "Unix"
 			}
 		},
@@ -651,7 +643,15 @@
 			"file": "paras_G.py",
 			"settings":
 			{
-				"buffer_size": 5611,
+				"buffer_size": 6416,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
+			"settings":
+			{
+				"buffer_size": 19259,
 				"line_ending": "Unix"
 			}
 		},
@@ -659,7 +659,7 @@
 			"file": "simAirSpaceO.py",
 			"settings":
 			{
-				"buffer_size": 73861,
+				"buffer_size": 76947,
 				"line_ending": "Unix"
 			}
 		},
@@ -836,6 +836,38 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"erase_small_sectors",
+			"build",
+			"G.nodes()",
+			"Point(np.array(c))",
+			"[c]",
+			"x,y",
+			"change",
+			"vor",
+			"it2",
+			"compute_shortest_paths",
+			"pairs_outer",
+			"detect_nodes_on_boundaries",
+			":",
+			"Number",
+			":",
+			"):',",
+			"Final",
+			"navpoints_borders",
+			"fix_airports",
+			"airportsiports",
+			"Point",
+			"Pint",
+			"all_other_nodes",
+			"n1",
+			"nodes",
+			"n2",
+			"n1",
+			"clean_borders",
+			"paras_G['airports']",
+			"Set",
+			"shortest",
+			"short",
 			"check_and_fix_empty_sectors",
 			"centroid",
 			"check_everybody_is_attached",
@@ -931,39 +963,7 @@
 			"rest_bond",
 			"bond",
 			"paras",
-			"print",
-			"i",
-			"print_state",
-			"update",
-			"update.()",
-			"update.",
-			"update",
-			"				\n",
-			"maturity_bond",
-			"maturity_bonds",
-			"tau",
-			"consumption",
-			"rs",
-			"edge_on_layer",
-			"node_on_layer",
-			"edges_B",
-			"cste_demand_repo",
-			"edges",
-			"theta",
-			"edges",
-			"agents",
-			"build_network",
-			"setup_simu",
-			"self.edges_B",
-			"edges",
-			"nodes_on_layer",
-			"correlate_price_prod",
-			"A",
-			"last_production",
-			"vol",
-			"all_assets",
-			"all_assets_value",
-			"make_contract"
+			"print"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1007,11 +1007,11 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": -0.0,
+						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 8,
+					"stack_index": 9,
 					"type": "text"
 				},
 				{
@@ -1128,7 +1128,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 7,
+					"stack_index": 8,
 					"type": "text"
 				},
 				{
@@ -1156,7 +1156,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 6,
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
@@ -1214,7 +1214,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 10,
+					"stack_index": 4,
 					"type": "text"
 				},
 				{
@@ -1223,15 +1223,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 58381,
+						"buffer_size": 44382,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								8125,
-								8125
+								2823,
+								2823
 							]
 						],
 						"settings":
@@ -1241,7 +1241,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 973.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -1272,7 +1272,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 9,
+					"stack_index": 10,
 					"type": "text"
 				},
 				{
@@ -1298,7 +1298,7 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": -0.0,
+						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
@@ -1329,7 +1329,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1734.0,
+						"translation.y": 1224.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 5,
@@ -1337,36 +1337,6 @@
 				},
 				{
 					"buffer": 12,
-					"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 19259,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								10961,
-								10961
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 510.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 13,
 					"file": "study_overlap_and_swap.py",
 					"semi_transient": false,
 					"settings":
@@ -1395,7 +1365,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 14,
+					"buffer": 13,
 					"file": "train_ABM.py",
 					"semi_transient": false,
 					"settings":
@@ -1416,7 +1386,7 @@
 							"syntax": "Packages/Python/Python.tmLanguage",
 							"translate_tabs_to_spaces": false
 						},
-						"translation.x": -0.0,
+						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
@@ -1424,7 +1394,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 15,
+					"buffer": 14,
 					"file": "voronoi.py",
 					"semi_transient": false,
 					"settings":
@@ -1456,24 +1426,24 @@
 			]
 		},
 		{
-			"selected": 1,
+			"selected": 2,
 			"sheets":
 			[
 				{
-					"buffer": 16,
+					"buffer": 15,
 					"file": "paras_G.py",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 5611,
+						"buffer_size": 6416,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4863,
-								4863
+								4791,
+								4791
 							]
 						],
 						"settings":
@@ -1482,27 +1452,27 @@
 							"syntax": "Packages/Python/Python.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 1887.0,
+						"translation.y": 1173.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
 					"type": "text"
 				},
 				{
-					"buffer": 17,
-					"file": "simAirSpaceO.py",
+					"buffer": 16,
+					"file": "/home/earendil/Documents/ELSA/Modules/general_tools.py",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 73861,
+						"buffer_size": 19259,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								29205,
-								29205
+								1847,
+								1847
 							]
 						],
 						"settings":
@@ -1512,7 +1482,37 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 580.0,
+						"translation.y": 408.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "simAirSpaceO.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 76947,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								29838,
+								29838
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 599.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
@@ -1545,7 +1545,7 @@
 						"translation.y": 153.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 6,
 					"type": "text"
 				}
 			]
@@ -1579,7 +1579,7 @@
 		"cols":
 		[
 			0.0,
-			0.549404761905,
+			0.538943452381,
 			1.0
 		],
 		"rows":
