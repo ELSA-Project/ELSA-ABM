@@ -31,7 +31,7 @@ unit = 20. # minutes
 
 # ---------------- Network Setup --------------- #
 
-fixnetwork=True               #if fixnetwork='True' the graph is loaded from file and is not generated at each iteration
+fixnetwork=True       #if fixnetwork='True' the graph is loaded from file and is not generated at each iteration
 
 if fixnetwork:
     if 1:  # Take existing network
@@ -83,7 +83,7 @@ try:
 except:
     raise Exception('Nfp should be the same than in the network. Nfp=', Nfp, ' ; G.Nfp=', G.Nfp)
 
-Nsp_nav = 10
+Nsp_nav = 10 # Number of shortest paths of navpoints per path of sector.
 Nsp_nav_iter = range(1,11)
 na=1  #number of flights (pairs of departing-arriving airports) per company
 
@@ -216,7 +216,7 @@ par=tuple([tuple([float(_v) for _v in _p])  for _p in par])
 
 
 # ------------ Building of AC --------------- #
-# Shouldn't be touched.
+# Shouldn't be modified.
 
 def func_AC(a, b):
     return [int(a*b),b-int(a*b)]  

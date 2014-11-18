@@ -1294,6 +1294,7 @@ class Net(nx.Graph):
     def compute_all_shortest_paths(self, Nsp_nav, perform_checks = False, sec_pairs_to_compute = [], nav_pairs_to_compute = [], verb = True):
         """
         Gather several methods to ensure a consistency between navpoints and sectors.
+        Obsolete ? TODO
         """
         if verb:
             print 'Computing shortest paths for sectors...'

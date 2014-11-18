@@ -13,11 +13,11 @@ import numpy as np
 import copy
 from utilities import draw_network_map
 from math import ceil
-from general_tools import draw_network_and_patches, header, delay, clock_time
+from general_tools import draw_network_and_patches, header, delay, clock_time, delay, date_human
 from tools_airports import extract_flows_from_data
 #from utilitiesO import compare_networks
 
-version='2.9.3'
+version='2.9.4'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
 
 if 0:
@@ -424,6 +424,88 @@ def plot_times_departure(queue, rep='.'):
     plt.savefig(rep + '/departure_times.png')
     plt.show()
         
+def compute_M1_trajectories(queue):
+    """
+    Returns some trajectories (navpoint names) based on the given queue.
+    """
+    #trajectories=[]
+    trajectories_nav=[]
+    for f in queue:
+        try:
+            #trajectories.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p) 
+            trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
+        except ValueError:
+            pass
+
+    return trajectories_nav
+
+def generate_traffic(paras, G, dump = None, simple_setup=True):
+    """
+    High level function to create traffic on a given network with given parameters. 
+    It is not really intented to use as a simulation by itself, but only to generate 
+    some synthetic traffic, mainly for the tactical ABM.
+    Returns a set of M1 trajectories.
+    If simple_setup is True, the function uses some default parameters suitable for 
+    quick generation of traffic.
+    New in 2.9.4.
+    """
+    #GG = ABMvars.G
+    #paras = ABMvars.paras.copy()
+
+    print header(paras,'Generation of traffic', version, paras_to_display=['ACtot'])
+
+    with clock_time():
+        sim=Simulation(paras, G=G, make_dir=True, verbose=True)
+        sim.make_simu(storymode=False)
+        sim.compute_flags()
+        queue=post_process_queue(sim.queue)
+        M0_queue=post_process_queue(sim.M0_queue)
+
+    #print 'ACs:'
+    #print sim.ACs
+    print
+    print
+    print 'Global metrics for M1:'
+    print extract_aggregate_values_on_queue(queue, paras['par'])
+    print 'Global metrics for M0:'
+    print extract_aggregate_values_on_queue(M0_queue, paras['par'])
+    print
+    print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted])
+    print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
+    #print "Satisfaction: "
+    #print [f.satisfaction for f in sim.queue]
+    print
+
+    trajectories = compute_M1_trajectories(queue)
+
+    return trajectories
+
+def write_trajectories_file(G, trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+    with open(fil, 'w') as f:
+        for i,trajectory in enumerate(trajectories):
+            x, y, ts = [], [], []
+            t = 0.
+            for j,n in enumerate(trajectory):
+                x.append(G.node[n]['coord'][0])
+                y.append(G.node[n]['coord'][1])
+                t = 0 if j==0 else t + G[n][trajectory[j-1]]['weight']
+                ts.append(date_abm_tactic(date_st(t, starting_date = starting_date)))
+            print >>f, i, "\t", len(t), "\t", [(x[j], ",", y[j], ",", 0., ",", ts[j], "\t") for j in range(len(trajectory))]
+
+    print "Trajectories saved in", fil
+
+def date_abm_tactic(date):
+    """
+    Transform a list [year, month, day, hours, minutes, seconds] in 
+    YYYY-MM-DD H:mm:s:0
+    """
+    year, month, day, hours, minutes, seconds = tuple(date)
+    month = str(month) if month<10 else "0" + str(month)
+    day = str(day) if day<10 else "0" + str(day)
+
+    date_abm = date_human([str(year), month, day, str(hours), str(minutes), str(seconds)]) + ':0'
+    return date_abm
+
 if __name__=='__main__': 
     """
     Manual single simulation used for "story mode" and debugging.
@@ -489,8 +571,6 @@ if __name__=='__main__':
             trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
         except ValueError:
             pass
-        except:
-            raise Exception()
 
     #  Real trajectories
     trajectories_real = []

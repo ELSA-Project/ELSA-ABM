@@ -5,10 +5,12 @@ Created on Tue May 21 16:06:18 2013
 @author: earendil
 
 ===========================================================================
-This file is used to generate a sector network only. Not used in Model 1
-a priori TODO.
+This file is used to generate a sector network only. Not used in Model 2
+a priori.
 ===========================================================================
 """
+#TODO: remove if not used in model 2.
+
 #from networkx import shortest_path
 #import numpy as np
 from simAirSpaceO import Net

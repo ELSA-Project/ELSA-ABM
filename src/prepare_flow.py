@@ -5,9 +5,10 @@
 @author: earendil
 
 ===========================================================================
-Used to extract flows from data. Needs the Distance library. TODO: in principle, no.
+Used to extract flows from data. Needs the Distance library.
 ===========================================================================
 """
+
 
 import sys
 sys.path.insert(1,'../Distance')
