@@ -212,6 +212,7 @@ class Network_Manager:
         overreached the capacity, but if the total number of flights during an hour 
         (counting those already there at the beginning and those still there at the end)
         is greater than the capacity. 
+        Changed in 2.9.8: added the condition h<len(G.node[n]['load'])
 
         There is now an absolute reference in time and the weights of the network are 
         in minutes.
@@ -224,14 +225,13 @@ class Network_Manager:
 
         overload = False
         h = 0 
-        # h=max(0, floor(t1/60.)) # a tester pour virer la premiere condition.
-        while float(h) <= t2/60. and not overload:
+        while float(h) <= t2/60. and h<len(G.node[n]['load']) and not overload:
             try:
                 if h+1 > t1/60. and G.node[n]['load'][h]+1>G.node[n]['capacity']:
                     overload = True
             except:
-                print t1/60., t2/60., h
-                print G.node[n]['load']
+                print "Problem. t1/60., t2/60., h:", t1/60., t2/60., h
+                print "G.node[n]['load']:", G.node[n]['load']
                 raise
             h += 1
         return overload
@@ -256,11 +256,12 @@ class Network_Manager:
     def overload_airport_hours(self, G, n, (t1, t2)):
         """
         Same than overload_sector_hours, for airports.
+        Changed in 2.9.8: added the condition h<len(G.node[n]['load'])
         """
         overload = False
         h = 0 
         # h=max(0, floor(t1/60.)) # a tester pour virer la premiere condition.
-        while float(h) <= t2/60. and not overload:
+        while float(h) <= t2/60. and h<len(G.node[n]['load']) and not overload:
             if h+1 > t1/60. and G.node[n]['load_airport'][h]+1>G.node[n]['capacity_airport']:
                 overload = True
             h += 1
@@ -287,6 +288,7 @@ class Network_Manager:
         is present in the sector.
         Changed in 2.9: completely changed (count number of flights per hour).
         Changed in 2.9.5: does change the load of the first and last sector.
+        Changed in 2.9.8: added condition h<G.node[n]['load']
 
         @input G: network.
         @input fp: flight plan to allocate.
@@ -298,7 +300,7 @@ class Network_Manager:
             n=path[i]
             t1,t2=times[i]/60.,times[i+1]/60.
             h=0
-            while h<t2:
+            while h<t2 and h<len(G.node[n]['load']):
                 if h+1>t1:
                     if storymode:
                         print "Load of sector", n, "goes from",  G.node[n]['load'][h], "to", G.node[n]['load'][h]+1, "for interval", h, "--", h+1
@@ -441,9 +443,10 @@ class Network_Manager:
         Same method than previous one, but closes all sectors at the same time, then recomputes the hosrtest paths.
         New in 2.9.7.
         """
+        print "N_shocks:", N_shocks
         if sectors_to_shut==None:
             #sectors_to_shut = shock_sectors(G, N_shocks)#sample(G.nodes(), N_shocks)
-            sectors_to_shut = sample(G.nodes(), N_shocks)
+            sectors_to_shut = sample(G.nodes(), int(N_shocks))
         else:
             sectors_to_shut = [sectors_to_shut]
         #sectors_to_shut = [33]
@@ -1365,7 +1368,7 @@ class Net(nx.Graph):
         self.Nsp_nav = Nsp_nav
         assert self.type=='sec'
         for (p0,p1) in pairs:
-            assert len(self.short_nav[(p0,p1)])==10
+            assert len(self.short_nav[(p0,p1)])==self.Nfp
             self.G_nav.short[(p0,p1)] = sorted([path for paths in self.short_nav[(p0,p1)].values() for path in paths[:Nsp_nav]],\
                 key= lambda p: self.G_nav.weight_path(p))[:self.Nfp]
     

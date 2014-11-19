@@ -15,6 +15,9 @@ from descartes import PolygonPatch
 import matplotlib.pyplot as plt
 #from random import shuffle, seed
 import networkx as nx
+import imp
+import pickle
+from os.path import join
 
 version='2.9.0'
 
@@ -111,7 +114,6 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
     if show:
         plt.show()
 
-
 def split_coords(G,nodes,r=0.04):
     lines=[]
     for n in G.nodes():
@@ -205,5 +207,185 @@ class Paras(dict):
  
 def network_whose_name_is(name):
     with open(name + '.pic') as _f:
-        B=_pickle.load(_f)
+        B=pickle.load(_f)
     return B
+
+def read_paras(rep = '.', file_name = 'paras.py', post_process = True):
+    paras_mod = imp.load_source("paras", join(rep,file_name))
+    paras = paras_mod.paras
+
+    if post_process:
+        paras = post_process_paras(paras)
+
+    return paras
+
+def read_paras_iter(rep = '.', file_name = 'paras_iter.py'):
+    paras_mod = imp.load_source("paras_name", join(rep,file_name))
+    paras = paras_mod.paras
+
+    return paras
+
+def post_process_paras(paras):
+    ##################################################################################
+    ################################# Post processing ################################
+    ##################################################################################
+    # This is useful in case of change of parameters (in particular using iter_sim) in
+    # the future, to record the dependencies between variables.
+    update_priority=[]
+    to_update={}
+
+    # -------------------- Post-processing -------------------- #
+
+    paras['par']=tuple([tuple([float(_v) for _v in _p])  for _p in paras['par']]) # This is to ensure hashable type for keys.
+
+    # Load network
+    if paras['file_net']!=None:
+        with open(paras['file_net']) as f:
+            paras['G'] = pickle.load(f)
+    
+    if not 'G' in paras.keys():
+        paras['G'] = None
+
+    if paras['file_traffic']!=None:
+        with open(paras['   '], 'r') as _f:
+            flights = _pickle.load(_f)
+        paras['flows'] = {}
+        for f in flights:
+            # _entry = G.G_nav.idx_navs[f['route_m1t'][0][0]]
+            # _exit = G.G_nav.idx_navs[f['route_m1t'][-1][0]]
+            _entry = f['route_m1t'][0][0]
+            _exit = f['route_m1t'][-1][0]
+            paras['flows'][(_entry, _exit)] = paras['flows'].get((_entry, _exit),[]) + [f['route_m1t'][0][1]]
+
+        paras['departure_times'] = 'exterior'
+        paras['ACtot'] = sum([len(v) for v in paras['flows'].values()])
+        paras['control_density'] = False
+        density=_func_density_vs_ACtot_na_day(paras['ACtot'], na, day)
+
+        # There is no update requisites here, because the traffic shoul dnot be changed
+        # when it is extracted from data.
+
+    else:
+        paras['flows'] = {}
+        paras['times']=[]
+        if paras['file_times'] != None:
+            if paras['departure_times']=='from_data': #TODO
+                with open('times_2010_5_6.pic', 'r') as f:
+                    paras['times']=_pickle.load(f)
+        else:
+            if paras['control_density']:
+                # ACtot is not an independent variable and is computed thanks to density
+                paras['ACtot']=_func_ACtot_vs_density_day_na(paras['density'], paras['day'], paras['na'])
+                to_update['ACtot']=(_func_ACtot_vs_density_day_na, ('density', 'day', 'na'))
+            else:
+                # Density is not an independent variables and is computed thanks to ACtot.
+                paras['density']=_func_density_vs_ACtot_na_day(paras['ACtot'], paras['na'], paras['day'])
+                to_update['density']=(_func_density_vs_ACtot_na_day,('ACtot','na','day'))
+
+            assert paras['departure_times'] in ['zeros','from_data','uniform','square_waves']
+
+            if paras['departure_times']=='square_waves':
+                Np = _func_Np(paras['day'], width_peak, Delta_t)
+                to_update['Np']=(_func_Np,('day', 'width_peak', 'Delta_t'))
+                update_priority.append('Np')
+
+                if control_ACsperwave:
+                    # density/ACtot based on ACsperwave
+                    paras['density'] = _func_density_vs_ACsperwave_Np_na_day(paras['ACsperwave'], Np, paras['ACtot'], paras['na'], paras['day'])
+                    to_update['density']=(_func_density_vs_ACsperwave_Np_na_day,('ACsperwave', 'Np', 'ACtot', 'na', 'day'))
+                    update_priority.append('density')   
+                else:
+                    # ACperwave based on density/ACtot
+                    paras['ACsperwave']=_func_ACsperwave_vs_density_day_Np(paras['density'], paras['day'], Np)
+                    to_update['ACsperwave']=(_func_ACsperwave_vs_density_day_Np,('density', 'day','Np'))
+                    update_priority.append('ACsperwave')
+
+            if paras['control_density']:
+                update_priority.append('ACtot')     # Update ACtot last
+            else:
+                update_priority.append('density')   # Update density last
+
+    # --------------- Network stuff --------------#
+    if paras['G']!=None:
+        paras['G'].choose_short(paras['Nsp_nav'])
+
+    # ------------------- From M0 to M1 ----------------------- #
+    if paras['mode_M1'] == 'standard':
+        paras['STS'] = None
+    else: 
+        paras['N_shocks'] = 0
+
+    paras['N_shocks'] = int(paras['N_shocks'])
+
+    # ------------ Building of AC --------------- #
+
+    def _func_AC(a, b):
+        return [int(a*b),b-int(a*b)]  
+
+    paras['AC']=_func_AC(paras['nA'], paras['ACtot'])               #number of air companies/operators
+
+    def _func_AC_dict(a, b, c):
+        if c[0]==c[1]:
+            return {c[0]:int(a*b)}
+        else:
+            return {c[0]:int(a*b), c[1]:b-int(a*b)}  
+
+    paras['AC_dict']=_func_AC_dict(paras['nA'], paras['ACtot'], paras['par'])                #number of air companies/operators
+
+
+    # ------------ Building paras dictionary ---------- #
+
+
+    paras.to_update = to_update
+
+    paras.to_update['AC'] = (_func_AC,('nA', 'ACtot'))
+    paras.to_update['AC_dict'] = (_func_AC_dict,('nA', 'ACtot', 'par'))
+
+    # Add update priority here
+
+    paras.update_priority=update_priority
+
+    paras.analyse_dependance()
+
+    return paras
+
+##################################################################################
+"""
+Functions of dependance between variables.
+"""
+def _func_density_vs_ACtot_na_day(ACtot, na, day):
+    """
+    Used to compute density when ACtot, na or day are variables.
+    """
+    return ACtot*na/float(day)
+
+def _func_density_vs_ACsperwave_Np_na_day(ACsperwave, Np, ACtot, na, day):
+    ACtot = _func_ACtot_vs_ACsperwave_Np(ACsperwave, Np)
+    return _func_density_vs_ACtot_na_day(ACtot, na, day)
+
+def _func_ACtot_vs_ACsperwave_Np(ACsperwave, Np):
+    """
+    Used to compute ACtot when ACsperwave or Np are variables.
+    """
+    return int(ACsperwave*Np)
+
+def _func_ACsperwave_vs_density_day_Np(density, day, Np):
+    """
+    Used to compute ACsperwave when density, day or Np are variables.
+    """
+    return int(float(density*day/unit)/float(Np))
+
+def _func_ACtot_vs_density_day_na(density, day, na):
+    """
+    Used to compute ACtot when density, day or na are variables.
+    """
+    return int(density*day/float(na))
+
+def _func_Np(day, width_peak, Delta_t):
+    """
+    Used to compute Np based on width of waves, duration of day and 
+    time between the end of a wave and the beginning of the nesx wave.
+    """
+    return int(_ceil(day/float(width_peak+Delta_t)))
+
+##################################################################################

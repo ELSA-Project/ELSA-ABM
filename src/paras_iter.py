@@ -19,18 +19,19 @@ from math import ceil as _ceil
 #import networkx as _nx
 
 #from tools_airports import get_paras as _get_paras, extract_flows_from_data as _extract_flows_from_data
-from utilities import Paras as _Paras#, network_whose_name_is as _network_whose_name_is
+from utilities import read_paras#, network_whose_name_is as _network_whose_name_is
 from general_tools import yes as _yes
-
-#--------------------------------------------------#
-from paras import paras # Import main parameters
-#--------------------------------------------------#
 
 version='2.9.5' # Forked from version 2.9.5 of ABMvars.
 
 ##################################################################################
 ################################### Parameters ###################################
 ##################################################################################
+
+paras = read_paras() # Import main parameters
+
+if paras['file_net'] == None:
+	fixnetwork=True       				#if fixnetwork='False' a new graph is generated at each iteration.
 
 # ---------------- Companies ---------------- #
 
@@ -65,9 +66,7 @@ par_iter=[[[1.,0.,10.**_e], [1.,0.,1.]] for _e in range(-3,4)]
 mode_M1 = 'standard' # sweep or standard
 if mode_M1 == 'standard':
 	N_shocks_iter=range(0,5,1)
-	STS = None
 else: 
-	STS = None  #Sector to Shut
 	STS_iter = paras['G'].nodes()
 
 # --------------------System parameters -------------------- #
@@ -133,15 +132,16 @@ if 'G' in paras_to_loop:
 ##################################################################################
 ################################# Post processing ################################
 ##################################################################################
-# DO NOT MODIFY THIS SECTION (unless you know what you are doing).
+# DO NOT MODIFY THIS SECTION.
 
 # -------------------- Post-processing -------------------- #
-
-par_iter=tuple([tuple([tuple([float(_v) for _v in _pp])  for _pp in _p])  for _p in par_iter]) # transformation in tuple, because arrays cannot be keys for dictionaries.
-
 # Add new parameters to the dictionary.
+
+paras['par_iter']=tuple([tuple([tuple([float(_v) for _v in _pp])  for _pp in _p])  for _p in paras['par_iter']]) # transformation in tuple, because arrays cannot be keys for dictionaries.
+paras['fixnetwork'] = paras['par_iter']
+
 for k,v in vars().items():
-	if k[-4:]=='iter' and k[:-5] in paras_to_loop:
-		paras[k] = v
+    if k[-4:]=='iter' and k[:-5] in paras_to_loop:
+        paras[k] = v
 
 paras['paras_to_loop'] = paras_to_loop

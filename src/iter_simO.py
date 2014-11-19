@@ -7,7 +7,6 @@ Created on Mon Dec 17 14:38:09 2012
 
 ===========================================================================
 This is the main interface to the model. The main functions are 
- - do_standard, which makes a single iteration of the model, 
  - average_sim, which makes several iterations of the model with the same
 parameters, 
  - iter_sim, which makes iterations of average_sim over several values of 
@@ -15,7 +14,7 @@ parameters,
 ===========================================================================
 """
 
-from simulationO import Simulation, build_path as build_path_single, post_process_queue, extract_aggregate_values_on_queue, extract_aggregate_values_on_network
+from simulationO import do_standard, build_path as build_path_single
 import pickle
 #import ABMvars
 import os
@@ -28,6 +27,7 @@ from itertools import izip
 from time import time, gmtime, strftime
 
 from general_tools import yes
+from utilities import read_paras_iter
 
 version='2.9.3'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
@@ -45,7 +45,6 @@ def parmap(f,X):
     [p.start() for p in proc]
     [p.join() for p in proc]
     return [p.recv() for (p,c) in pipe]
-
 
 #--------------------------------------------------------#
 
@@ -109,30 +108,6 @@ def loop(a, level, parass, thing_to_do=None, **args):
             print level[0], '=', i
             parass.update(level[0],i)
             loop(a, level[1:], parass, thing_to_do=thing_to_do, **args)
-   
-def do_standard((paras, G, i)):
-    """
-    Make the simulation and extract aggregate values.
-    New in 2.9.2: extracted from average_sim
-    """
-    results={} 
-    sim=Simulation(paras, G=G.copy(), verbose=False)
-    sim.make_simu(storymode=False)
-    sim.queue=post_process_queue(sim.queue)
-    
-    results_queue=extract_aggregate_values_on_queue(sim.queue, paras['par'])
-    results_G=extract_aggregate_values_on_network(sim.G)
-    
-    for met in results_G:
-        results[met]=results_G[met]
-            
-    for met in results_queue:
-        results[met]={tuple(p):[] for p in paras['par']}
-        for p in paras['par']:
-            results[met][tuple(p)]=results_queue[met][tuple(p)]
-
-    del sim
-    return results
  
 def average_sim(paras=None, G=None, save=1, do = do_standard, build_pat = build_path_average):#, mets=['satisfaction', 'regulated_F', 'regulated_FPs']):
     """
@@ -207,8 +182,8 @@ def iter_sim(paras, save=1, do = do_standard, build_pat = build_path_average):#,
     
 if __name__=='__main__':
 
-    #if yes('Ready?'):
-    #    results=iter_sim(ABMvars.paras)
+    if yes('Ready?'):
+        results=iter_sim(read_paras_iter())
     
     print 'Done.'
     

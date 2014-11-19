@@ -1,8 +1,20 @@
 #!/usr/bin/env python
 
+"""
+Created on Mon Dec 17 14:38:09 2012
+
+@author: earendil
+
+===========================================================================
+This is the main interface to the model. The main functions are 
+ - do_standard, which makes a single iteration of the model, 
+ - generate_traffic
+===========================================================================
+"""
+
 from simAirSpaceO import AirCompany, Network_Manager
 import networkx as nx
-from paras import paras
+#from paras import paras
 #from random import getstate, setstate, 
 from random import shuffle, uniform,  sample, seed, choice, gauss, randrange
 import pickle
@@ -11,7 +23,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import copy
-from utilities import draw_network_map
+from utilities import draw_network_map, read_paras, post_process_paras
 from math import ceil
 from general_tools import draw_network_and_patches, header, delay, clock_time, delay, date_human
 from tools_airports import extract_flows_from_data
@@ -80,10 +92,8 @@ def check_object(G):
     """
     Use to check if you have an old object. Used for legacy.
     """
-    
     return hasattr(G, 'comments')
         
-
 class Simulation:
     """
     Class Simulation. 
@@ -145,7 +155,7 @@ class Simulation:
             self.build_ACs_from_flows()
 
         if clean:
-            Netman.initialize_load(self.G, length_day = int(self.day/60.))
+            Netman.initialize_load(self.G, length_day = int(self.day/60.)) # TODO: check why I am doing this again.
 
         self.queue = Netman.build_queue(self.ACs)
 
@@ -196,7 +206,7 @@ class Simulation:
         shuffle(self.t0sp)
         for i,par in enumerate(self.pars):
             for j in range(self.AC[i]):
-                self.ACs[k]=AirCompany(k, self.Nfp, self.na, self.G.G_nav.pairs, par)
+                self.ACs[k]=AirCompany(k, self.Nfp, self.na, self.G.G_nav.connections(), par)
                 self.ACs[k].fill_FPs(self.t0sp[k], self.tau, self.G)
                 k+=1
         # if clean:  # Not sure if this is useful.
@@ -347,8 +357,7 @@ class Simulation:
     def mark_best_of_queue(self):
         for f in self.queue:
             f.best_fp_cost=f.FPs[0].cost
-            
-                          
+                       
 def post_process_queue(queue):
     """
     Used to post-process results. Every processes between the simulation and 
@@ -439,7 +448,33 @@ def compute_M1_trajectories(queue):
 
     return trajectories_nav
 
-def generate_traffic(paras, G, dump = None, simple_setup=True):
+def do_standard((paras, G, i)):
+    """
+    Make the simulation and extract aggregate values.
+    This one is used in particular by iter_sim
+    New in 2.9.2: extracted from average_sim
+    Changed in 2.9.4: taken from iter_simO
+    """
+    results={} 
+    sim=Simulation(paras, G=G.copy(), verbose=False)
+    sim.make_simu(storymode=False)
+    sim.queue=post_process_queue(sim.queue)
+    
+    results_queue=extract_aggregate_values_on_queue(sim.queue, paras['par'])
+    results_G=extract_aggregate_values_on_network(sim.G)
+    
+    for met in results_G:
+        results[met]=results_G[met]
+            
+    for met in results_queue:
+        results[met]={tuple(p):[] for p in paras['par']}
+        for p in paras['par']:
+            results[met][tuple(p)]=results_queue[met][tuple(p)]
+
+    del sim
+    return results
+
+def generate_traffic(G, save_file = None, simple_setup=True, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -447,10 +482,40 @@ def generate_traffic(paras, G, dump = None, simple_setup=True):
     Returns a set of M1 trajectories.
     If simple_setup is True, the function uses some default parameters suitable for 
     quick generation of traffic.
+    
+    @paras_control: dictionary of values which are externally controlled. Typically,
+    the number of flights.
+    @
     New in 2.9.4.
     """
     #GG = ABMvars.G
     #paras = ABMvars.paras.copy()
+    
+    paras = read_paras(post_process = False)
+    if simple_setup:
+        paras['file_net'] = None
+        paras['G'] = G
+        paras['Nfp'] = 2
+        paras['Nsp_nav'] = 2
+        paras['unit'] = 15
+        paras['days'] = 24.*60.
+        paras['file_traffic'] = None  
+        paras['ACtot'] = 1000 # TODO: I need to change this, for sure
+        paras['control_density'] = False
+        paras['departure_times'] = 'uniform'  # Maybe change this, include file.
+        paras['noise'] = 0.
+        paras['nA'] = 1.
+        paras['par'] = [[1.,0.,0.001], [1.,0.,1000.]]
+        paras['STS'] = None
+        paras['N_shocks'] = 0.
+        paras['parallel'] = True
+        paras['old_style_allocation'] = False
+        paras['force'] = True
+
+    for p,v in paras_control.items():
+        paras[p] = v
+
+    paras = post_process_paras(paras)
 
     print header(paras,'Generation of traffic', version, paras_to_display=['ACtot'])
 
@@ -466,11 +531,18 @@ def generate_traffic(paras, G, dump = None, simple_setup=True):
     print
     print
     print 'Global metrics for M1:'
-    print extract_aggregate_values_on_queue(queue, paras['par'])
-    print 'Global metrics for M0:'
-    print extract_aggregate_values_on_queue(M0_queue, paras['par'])
+    agg_results = extract_aggregate_values_on_queue(queue, paras['par'])
+    for met, res in agg_results.items():
+        for ac, met_res in res.items():
+            print '-', met, "for companies of type", ac, ":", met_res
     print
-    print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted])
+
+    if paras['N_shocks']!=0:
+        print 'Global metrics for M0:'
+        print extract_aggregate_values_on_queue(M0_queue, paras['par'])
+        print
+
+    print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted]), '/', len(sim.queue)
     print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
     #print "Satisfaction: "
     #print [f.satisfaction for f in sim.queue]
@@ -511,7 +583,7 @@ if __name__=='__main__':
     Manual single simulation used for "story mode" and debugging.
     """
     GG = paras['G']#ABMvars.G
-    paras = paras#ABMvars.paras.copy()
+    paras = read_paras()
 
     print header (paras,'SimulationO', version, paras_to_display=['ACtot'])
 
