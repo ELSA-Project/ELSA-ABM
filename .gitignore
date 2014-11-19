@@ -1,1 +1,3 @@
 abm_strategic/*.pyc
+abm_tactical/*.so
+abm_tactical/*.o
