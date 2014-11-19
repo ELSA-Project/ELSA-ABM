@@ -2,7 +2,7 @@
 
 from simAirSpaceO import AirCompany, Network_Manager
 import networkx as nx
-import ABMvars
+from paras import paras
 #from random import getstate, setstate, 
 from random import shuffle, uniform,  sample, seed, choice, gauss, randrange
 import pickle
@@ -510,8 +510,8 @@ if __name__=='__main__':
     """
     Manual single simulation used for "story mode" and debugging.
     """
-    GG = ABMvars.G
-    paras = ABMvars.paras.copy()
+    GG = paras['G']#ABMvars.G
+    paras = paras#ABMvars.paras.copy()
 
     print header (paras,'SimulationO', version, paras_to_display=['ACtot'])
 

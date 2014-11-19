@@ -17,7 +17,7 @@ parameters,
 
 from simulationO import Simulation, build_path as build_path_single, post_process_queue, extract_aggregate_values_on_queue, extract_aggregate_values_on_network
 import pickle
-import ABMvars
+#import ABMvars
 import os
 from string import split
 import numpy as np
@@ -27,13 +27,12 @@ from multiprocessing import Process, Pipe
 from itertools import izip
 from time import time, gmtime, strftime
 
-def yes(question):
-    ans=''
-    while not ans in ['Y','y','yes','Yes','N','n','No','no']:
-        ans=raw_input(question + ' (y/n)\n')
-    return ans in ['Y','y','yes','Yes']
+from general_tools import yes
 
-# This is for multithreading.
+version='2.9.3'
+main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
+
+# This is for parallel computation.
 def spawn(f):
     def fun(pipe,x):
         pipe.send(f(x))
@@ -47,8 +46,8 @@ def parmap(f,X):
     [p.join() for p in proc]
     return [p.recv() for (p,c) in pipe]
 
-version='2.9.2'
-main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
+
+#--------------------------------------------------------#
 
 def header(paras, paras_to_display=['departure_times','par','nA', 'ACtot', 'density','Delta_t','ACsperwave']):
     """
@@ -206,12 +205,10 @@ def iter_sim(paras, save=1, do = do_standard, build_pat = build_path_average):#,
     loop({p:paras[p + '_iter'] for p in paras['paras_to_loop']}, paras['paras_to_loop'], \
         paras, thing_to_do=average_sim, paras=paras, G=G, do = do, build_pat = build_pat)
     
-            
 if __name__=='__main__':
 
-    if yes('Ready?'):
-        results=iter_sim(ABMvars.paras)
-    #reduce_results(ABMvars.paras)
+    #if yes('Ready?'):
+    #    results=iter_sim(ABMvars.paras)
     
     print 'Done.'
     

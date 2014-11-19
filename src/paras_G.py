@@ -60,7 +60,7 @@ if paras_G['file_net_sec'] == None:
 
 
 # ----------- Polygons ---------------
-# Polygons corresponds to areas simulating the spatial extension of sectors.
+# Polygons correspond to areas simulating the spatial extension of sectors (in 2d).
 # They are used to detect which sector each navpoint belongs to.
 # Leave "None" for generation of new polygons.
 # Input should be a pickle file with a dictionnary of polygons: name: Polygon object from shapely module.

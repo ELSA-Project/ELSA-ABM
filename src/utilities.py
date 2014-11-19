@@ -179,7 +179,7 @@ class Paras(dict):
         """
         Changed in 2.9.4: self.update_priority instead of update_priority.
         """
-        paras[name_para]=new_value
+        self[name_para]=new_value
         # Everything before level_of_priority_required should not be updated, given the para being updated.
         lvl = self.levels.get(name_para, len(self.update_priority)) #level_of_priority_required
         #print name_para, 'being updated'
@@ -187,7 +187,7 @@ class Paras(dict):
         for j in range(lvl, len(self.update_priority)):
             k = self.update_priority[j]
             (f, args)=self.to_update[k]
-            vals=[paras[a] for a in args] 
+            vals=[self[a] for a in args] 
             self[k]=f(*vals)
 
     def analyse_dependance(self):

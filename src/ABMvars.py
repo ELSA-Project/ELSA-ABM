@@ -3,6 +3,8 @@
 Created on Thu Mar  7 15:15:30 2013
 
 @author: earendil
+
+Parameter file for the simulations.
 """
 
 # You can safely comment these two lines, it is just for me.
@@ -293,7 +295,7 @@ paras_to_loop = ['STS']
 if paras_to_loop == ['nA'] and par!=tuple([tuple([float(_v) for _v in _p])  for _p in [[1.,0.,0.001], [1.,0.,1000.]]]) :
     assert _yes('The set of par does not seem consistent with the loop on nA. Proceed?')
 
-# -------------- Stuff if G or airports in iterated ----------- #
+# -------------- Stuff if G or airports is iterated ----------- #
 
 if 'airports' in paras_to_loop and paras_to_loop[0]!='airports':
     if not _yes("You did not put 'airports' first in the sequence!. This is going to take much more time ! Continue?"):

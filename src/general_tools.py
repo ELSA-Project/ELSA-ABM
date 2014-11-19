@@ -42,10 +42,10 @@ def flip_polygon(pol):
     """
     return Polygon([(p[1], p[0]) for p in list(pol.exterior.coords)])
 
-def draw_network_and_patches(G,G_nav,polygons,draw_navpoints_edges=True, 
-            draw_sectors_edges=False, rep='.', save=True, name='network', 
-            show=True, flip_axes=False, trajectories=[], 
-            trajectories_type='navpoints', dpi = 100, figsize = None):
+def draw_network_and_patches(G,G_nav,polygons,draw_navpoints_edges=True, \
+    draw_sectors_edges=False, rep='.', save=True, name='network', \
+    show=True, flip_axes=False, trajectories=[], \
+    trajectories_type='navpoints', dpi = 100, figsize = None):
     """
     Quite general functions used to draw navigations points, sectors, and trajectories.
     """
