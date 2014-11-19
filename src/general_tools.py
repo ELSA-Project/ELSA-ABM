@@ -418,7 +418,7 @@ def clock_time():
     start=datetime.datetime.now()
     yield
     elapsed = datetime.datetime.now() - start
-    print 'Executed in ', str(elapsed)
+    print 'Executed in ', str(elapsed), 's.'
 
 def counter(i, end, start=0, message=''):
     """

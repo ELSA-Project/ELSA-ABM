@@ -25,7 +25,7 @@ import numpy as np
 import copy
 from utilities import draw_network_map, read_paras, post_process_paras
 from math import ceil
-from general_tools import draw_network_and_patches, header, delay, clock_time, delay, date_human
+from general_tools import draw_network_and_patches, header, delay, clock_time, delay, date_human, date_st
 from tools_airports import extract_flows_from_data
 #from utilitiesO import compare_networks
 
@@ -474,7 +474,7 @@ def do_standard((paras, G, i)):
     del sim
     return results
 
-def generate_traffic(G, save_file = None, simple_setup=True, **paras_control):
+def generate_traffic(G, paras_file = 'paras.py', save_file = None, simple_setup=True, starting_date = [2010, 6, 5, 10, 0, 0], **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -485,13 +485,14 @@ def generate_traffic(G, save_file = None, simple_setup=True, **paras_control):
     
     @paras_control: dictionary of values which are externally controlled. Typically,
     the number of flights.
-    @
+    @save_file: file for saving trajectories with the abm_tactical format.
+
     New in 2.9.4.
     """
     #GG = ABMvars.G
     #paras = ABMvars.paras.copy()
     
-    paras = read_paras(post_process = False)
+    paras = read_paras(paras_file=paras_file, post_process = False)
     if simple_setup:
         paras['file_net'] = None
         paras['G'] = G
@@ -500,9 +501,9 @@ def generate_traffic(G, save_file = None, simple_setup=True, **paras_control):
         paras['unit'] = 15
         paras['days'] = 24.*60.
         paras['file_traffic'] = None  
-        paras['ACtot'] = 1000 # TODO: I need to change this, for sure
+        paras['ACtot'] = 1000 
         paras['control_density'] = False
-        paras['departure_times'] = 'uniform'  # Maybe change this, include file.
+        paras['departure_times'] = 'uniform' 
         paras['noise'] = 0.
         paras['nA'] = 1.
         paras['par'] = [[1.,0.,0.001], [1.,0.,1000.]]
@@ -517,6 +518,7 @@ def generate_traffic(G, save_file = None, simple_setup=True, **paras_control):
 
     paras = post_process_paras(paras)
 
+    # Do a better header
     print header(paras,'Generation of traffic', version, paras_to_display=['ACtot'])
 
     with clock_time():
@@ -526,9 +528,6 @@ def generate_traffic(G, save_file = None, simple_setup=True, **paras_control):
         queue=post_process_queue(sim.queue)
         M0_queue=post_process_queue(sim.M0_queue)
 
-    #print 'ACs:'
-    #print sim.ACs
-    print
     print
     print 'Global metrics for M1:'
     agg_results = extract_aggregate_values_on_queue(queue, paras['par'])
@@ -538,22 +537,26 @@ def generate_traffic(G, save_file = None, simple_setup=True, **paras_control):
     print
 
     if paras['N_shocks']!=0:
-        print 'Global metrics for M0:'
-        print extract_aggregate_values_on_queue(M0_queue, paras['par'])
-        print
-
+        agg_results = extract_aggregate_values_on_queue(M0_queue, paras['par'])
+        for met, res in agg_results.items():
+            for ac, met_res in res.items():
+                print '-', met, "for companies of type", ac, ":", met_res
+    print
     print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted]), '/', len(sim.queue)
     print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
-    #print "Satisfaction: "
-    #print [f.satisfaction for f in sim.queue]
     print
 
     trajectories = compute_M1_trajectories(queue)
 
+    if save_file!=None:
+        write_trajectories_for_tact(G.G_nav, trajectories, fil=save_file, starting_date = starting_date)
+
     return trajectories
 
-def write_trajectories_file(G, trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+def write_trajectories_for_tact(G, trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+    os.system("mkdir -p " + os.path.dirname(fil))
     with open(fil, 'w') as f:
+        print >>f, str(len(trajectories)) + "\tNflights"
         for i,trajectory in enumerate(trajectories):
             x, y, ts = [], [], []
             t = 0.
@@ -562,7 +565,12 @@ def write_trajectories_file(G, trajectories, fil='../trajectories/trajectories.d
                 y.append(G.node[n]['coord'][1])
                 t = 0 if j==0 else t + G[n][trajectory[j-1]]['weight']
                 ts.append(date_abm_tactic(date_st(t, starting_date = starting_date)))
-            print >>f, i, "\t", len(t), "\t", [(x[j], ",", y[j], ",", 0., ",", ts[j], "\t") for j in range(len(trajectory))]
+            #print "len(trajectory):", len(trajectory)
+            #print [(x[j], ",", y[j], ",", 0., ",", ts[j], "\t") for j in range(len(trajectory))]
+            print >>f, str(i) + "\t" + str(len(trajectory)) + '\t',
+            for j in range(len(trajectory)):
+                print >>f, str(x[j]) + "," + str(y[j]) + "," + str(0.) + "," + str(ts[j]) + '\t',
+            print >>f, ''
 
     print "Trajectories saved in", fil
 
@@ -572,8 +580,8 @@ def date_abm_tactic(date):
     YYYY-MM-DD H:mm:s:0
     """
     year, month, day, hours, minutes, seconds = tuple(date)
-    month = str(month) if month<10 else "0" + str(month)
-    day = str(day) if day<10 else "0" + str(day)
+    month = str(month) if month>=10 else "0" + str(month)
+    day = str(day) if day>=10 else "0" + str(day)
 
     date_abm = date_human([str(year), month, day, str(hours), str(minutes), str(seconds)]) + ':0'
     return date_abm

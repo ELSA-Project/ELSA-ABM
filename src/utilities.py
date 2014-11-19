@@ -210,8 +210,8 @@ def network_whose_name_is(name):
         B=pickle.load(_f)
     return B
 
-def read_paras(rep = '.', file_name = 'paras.py', post_process = True):
-    paras_mod = imp.load_source("paras", join(rep,file_name))
+def read_paras(paras_file = 'paras.py', post_process = True):
+    paras_mod = imp.load_source("paras", paras_file)
     paras = paras_mod.paras
 
     if post_process:
@@ -219,8 +219,8 @@ def read_paras(rep = '.', file_name = 'paras.py', post_process = True):
 
     return paras
 
-def read_paras_iter(rep = '.', file_name = 'paras_iter.py'):
-    paras_mod = imp.load_source("paras_name", join(rep,file_name))
+def read_paras_iter(paras_file = 'paras.py'):
+    paras_mod = imp.load_source("paras_name", paras_file)
     paras = paras_mod.paras
 
     return paras
