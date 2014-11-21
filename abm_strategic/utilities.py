@@ -7,6 +7,7 @@ Created on Thu May 23 11:24:00 2013
 Utilies for the ABM. TODO: use general tools?
 """
 
+import os
 from mpl_toolkits.basemap import Basemap
 from math import sqrt, cos, sin, pi
 import numpy as np
@@ -18,8 +19,10 @@ import networkx as nx
 import imp
 import pickle
 from os.path import join
+from string import split
 
-version='2.9.0'
+from general_tools import  delay, date_human, date_st
+version='2.9.1'
 
 #seed(3)
 _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed','Red']
@@ -210,8 +213,70 @@ def network_whose_name_is(name):
         B=pickle.load(_f)
     return B
 
-def read_paras(paras_file = 'paras.py', post_process = True):
-    paras_mod = imp.load_source("paras", paras_file)
+def date_abm_tactic(date):
+    """
+    Transform a list [year, month, day, hours, minutes, seconds] in 
+    YYYY-MM-DD H:mm:s:0
+    """
+    year, month, day, hours, minutes, seconds = tuple(date)
+    month = str(month) if month>=10 else "0" + str(month)
+    day = str(day) if day>=10 else "0" + str(day)
+
+    date_abm = date_human([str(year), month, day, str(hours), str(minutes), str(seconds)]) + ':0'
+    pouet = split(date_abm,'_')# replace _ by a space
+    date_abm = pouet[0] + ' ' + pouet[1]
+    return date_abm
+
+def compute_M1_trajectories(queue):
+    """
+    Returns some trajectories (navpoint names) based on the given queue. 
+    All altitudes are set to 0.
+    """
+    trajectories_nav=[]
+    for f in queue:
+        try:
+            trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
+        except ValueError:
+            pass
+
+    return trajectories_nav
+
+def convert_trajectories(G, trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+    """
+    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+    """ 
+    trajectories_coords = []
+    for i,trajectory in enumerate(trajectories):
+        traj_coords = []
+        for j,n in enumerate(trajectory):
+            x = G.node[n]['coord'][0]
+            y = G.node[n]['coord'][1]
+            t = 0 if j==0 else t + G[n][trajectory[j-1]]['weight']
+            traj_coords.append((x, y, 0., t))
+        trajectories_coords.append(traj_coords)
+    return trajectories_coords
+
+def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+    """
+    Write a set of trajectories in the format for abm_tactical
+    @G: navpoint network.
+    """ 
+    os.system("mkdir -p " + os.path.dirname(fil))
+    with open(fil, 'w') as f:
+        print >>f, str(len(trajectories)) + "\tNflights"
+        for i,trajectory in enumerate(trajectories):
+            print >>f, str(i) + "\t" + str(len(trajectory)) + '\t',
+            for x, y, z, t in trajectory:
+                print >>f, str(x) + "," + str(y) + "," + str(z) + "," + date_abm_tactic(date_st(t, starting_date = starting_date)) + '\t',
+            print >>f, ''
+
+    print "Trajectories saved in", fil  
+
+def read_paras(paras_file = None, post_process = True):
+    if paras_file==None:
+        import paras as paras_mod
+    else:
+        paras_mod = imp.load_source("paras", paras_file)
     paras = paras_mod.paras
 
     if post_process:
@@ -220,7 +285,10 @@ def read_paras(paras_file = 'paras.py', post_process = True):
     return paras
 
 def read_paras_iter(paras_file = 'paras.py'):
-    paras_mod = imp.load_source("paras_name", paras_file)
+    if paras_file==None:
+        import paras_iter as paras_mod
+    else:
+        paras_mod = imp.load_source("paras_iter", paras_file)
     paras = paras_mod.paras
 
     return paras

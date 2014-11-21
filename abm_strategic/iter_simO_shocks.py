@@ -9,6 +9,7 @@ Created on Mon Dec 17 14:38:09 2012
 This file contains a alternative to the do_standard procedure of iter_simO
  in order to study the impact of shocks on sectors.
 ===========================================================================
+NOT UP TO DATE.
 """
 
 from iter_simO import iter_sim, yes, build_path_average

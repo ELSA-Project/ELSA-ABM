@@ -63,7 +63,7 @@ def generate_altitudes_for_traj(trajectories, distr_file = None, distr_type = "f
 
 	for traj in trajectories:
 		alt = distr()
-		for p in traj: #same altitude for all the trajectory
+		for p in traj: #same altitude for the whole trajectory
 			p[2] = 10*int(alt/10.) # To have trajectories separated by 10 FL.
 
 

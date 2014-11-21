@@ -3,28 +3,37 @@
 
 
 import sys
-sys.path.insert(1,'../engine')
+sys.path.insert(1,'../abm_tactical')
 import os
 from string import split
 
 from ABMtactic import simulation
 
 
+def do_ABM_tactical(input_file, output_file):
+	inpt = ["", input_file, output_file]
 
-#inpt = CharArray(2);
-main_dir = os.path.abspath('.')
-main_dir = split(main_dir, '/src')[0]
+	print "M1 source:", inpt[1]
+	print "Destination output:", inpt[2]
+	print
+	print
+	print "Running ABM Tactical model..."
 
-inpt = ["", os.path.join(main_dir, "trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat"), os.path.join(main_dir, "results/output.dat")]
+	simulation(inpt)
+
+	print
+	print
+	print "Done."
 
 
-print "M1 source:", inpt[1]
-print "Destination output:", inpt[2]
-print
-print
-print "Running model..."
-simulation(inpt)
+if __name__ == '__main__':
+	main_dir = os.path.abspath('.')
+	main_dir = split(main_dir, '/interface')[0]
 
-print
-print
-print "Done."
+	#input_file = os.path.join(main_dir, "trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat")
+	input_file = os.path.join(main_dir, "trajectories/M1/trajectories_alt.dat")
+	output_file = os.path.join(main_dir, "results/output.dat")
+	do_ABM_tactical(input_file, output_file)
+
+
+

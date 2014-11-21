@@ -3,7 +3,6 @@
  *  ElsaABM_v1
  *
  *  Created by Christian Bongiorno on 08/03/14.
- *  Copyright 2014 __MyCompanyName__. All rights reserved.
  *
  */
 #include "mQuery.h"
@@ -130,7 +129,7 @@ int _init_tool(TOOL_f *t,int N, CONF_t conf){
 	(*t).dist = falloc_vec(conf.t_w);
 	
 	(*t).sel_nvp_index=falloc_matrix(conf.n_tmp_nvp,2);
-	if((*t).sel_nvp_index==NULL) BuG("not enoght Memory\n");
+	if((*t).sel_nvp_index==NULL) BuG("not enough Memory\n");
 	
 	(*t).temp_angle=falloc_vec(conf.n_tmp_nvp);
 
@@ -859,7 +858,7 @@ int ABM(Aircraft_t **f, int N_f, CONF_t conf, SHOCK_t sh){
 #endif
 	
 
-// plot((*f)[i], conf);
+	// plot((*f)[i], conf);
 	TOOL_f tool;
 	_init_tool(&tool,N_f,conf);
 	

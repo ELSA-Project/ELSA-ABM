@@ -88,7 +88,6 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 			if(c[j]=='\0') BuG("BUG in M1 File -lx3\n");
 			(*flight)[i].nvp[h][2]=atof(&c[++j]);
 			
-			
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx4\n");
 			for(++j;c[j]!=' '&&c[j]!='\0';j++);
@@ -108,7 +107,7 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 }
 
 long double _find_value_string(char *config_file,char *label){
-	
+
 	FILE *rstream=fopen(config_file, "r");
 	if(rstream==NULL) BuG("BUG - configuration file doesn't exist\n");
 	
@@ -128,7 +127,7 @@ long double _find_value_string(char *config_file,char *label){
 	}
 	
 	fclose(rstream);
-	printf("Impossible to fine %s in config-file\n",label);
+	printf("Impossible to find %s in config-file\n",label);
 	exit(0);
 }
 
@@ -151,7 +150,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).f_lvl[1] = _find_value_string(config_file, "shock_f_lvl_max");
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
-	(*config).main_dir = "/home/earendil/Documents/ELSA/ABM_Tactic/ABM_FINAL";//TODO: change this. //_find_value_string(config_file, "main_dir");
+	(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";//TODO: change this. //_find_value_string(config_file, "main_dir");
 	return 1;
 }
 
@@ -185,7 +184,7 @@ int get_boundary( char *bound_file, CONF_t *config ){
 
 int get_temp_shock(CONF_t *conf){
 
-	char* rep_tail = "/config/shock_tmp.dat";
+	char* rep_tail = "/abm_tactical/config/shock_tmp.dat";
 	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*conf).main_dir, rep_tail) + 1);
 	sprintf(rep, "%s%s", (*conf).main_dir, rep_tail);
 	
