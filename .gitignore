@@ -1,5 +1,6 @@
 abm_strategic/*.pyc
 abm_tactical/*.pyc
+interface/*.pyc
 abm_tactical/*.so
 abm_tactical/*.o
 abm_tactical/ABMtactic.py

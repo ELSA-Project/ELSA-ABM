@@ -768,6 +768,7 @@ class Net(nx.Graph):
     def build(self, N, nairports, min_dis, generation_of_airports=True, Gtype='D', sigma=1., mean_degree=6, prelist=[], put_nodes_at_corners = False):
         """
         Build a graph of the given type, nodes, edges and possibly airports.
+        TODO: remove arg nairports, min_dis, generation of airports.
         """
         print 'Building random network of type', Gtype
         
