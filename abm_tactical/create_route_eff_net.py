@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from collections import Counter 
 import pylab as pl
@@ -22,6 +24,9 @@ to_OD2 = lambda z: to_str([z[0]])+','+to_str([z[1]])
 to_OD_inv  = lambda z: to_str([invgall(z[0])])+','+to_str([invgall(z[-1])])
 
 def select_heigths(th):
+	"""
+	Sorts the altitude th increasingly, decreasingly or half/half at random.
+	"""
 	coin=rd.choice(['up','down','both'])
 	if coin=='up' : th.sort()
 	if coin=='down': th.sort(reverse=True)
@@ -33,68 +38,96 @@ def select_heigths(th):
 		th=a+b
 	return th
 
-def rettifica(route,Eff,D,soglia):
-    Nf=len(route)
+def rettifica(routes, Eff, D, eff_target):
+	"""
+	Given all routes and a value of efficiency, modify the trajectories 
+	by creating a new point between two existing points chosen at random
+	on a trajectory. Modifies trajectories until the target efficiency 
+	is met.
+	Args:
+		routes: list of trajectories (list of points)
+		Eff: initial value of efficiency
+		D: direct path total length
+		eff_target: target for efficiency
+	Return:
+		routes: modified routes.
+	"""
+	Nf=len(routes)
 
-    while Eff<=soglia:
-		f=rd.choice(range(len(route)))
-		if len(route[f])<3:
+	while Eff<=eff_target:
+		f=rd.choice(range(len(routes)))
+		if len(routes[f])<3:
 			continue
-		p=rd.choice(range(1,len(route[f])-1))
+		p=rd.choice(range(1,len(routes[f])-1))
 
-		old=dist([route[f][p-1],route[f][p]])+dist([route[f][p+1],route[f][p]])
-		new=dist([route[f][p-1],route[f][p+1]])
+		old=dist([routes[f][p-1],routes[f][p]])+dist([routes[f][p+1],routes[f][p]])
+		new=dist([routes[f][p-1],routes[f][p+1]])
 		if new < old :
-			route[f][p][0]=pl.mean([route[f][p-1][0],route[f][p+1][0]])
-			route[f][p][1]=pl.mean([route[f][p-1][1],route[f][p+1][1]])
+			routes[f][p][0]=pl.mean([routes[f][p-1][0],routes[f][p+1][0]])
+			routes[f][p][1]=pl.mean([routes[f][p-1][1],routes[f][p+1][1]])
 			Eff=D/(D/Eff+ ((new-old)/Nf))
-            
-    return route
 
-def calculate_time(C,T,vm):
-	t=[0]*len(C)
-	t[0]=T
-	for i in range(1,len(C)):
-		dt=timedelta( seconds=dist(  [ to_coord(C[i-1]),to_coord(C[i])  ] )/vm)
-		t[i]=t[i-1]+ dt
+	return routes
+
+def calculate_time(C, T, vm):
+	"""
+	Compute times of crossings given a trajectory C and first time T.
+	"""
+	t = [0]*len(C)
+	t[0] = T
+	for i in range(1, len(C)):
+		dt = timedelta(seconds=dist([to_coord(C[i-1]), to_coord(C[i])])/vm)
+		t[i] = t[i-1] + dt
 	return t
 
-#~ Trova i vicini di posizione inferiore nella lista
 def neighboors_traj(x):
+	"""
+	Build the list of "neighbors" for trajectories. Two trajectories are neighbors 
+	if they intersect each other. Each trajectory checks the trajectories before
+	itself in the list.
+	"""
 	#xp=[LineString([gall(b) for b in a]) for a in x]
 	xp=[LineString(a) for a in x]
 	neig=[[j for j in range(i) if xp[i].intersects(xp[j])] for i in range(len(xp))]
 	
 	return neig
 
-def get_originale_net(config,newEff,Nflight):
-	fr=open(config['type'],'r')
-	x=fr.read()
-	fr.close()
+def get_originale_net(config, newEff, Nflight):
+	"""
+	Generate Nflight flights with distribution of altitude taken from 
+	the file in config['type']. 
+	"""
+	with open(config['type'],'r') as fr:
+		x=fr.read()
 	
+	# Number of flights for the altitude distribution
 	old_Nflight = int(x.split('\n')[0].split('\t')[0])
 
+	# Put trajectories in a good format?
 	x=[[[[float(b.split(',')[0]),float(b.split(',')[1])],float(b.split(',')[2]),datetime.strptime(b.split(',')[3],'%Y-%m-%d %H:%M:%S') ] for b in  a.split('\t')[2:-1] ] for a in x.split('\n')[1:-1]]
 	
+	# Compute velocities on each segment to have median velocity.
 	v=[dist([gall(f[i][0]),gall(f[i+1][0])])/(f[i+1][2]-f[i][2]).total_seconds() for f in x for i in range(1,len(f)-1)]
 	vm=pl.median(v)
 		
 	'Select from distribution OD for flights'
 	Ap=[[a[0][0],a[-1][0]] for a in x]
+	# Choose OD for new flights
 	Ap=[rd.choice(Ap) for a in range(Nflight)]
+
 
 	Aps=list(set([to_str([a[0]])+','+to_str([a[1]]) for a in Ap]))
 	Aps=[[to_coord_ng(a.split(',')[0])  ,to_coord_ng(a.split(',')[1] ) ] for a in Aps]
 	
-		
 	'Calculate angle between different OD'
+	# This is for putting half flights on odd FL and the other half on even FLs.
 	Ang=[mt.atan2(-(a[0][1]-a[1][1]),(a[0][0]-a[1][0]))  for a in [[gall(a[0]),gall(a[1])] for a in Ap]]
 	'Select from distribution height for fligths'
 	h=[(int(b[1])/10)*10. for a in x for b in a if b[1]>=240.]
 	hp=[a for a in h if a%20==0]
 	hd=[a for a in h if a%20!=0]
 	h=[hp,hd]
-	'choice differnet height respect to the direction - odd rule'
+	'choice different height respect to the direction - odd rule'
 	H=[rd.choice(h[Ang[i]<0]) for i in range(Nflight)]
 	T=[rd.choice([a[0][2] for a in x]) for i in range(Nflight)]
 	tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
@@ -160,12 +193,11 @@ def print_net(net,T,neig):
 	fw=open('OUTPUT_net_eff/'+in_neig(T),'w')
 	fw.write("\t\n".join(["\t".join([str(h) for h in neig[i]]) for i in range(len(neig))]))
 	fw.close()
-	
-	
+		
 def new_route(newEff,newNflight,nsim):
 
 	config={
-		'type':'DATA/inputAMB.dat',
+		'type':'../trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat',
 		'distr':'from_file',
 		'coll_free': True
 	}
