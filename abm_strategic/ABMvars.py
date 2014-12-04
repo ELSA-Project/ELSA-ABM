@@ -7,9 +7,7 @@ Created on Thu Mar  7 15:15:30 2013
 Parameter file for the simulations.
 """
 
-# You can safely comment these two lines, it is just for me.
-from import_exterior_libs import import_ext_libs
-import_ext_libs()
+import import_exterior_libs
 
 import pickle as _pickle
 import sys as _sys

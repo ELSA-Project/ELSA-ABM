@@ -3,12 +3,12 @@
 
 
 import sys
-sys.path.insert(1,'../abm_tactical')
+sys.path.insert(1, '..')
+
 import os
 from string import split
 
-from ABMtactic import simulation
-
+from abm_tactical.ABMtactic import simulation
 
 def do_ABM_tactical(input_file, output_file):
 	inpt = ["", input_file, output_file]

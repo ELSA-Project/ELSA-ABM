@@ -1,10 +1,12 @@
 abm_strategic/*.pyc
+abm_strategic/*sublime*
 abm_tactical/*.pyc
 interface/*.pyc
 abm_tactical/*.so
 abm_tactical/*.o
 abm_tactical/ABMtactic.py
 abm_tactical/ABMtactic_wrap.c
+abm_tactical/*sublime*
 results_tactical
 results_strategic
 networks

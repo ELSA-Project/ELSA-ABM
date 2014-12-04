@@ -20,8 +20,9 @@ to_coord_ng = lambda z : [float(z.split(' ')[0]),float(z.split(' ')[1])]
 pday = lambda x:  datetime.strftime(x,"%Y-%m-%d")
 to_OD = lambda z: to_str([z[0]])+','+to_str([z[-1]])
 to_OD2 = lambda z: to_str([z[0]])+','+to_str([z[1]])
-
 to_OD_inv  = lambda z: to_str([invgall(z[0])])+','+to_str([invgall(z[-1])])
+tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
+
 
 _version_ = "1.1"
 
@@ -51,42 +52,43 @@ def compute_efficicency(trajectories):
 	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
 	return pl.mean(S)/pl.mean(L), S
 
-def rectificate(routes, eff_target):
+def rectificate_trajectories(trajs, eff_target, dist_func = dist):
 	"""
-	Given all routes and a value of efficiency, modify the trajectories 
+	Given all trajectories and a value of efficiency, modify the trajectories 
 	by creating a new point between two existing points chosen at random
 	on a trajectory. Modifies trajectories until the target efficiency 
 	is met.
 
 	Args:
-		routes: list of trajectories (list of points)
+		trajs: list of trajectories (list of points)
 		Eff: initial value of efficiency
 		D: direct path total length
 		eff_target: target for efficiency
 
 	Return:
-		routes: modified routes.
+		trajs: modified trajectories.
 
 	Changed in 1.1: efficiency is computed internally. Stop criteria is < instead of <=.
+		Added kwarg dist_func.
 	"""
 
-	eff, S = compute_efficicency(routes)
-	Nf = len(routes)
+	eff, S = compute_efficicency(trajs)
+	Nf = len(trajs)
 
 	while eff < eff_target:
-		f=rd.choice(range(len(routes)))
-		if len(routes[f])<3:
+		f=rd.choice(range(len(trajs)))
+		if len(trajs[f])<3:
 			continue
-		p=rd.choice(range(1,len(routes[f])-1))
+		p=rd.choice(range(1,len(trajs[f])-1))
 
-		old=dist([routes[f][p-1],routes[f][p]])+dist([routes[f][p+1],routes[f][p]])
-		new=dist([routes[f][p-1],routes[f][p+1]])
+		old=dist_func([trajs[f][p-1],trajs[f][p]])+dist_func([trajs[f][p+1],trajs[f][p]])
+		new=dist_func([trajs[f][p-1],trajs[f][p+1]])
 		if new < old :
-			routes[f][p][0]=pl.mean([routes[f][p-1][0],routes[f][p+1][0]])
-			routes[f][p][1]=pl.mean([routes[f][p-1][1],routes[f][p+1][1]])
+			trajs[f][p][0]=pl.mean([trajs[f][p-1][0],trajs[f][p+1][0]])
+			trajs[f][p][1]=pl.mean([trajs[f][p-1][1],trajs[f][p+1][1]])
 			eff=S/(S/eff+ ((new-old)/Nf))
 
-	return routes
+	return trajs
 
 def calculate_time(C, T, vm):
 	"""
@@ -111,7 +113,7 @@ def neighboors_traj(x):
 	
 	return neig
 
-def get_originale_net(config, newEff, Nflight):
+def create_traffic(config, N_flights):
 	"""
 	Generate Nflight flights with distribution of altitude taken from 
 	the file in config['type']. 
@@ -132,6 +134,7 @@ def get_originale_net(config, newEff, Nflight):
 		
 	'Select from distribution OD for flights'
 	Ap=[[a[0][0],a[-1][0]] for a in x]
+
 	# Choose OD for new flights
 	Ap=[rd.choice(Ap) for a in range(Nflight)]
 
@@ -147,13 +150,12 @@ def get_originale_net(config, newEff, Nflight):
 	hp=[a for a in h if a%20==0]
 	hd=[a for a in h if a%20!=0]
 	h=[hp,hd]
-	'choice different height respect to the direction - odd rule'
+	'Choice different heights respect to the direction - odd rule'
 	H=[rd.choice(h[Ang[i]<0]) for i in range(Nflight)]
 	T=[rd.choice([a[0][2] for a in x]) for i in range(Nflight)]
-	tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
-	
 	T=[tf_time(a) for a in T]
 	
+	# Navigation points
 	nvp=list(set([str(b[0][0])+' '+str(b[0][1]) for a in x for b in a]))
 	
 	'Create Graph from Data'
@@ -166,7 +168,7 @@ def get_originale_net(config, newEff, Nflight):
 
 	'Calculate the shortest path on the net between OD'
 	to_str2 = lambda z: str(z[0])+' '+str(z[1])
-	#L=[g.shortest_paths(source=to_str2(a[0]),target=to_str2(a[1]),weights=g.es["weight"])[0][0] for a in Aps]
+	L=[g.shortest_paths(source=to_str2(a[0]),target=to_str2(a[1]),weights=g.es["weight"])[0][0] for a in Aps]
 	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
 	#S=pl.mean(S) # Srange...
 	#Eff=pl.mean(S)/pl.mean(L)
@@ -178,12 +180,19 @@ def get_originale_net(config, newEff, Nflight):
 	P=[[gV[e] for e in g.get_shortest_paths(to_str2(a[0]),to=to_str2(a[1]),weights=g.es["weight"])[0]] for a in Aps]
 	
 	routes=[[to_coord(a) for a in b] for b in P]
-	routes=rectificate(routes,Eff,S,newEff)
+
+	return routes, Ap, T
+
+def get_originale_net(config, newEff, Nflight):
+
+	routes, Ap, T = create_traffic(config, Nflight)
 	
-	print to_OD_inv(routes[0])
+	routes = rectificate_trajectories(routes, newEff)
 	
-	routes={to_OD_inv(a):a for a in routes}
-	routes=[routes[to_OD2(a)] for a in Ap]
+	#print to_OD_inv(routes[0])
+	
+	routes = {to_OD_inv(a):a for a in routes}
+	routes = [routes[to_OD2(a)] for a in Ap]
 	#~ NEW
 	neig=neighboors_traj(routes)
 			
@@ -200,20 +209,19 @@ def get_originale_net(config, newEff, Nflight):
 
 def print_net(net,T,neig):
 	in_f = lambda x: 'inputABM_n-'+str(x[2])+'_Eff-'+str(x[0])+'_Nf-'+str(x[1])+'.dat'
-	fw=open('OUTPUT_net_eff/'+in_f(T),'w')
-	fw.write(str(len(net))+'\tNflight\n')
-	for i in range(len(net)):
-		fw.write(str(i+1)+'\t'+str(len(net[i]))+'\t')
-		for p in net[i]:
-			fw.write(p[0].replace(' ',',')+','+str(p[1])+','+p[2]+'\t')
-		fw.write('\n')
-	fw.close()
+	with open('OUTPUT_net_eff/'+in_f(T),'w') as fw:
+		fw.write(str(len(net))+'\tNflight\n')
+		for i in range(len(net)):
+			fw.write(str(i+1)+'\t'+str(len(net[i]))+'\t')
+			for p in net[i]:
+				fw.write(p[0].replace(' ',',')+','+str(p[1])+','+p[2]+'\t')
+			fw.write('\n')
 	
 	in_neig = lambda x: 'neighboors_n-'+str(x[2])+'_Eff-'+str(x[0])+'_Nf-'+str(x[1])+'.dat'
-	fw=open('OUTPUT_net_eff/'+in_neig(T),'w')
-	fw.write("\t\n".join(["\t".join([str(h) for h in neig[i]]) for i in range(len(neig))]))
-	fw.close()
-		
+	
+	with open('OUTPUT_net_eff/'+in_neig(T),'w') as fw:
+		fw.write("\t\n".join(["\t".join([str(h) for h in neig[i]]) for i in range(len(neig))]))
+			
 def new_route(newEff,newNflight,nsim):
 
 	config={
