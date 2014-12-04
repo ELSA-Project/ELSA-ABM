@@ -23,6 +23,8 @@ to_OD2 = lambda z: to_str([z[0]])+','+to_str([z[1]])
 
 to_OD_inv  = lambda z: to_str([invgall(z[0])])+','+to_str([invgall(z[-1])])
 
+_version_ = "1.1"
+
 def select_heigths(th):
 	"""
 	Sorts the altitude th increasingly, decreasingly or half/half at random.
@@ -38,23 +40,40 @@ def select_heigths(th):
 		th=a+b
 	return th
 
-def rettifica(routes, Eff, D, eff_target):
+def compute_efficicency(trajectories):
+	"""
+	Compute the efficiency of a set of trajectories.
+	"""
+
+	L = [dist([trajectories[f][p-1],trajectories[f][p]]) for f in range(len(trajectories)) for p in range(1, len(trajectories[f]))]
+	S = [dist([trajectories[f][0],trajectories[f][-1]]) for f in range(len(trajectories))]
+	#L=[g.shortest_paths(source=to_str2(a[0]), target=to_str2(a[1]), weights=g.es["weight"])[0][0] for a in Aps]
+	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
+	return pl.mean(S)/pl.mean(L), S
+
+def rectificate(routes, eff_target):
 	"""
 	Given all routes and a value of efficiency, modify the trajectories 
 	by creating a new point between two existing points chosen at random
 	on a trajectory. Modifies trajectories until the target efficiency 
 	is met.
+
 	Args:
 		routes: list of trajectories (list of points)
 		Eff: initial value of efficiency
 		D: direct path total length
 		eff_target: target for efficiency
+
 	Return:
 		routes: modified routes.
-	"""
-	Nf=len(routes)
 
-	while Eff<=eff_target:
+	Changed in 1.1: efficiency is computed internally. Stop criteria is < instead of <=.
+	"""
+
+	eff, S = compute_efficicency(routes)
+	Nf = len(routes)
+
+	while eff < eff_target:
 		f=rd.choice(range(len(routes)))
 		if len(routes[f])<3:
 			continue
@@ -65,7 +84,7 @@ def rettifica(routes, Eff, D, eff_target):
 		if new < old :
 			routes[f][p][0]=pl.mean([routes[f][p-1][0],routes[f][p+1][0]])
 			routes[f][p][1]=pl.mean([routes[f][p-1][1],routes[f][p+1][1]])
-			Eff=D/(D/Eff+ ((new-old)/Nf))
+			eff=S/(S/eff+ ((new-old)/Nf))
 
 	return routes
 
@@ -96,6 +115,7 @@ def get_originale_net(config, newEff, Nflight):
 	"""
 	Generate Nflight flights with distribution of altitude taken from 
 	the file in config['type']. 
+	TODO: use networkx instead of igraph.
 	"""
 	with open(config['type'],'r') as fr:
 		x=fr.read()
@@ -146,10 +166,10 @@ def get_originale_net(config, newEff, Nflight):
 
 	'Calculate the shortest path on the net between OD'
 	to_str2 = lambda z: str(z[0])+' '+str(z[1])
-	L=[g.shortest_paths(source=to_str2(a[0]),target=to_str2(a[1]),weights=g.es["weight"])[0][0] for a in Aps]
-	S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
-	S=pl.mean(S)
-	Eff=pl.mean(S)/pl.mean(L)
+	#L=[g.shortest_paths(source=to_str2(a[0]),target=to_str2(a[1]),weights=g.es["weight"])[0][0] for a in Aps]
+	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
+	#S=pl.mean(S) # Srange...
+	#Eff=pl.mean(S)/pl.mean(L)
 	
 	#print "Efficence",Eff,Nflight
 	
@@ -157,26 +177,26 @@ def get_originale_net(config, newEff, Nflight):
 	
 	P=[[gV[e] for e in g.get_shortest_paths(to_str2(a[0]),to=to_str2(a[1]),weights=g.es["weight"])[0]] for a in Aps]
 	
-	route=[[to_coord(a) for a in b] for b in P]
-	route=rettifica(route,Eff,S,newEff)
+	routes=[[to_coord(a) for a in b] for b in P]
+	routes=rectificate(routes,Eff,S,newEff)
 	
-	print to_OD_inv(route[0])
+	print to_OD_inv(routes[0])
 	
-	route={to_OD_inv(a):a for a in route}
-	route=[route[to_OD2(a)] for a in Ap]
+	routes={to_OD_inv(a):a for a in routes}
+	routes=[routes[to_OD2(a)] for a in Ap]
 	#~ NEW
-	neig=neighboors_traj(route)
+	neig=neighboors_traj(routes)
 			
-	P=[[str(invgall(a)[0])+' '+str(invgall(a)[1]) for a in b] for b in route]
+	P=[[str(invgall(a)[0])+' '+str(invgall(a)[1]) for a in b] for b in routes]
 
-	'Create route'
-	route=[[] for i in range(len(P))]
+	'Create routes'
+	routes=[[] for i in range(len(P))]
 	for i in range(len(P)):
 		th=select_heigths([rd.choice(h[Ang[i]<0]) for j in range(len(P[i]))])
 		t=[datetime.strftime(a,"%Y-%m-%d %H:%M:%S:%f") for a in calculate_time(P[i],T[i],float(vm))]
-		route[i]= zip(P[i],th,t)
+		routes[i]= zip(P[i],th,t)
 		
-	return route,neig	
+	return routes,neig	
 
 def print_net(net,T,neig):
 	in_f = lambda x: 'inputABM_n-'+str(x[2])+'_Eff-'+str(x[0])+'_Nf-'+str(x[1])+'.dat'
@@ -197,7 +217,7 @@ def print_net(net,T,neig):
 def new_route(newEff,newNflight,nsim):
 
 	config={
-		'type':'../trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat',
+		'type':'../trajectories/trajectories.dat',
 		'distr':'from_file',
 		'coll_free': True
 	}
