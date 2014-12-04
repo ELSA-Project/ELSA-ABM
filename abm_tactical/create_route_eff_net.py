@@ -24,7 +24,7 @@ to_OD_inv  = lambda z: to_str([invgall(z[0])])+','+to_str([invgall(z[-1])])
 tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
 
 
-_version_ = "1.1"
+_version_ = "1.2"
 
 def select_heigths(th):
 	"""
@@ -46,13 +46,13 @@ def compute_efficicency(trajectories):
 	Compute the efficiency of a set of trajectories.
 	"""
 
-	L = [dist([trajectories[f][p-1],trajectories[f][p]]) for f in range(len(trajectories)) for p in range(1, len(trajectories[f]))]
+	L = [sum([dist([trajectories[f][p-1],trajectories[f][p]]) for p in range(1, len(trajectories[f]))]) for f in range(len(trajectories))]
 	S = [dist([trajectories[f][0],trajectories[f][-1]]) for f in range(len(trajectories))]
 	#L=[g.shortest_paths(source=to_str2(a[0]), target=to_str2(a[1]), weights=g.es["weight"])[0][0] for a in Aps]
 	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
-	return pl.mean(S)/pl.mean(L), S
+	return pl.mean(S)/pl.mean(L), pl.mean(S)
 
-def rectificate_trajectories(trajs, eff_target, dist_func = dist):
+def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func = dist, coords_func = lambda x: x, n_iter_max = 1000000, G=None):
 	"""
 	Given all trajectories and a value of efficiency, modify the trajectories 
 	by creating a new point between two existing points chosen at random
@@ -61,8 +61,6 @@ def rectificate_trajectories(trajs, eff_target, dist_func = dist):
 
 	Args:
 		trajs: list of trajectories (list of points)
-		Eff: initial value of efficiency
-		D: direct path total length
 		eff_target: target for efficiency
 
 	Return:
@@ -70,24 +68,43 @@ def rectificate_trajectories(trajs, eff_target, dist_func = dist):
 
 	Changed in 1.1: efficiency is computed internally. Stop criteria is < instead of <=.
 		Added kwarg dist_func.
+	Changed in 1.2: added dist_func, coords_func and n_iter_max, add_node_func, G.
 	"""
 
+	def add_node_func_coords(trajs, G, coords, f=None, p=None):
+		trajs[f][p][0] = coords[0]
+		trajs[f][p][1] = coords[1]
+
+		return trajs, G
+
+	if add_node_func==None: add_node_func = add_node_func_coords
+
+	print "Rectificating trajectories..."
 	eff, S = compute_efficicency(trajs)
+	print "Old efficiency:", eff
 	Nf = len(trajs)
 
-	while eff < eff_target:
-		f=rd.choice(range(len(trajs)))
+	n_iter = 0
+	while eff < eff_target or n_iter>n_iter_max:
+		f = rd.choice(range(len(trajs)))
 		if len(trajs[f])<3:
 			continue
-		p=rd.choice(range(1,len(trajs[f])-1))
+		p = rd.choice(range(1,len(trajs[f])-1))
 
-		old=dist_func([trajs[f][p-1],trajs[f][p]])+dist_func([trajs[f][p+1],trajs[f][p]])
-		new=dist_func([trajs[f][p-1],trajs[f][p+1]])
-		if new < old :
-			trajs[f][p][0]=pl.mean([trajs[f][p-1][0],trajs[f][p+1][0]])
-			trajs[f][p][1]=pl.mean([trajs[f][p-1][1],trajs[f][p+1][1]])
+		#old=dist_func([trajs[f][p-1],trajs[f][p]])+dist_func([trajs[f][p+1],trajs[f][p]])
+		cc_before, cc, cc_after = coords_func(trajs[f][p-1]), coords_func(trajs[f][p]), coords_func(trajs[f][1])
+		old = dist_func([cc_before, cc]) + dist_func([cc_after, cc])
+		new = dist_func([cc_before, cc_after])
+ 		if new < old :
+ 			coords = [pl.mean([cc_before[0], cc_after[0]]), pl.mean([cc_before[1], cc_after[1]])]
+ 			trajs, G = add_node_func(trajs, G, coords, f=f, p=p)
+			# trajs[f][p][0]=pl.mean([cc_before[0], cc_after[0]])
+			# trajs[f][p][1]=pl.mean([cc_before[1], cc_after[1]])
 			eff=S/(S/eff+ ((new-old)/Nf))
 
+		n_iter += 1
+
+	print "New efficiency:", eff
 	return trajs
 
 def calculate_time(C, T, vm):

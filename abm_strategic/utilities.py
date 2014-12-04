@@ -241,7 +241,7 @@ def compute_M1_trajectories(queue):
 
     return trajectories_nav
 
-def convert_trajectories(G, trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+def convert_trajectories(G, trajectories, starting_date = [2010, 6, 5, 10, 0, 0]):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
     """ 
@@ -252,7 +252,7 @@ def convert_trajectories(G, trajectories, fil='../trajectories/trajectories.dat'
             x = G.node[n]['coord'][0]
             y = G.node[n]['coord'][1]
             t = 0 if j==0 else t + G[n][trajectory[j-1]]['weight']
-            traj_coords.append((x, y, 0., t))
+            traj_coords.append([x, y, 0., t])
         trajectories_coords.append(traj_coords)
     return trajectories_coords
 

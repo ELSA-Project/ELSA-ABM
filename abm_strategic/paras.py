@@ -7,10 +7,6 @@ Created on Thu Mar  7 15:15:30 2013
 Parameter file for the a single simulation.
 """
 
-# You can safely comment these two lines, it is useless.
-from import_exterior_libs import import_ext_libs as _import_ext_libs
-_import_ext_libs()
-
 import pickle as _pickle
 import sys as _sys
 from math import ceil as _ceil

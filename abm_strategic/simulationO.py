@@ -8,7 +8,7 @@ Created on Mon Dec 17 14:38:09 2012
 ===========================================================================
 This is the main interface to the model. The main functions are 
  - do_standard, which makes a single iteration of the model, 
- - generate_traffic
+ - generate_traffic, used by tactical model
 ===========================================================================
 """
 
@@ -468,9 +468,10 @@ def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, 
     If simple_setup is True, the function uses some default parameters suitable for 
     quick generation of traffic.
     
-    @paras_control: dictionary of values which are externally controlled. Typically,
+    Args:
+        paras_control: dictionary of values which are externally controlled. Typically,
     the number of flights.
-    @save_file: file for saving trajectories with the abm_tactical format.
+        save_file: file for saving trajectories with the abm_tactical format.
 
     New in 2.9.4.
     """
