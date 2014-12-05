@@ -19,16 +19,34 @@ from abm_strategic.utilities import draw_network_map
 def do_plop():
 	#from abm_strategic.paras_G import paras_G
 	#G = prepare_hybrid_network(paras_G)
+
+
 	sys.path.insert(1, '../abm_strategic')
 	with open("../networks/D_N44_nairports22_cap_constant_C5_w_coords_Nfp2.pic", 'r') as f:
 		G = pickle.load(f)
-	trajectories = generate_traffic(G, paras_file = '../abm_strategic/paras.py', save_file = None, simple_setup=True, starting_date = [2010, 6, 5, 10, 0, 0], ACtot=3)
-	def d((p1, p2)):
+
+	def get_coords(nvp):
+		return G.G_nav.node[nvp]['coord']
+
+	def add_node(trajs, G, coords, f, p):
+		new_node = len(G.nodes())
+		G.add_node(new_node, coord = coords)
+		trajs[f][p] = new_node
+
+		return trajs, G
+
+	trajectories = generate_traffic(G, paras_file = '../abm_strategic/paras.py', save_file = None,  simple_setup=True, starting_date = [2010, 6, 5, 10, 0, 0], coordinates = False, ACtot=3)
+	#def d((p1, p2)):
+	#	return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+	def d((n1, n2)):
+		p1 = get_coords(n1)
+		p2 = get_coords(n2)
 		return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
 	print trajectories[0]
 	print
-	traj_eff = rectificate_trajectories(trajectories, 0.995, dist_func = d)
+	traj_eff = rectificate_trajectories(trajectories, 0.995, dist_func = d, add_node_func = add_node, coords_func =  get_coords, G = G.G_nav)
 
 	print traj_eff[0]
 

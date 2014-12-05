@@ -41,13 +41,13 @@ def select_heigths(th):
 		th=a+b
 	return th
 
-def compute_efficicency(trajectories):
+def compute_efficicency(trajectories, dist_func = dist):
 	"""
 	Compute the efficiency of a set of trajectories.
 	"""
 
-	L = [sum([dist([trajectories[f][p-1],trajectories[f][p]]) for p in range(1, len(trajectories[f]))]) for f in range(len(trajectories))]
-	S = [dist([trajectories[f][0],trajectories[f][-1]]) for f in range(len(trajectories))]
+	L = [sum([dist_func([trajectories[f][p-1],trajectories[f][p]]) for p in range(1, len(trajectories[f]))]) for f in range(len(trajectories))]
+	S = [dist_func([trajectories[f][0],trajectories[f][-1]]) for f in range(len(trajectories))]
 	#L=[g.shortest_paths(source=to_str2(a[0]), target=to_str2(a[1]), weights=g.es["weight"])[0][0] for a in Aps]
 	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
 	return pl.mean(S)/pl.mean(L), pl.mean(S)
@@ -71,7 +71,7 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	Changed in 1.2: added dist_func, coords_func and n_iter_max, add_node_func, G.
 	"""
 
-	def add_node_func_coords(trajs, G, coords, f=None, p=None):
+	def add_node_func_coords(trajs, G, coords, f, p):
 		trajs[f][p][0] = coords[0]
 		trajs[f][p][1] = coords[1]
 
@@ -80,7 +80,7 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	if add_node_func==None: add_node_func = add_node_func_coords
 
 	print "Rectificating trajectories..."
-	eff, S = compute_efficicency(trajs)
+	eff, S = compute_efficicency(trajs, dist_func = dist_func)
 	print "Old efficiency:", eff
 	Nf = len(trajs)
 
@@ -91,15 +91,12 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 			continue
 		p = rd.choice(range(1,len(trajs[f])-1))
 
-		#old=dist_func([trajs[f][p-1],trajs[f][p]])+dist_func([trajs[f][p+1],trajs[f][p]])
-		cc_before, cc, cc_after = coords_func(trajs[f][p-1]), coords_func(trajs[f][p]), coords_func(trajs[f][1])
-		old = dist_func([cc_before, cc]) + dist_func([cc_after, cc])
-		new = dist_func([cc_before, cc_after])
+		cc_before, cc_after = coords_func(trajs[f][p-1]), coords_func(trajs[f][p+1])
+ 		old = dist_func([trajs[f][p-1], trajs[f][p]]) + dist_func([trajs[f][p+1], trajs[f][p]])
+ 		new = dist_func([trajs[f][p-1], trajs[f][p+1]])
  		if new < old :
  			coords = [pl.mean([cc_before[0], cc_after[0]]), pl.mean([cc_before[1], cc_after[1]])]
- 			trajs, G = add_node_func(trajs, G, coords, f=f, p=p)
-			# trajs[f][p][0]=pl.mean([cc_before[0], cc_after[0]])
-			# trajs[f][p][1]=pl.mean([cc_before[1], cc_after[1]])
+ 			trajs, G = add_node_func(trajs, G, coords, f, p)
 			eff=S/(S/eff+ ((new-old)/Nf))
 
 		n_iter += 1

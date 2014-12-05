@@ -459,7 +459,7 @@ def do_standard((paras, G, i)):
     del sim
     return results
 
-def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, starting_date = [2010, 6, 5, 10, 0, 0], **paras_control):
+def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, starting_date = [2010, 6, 5, 10, 0, 0], coordinates = True, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -529,12 +529,15 @@ def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, 
     print
 
     trajectories = compute_M1_trajectories(queue)
-    trajectories_coords = convert_trajectories(G.G_nav, trajectories)
+    if coordinates:
+        trajectories_coords = convert_trajectories(G.G_nav, trajectories)
 
-    if save_file!=None:
-        write_trajectories_for_tact(trajectories_coords, fil=save_file, starting_date = starting_date)
+        if save_file!=None:
+            write_trajectories_for_tact(trajectories_coords, fil=save_file, starting_date = starting_date)
 
-    return trajectories_coords
+        return trajectories_coords
+    else:
+        return trajectories
 
 if __name__=='__main__': 
     """
