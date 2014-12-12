@@ -72,12 +72,14 @@ def do_ABM_tactical(input_file, output_file):
 
 if __name__ == '__main__':
 	main_dir = os.path.abspath(__file__)
-	main_dir = os.path.join(main_dir, '..')
+	main_dir = os.path.split(os.path.dirname(main_dir))[0]
+	print main_dir
 
+	print
 	#input_file = os.path.join(main_dir, "trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat")
 	input_file = os.path.join(main_dir, "trajectories/M1/trajectories_alt.dat")
 	output_file = os.path.join(main_dir, "results/output.dat")
-	#do_ABM_tactical(input_file, output_file)
-	do_plop()
+	do_ABM_tactical(input_file, output_file)
+	#do_plop()
 
 

@@ -157,27 +157,27 @@ int get_configuration(char *config_file,CONF_t *config){
 int get_boundary( char *bound_file, CONF_t *config ){
 	FILE *rstream=fopen(bound_file, "r");
 	
-	if(rstream==NULL) BuG("BUG in Bound File\n");
+	if(rstream==NULL) BuG("No Bound File found\n");
+	
+	//Finding the number of Points on the boundaries
 	char c[R_BUFF];
 	int Nbound,i,j;
 	for(Nbound=0;fgets(c, R_BUFF, rstream);Nbound++);
-	
 	(*config).Nbound=Nbound;
 	fclose(rstream);
 	
+	//Actually reading the file
 	rstream=fopen(bound_file, "r");
-	
 	(*config).bound = falloc_matrix(Nbound, 2);
 	for(i=0;fgets(c, R_BUFF, rstream)&&i<Nbound;i++){
 		(*config).bound[i][0]=atof(c);
 		for(j=0;c[j]!='\t'&&c[j]!=' ';j++);
 		(*config).bound[i][1]=atof(&c[++j]);
 	}
-	
 	fclose(rstream);
 	
 	if((*config).bound[0][0]!=(*config).bound[(*config).Nbound-1][0] || (*config).bound[0][1]!=(*config).bound[(*config).Nbound-1][1] )
-		BuG("Please last point of the Boundary as to be the same of the first\n");
+		BuG("Last point of the Boundary has to be the same than the first.\n");
 	
 	return 1;
 }

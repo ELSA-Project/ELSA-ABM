@@ -96,8 +96,6 @@ def voronoi_bis(X,Y):
     m = max(np.abs(X).max(), np.abs(Y).max())*1e5
     P[X.size:,0] = -m, -m, +m, +m
     P[Y.size:,1] = -m, +m, -m, +m
-    #print P
-    #print
     D = matplotlib.tri.Triangulation(P[:,0],P[:,1])
     T = D.triangles
     n = T.shape[0]
