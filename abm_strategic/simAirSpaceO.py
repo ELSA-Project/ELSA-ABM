@@ -22,7 +22,7 @@ from string import split
 import copy
 from os.path import join
 
-version='2.9.8'
+version='2.9.9'
 
 class NoShortH(Exception):
     """ 
@@ -562,6 +562,7 @@ class Flight:
         Changed in 2.9.6: use the convert_path method of the Net object.
         New in 2.9.6: comes from AirCompany object.
         Changed in 2.9.7: ai and aj are source and destination.
+        Changed in 2.9.9: resolved a serious bug of references on paths.
         """
 
         ai, aj = self.source, self.destination
@@ -584,7 +585,7 @@ class Flight:
         u=[[(cp, t0sp + i*tau, utility(self.par, SP[0][-1], t0sp, c, t0sp + i*tau),p) for p,cp,c in SP] for i in range(self.Nfp)\
             if utility(self.par,SP[0][-1], t0sp, SP[0][-1],t0sp + i*tau)<=uworst]
             
-        fp=[FlightPlan(a[0],a[1],a[2],self.id,a[3]) for a in sorted([item for sublist in u for item in sublist], key=lambda a: a[2])[:self.Nfp]]
+        fp=[FlightPlan(a[0][:],a[1],a[2],self.id,a[3][:]) for a in sorted([item for sublist in u for item in sublist], key=lambda a: a[2])[:self.Nfp]]
 
         if len(fp)!=self.Nfp:
             raise Exception('Boum', len(fp))
