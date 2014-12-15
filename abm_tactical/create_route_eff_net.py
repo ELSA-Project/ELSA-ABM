@@ -86,8 +86,8 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	Changed in 1.3: added probabilities. Broken the legacy with coordinatesbased tarjectories.
 	"""
 
-	def add_node_func_coords(trajs, G, coords, f, p, groups, group_new_nodes, dict_nodes_traj):
-		dict_nodes_traj[tuple(trajs[f][p])].remove(f) # PROBLEM
+	def add_node_func_coords(trajs, G, coords, f, p, groups, dict_nodes_traj):
+		dict_nodes_traj[tuple(trajs[f][p])].remove(f) # PROBLEM: TO Update
 
 		trajs[f][p][0] = coords[0]
 		trajs[f][p][1] = coords[1]
@@ -104,29 +104,25 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	print "Old efficiency:", eff
 	Nf = len(trajs)
 
+	# Compatible with legacy ?
 	dict_nodes_traj = {}
 	for f in range(Nf):
 		for p in trajs[f][1:-1]:
-			#if p in dict_nodes_traj.keys():
 			dict_nodes_traj[p] = dict_nodes_traj.get(p, []) + [f] # to each point, associates the list of flights going through.
-			if len(dict_nodes_traj[p]) == 0:
-				print "PROBLEM", f, p
 
 	if groups=={}: 
 		groups['all'] = dict_nodes_traj.keys() 
-		group_new_nodes = 'all'
 		probabilities['all'] = 1.
+	
+	# Remove all points in groups which are not crossed by any flights.
+	for g, nodes in groups.items():
+		nodes_copy = nodes[:]
+		for n in nodes_copy:
+			if not n in dict_nodes_traj.keys(): groups[g].remove(n)
 
-		#proba_f = [sum([probabilities[trajs[f][i]] for i in range(1,len(trajs[f])-1)]) for f in range(len(trajs))]
-		#proba_f = np.array(proba_f)/sum(proba_f)
-	#else:
-		#proba_f = None
 	all_groups = groups.keys()
-	#assert not "new_nodes" in groups.keys()
-	#groups['new_nodes'] = []
-	#probabilities['new_nodes'] = 1./(1. + len(groups))
+
 	probas_g = np.array([probabilities[gg] for gg in all_groups])
-	#probas_g = probas_g/sum(probas_g)
 
 	n_iter = 0
 	while eff < eff_target or n_iter>n_iter_max:
@@ -136,27 +132,18 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 		#print "n=", n, "; len(dict_nodes_traj[n]) = ", len(dict_nodes_traj[n])
 		f = choice(dict_nodes_traj[n])
 
-		p = trajs[f].index(n)
-
-		#f = choice(range(len(trajs)), p=proba_f)
 		if len(trajs[f])<3:
 			continue
-		#if probabilities!={}:
-		#	proba = [probabilities[trajs[f][i]] for i in range(1,len(trajs[f])-1)]
-		#	proba = np.array(proba)/sum(proba)
-		#else:
-		#	proba = None
-		#p = rd.choice(range(1,len(trajs[f])-1))
-		#p = choice(range(1,len(trajs[f])-1), p=proba)
+
+		p = trajs[f].index(n)
 
 		cc_before, cc_after = coords_func(trajs[f][p-1]), coords_func(trajs[f][p+1])
  		old = dist_func([trajs[f][p-1], trajs[f][p]]) + dist_func([trajs[f][p+1], trajs[f][p]])
  		new = dist_func([trajs[f][p-1], trajs[f][p+1]])
  		if new < old :
  			coords = [pl.mean([cc_before[0], cc_after[0]]), pl.mean([cc_before[1], cc_after[1]])]
- 			trajs, G, groups, dict_nodes_traj = add_node_func(trajs, G, coords, f, p, groups, group_new_nodes, dict_nodes_traj)
+ 			trajs, G, groups, dict_nodes_traj = add_node_func(trajs, G, coords, f, p, groups, dict_nodes_traj)
 			eff=S/(S/eff+ ((new-old)/Nf))
-			 # Remove the flight point from the list of this point.
 
 		n_iter += 1
 

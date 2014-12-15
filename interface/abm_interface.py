@@ -18,6 +18,7 @@ def find_group(element, groups):
 	for g, els in groups.items():
 		for el in els:
 			if el == element: break
+		if el == element: break
 
 	return g
 	#b = {c:g for g in a.keys() for c in a[g]}
@@ -35,18 +36,18 @@ def do_plop():
 	def get_coords(nvp):
 		return G.G_nav.node[nvp]['coord']
 
-	def add_node(trajs, G, coords, f, p, groups, group_new_node, dict_nodes_traj):
+	def add_node(trajs, G, coords, f, p, groups, dict_nodes_traj):
+		g = find_group(trajs[f][p], groups)
 		if len(dict_nodes_traj[trajs[f][p]])>1:
 			dict_nodes_traj[trajs[f][p]].remove(f)
 		else:
 			del dict_nodes_traj[trajs[f][p]]
-			g = find_group(trajs[f][p], groups)
 			groups[g].remove(trajs[f][p])
 
 		new_node = len(G.nodes())
 		G.add_node(new_node, coord = coords)
 		trajs[f][p] = new_node
-		groups[group_new_node].append(new_node)
+		groups[g].append(new_node)
 		dict_nodes_traj[new_node] = [f]
 
 		return trajs, G, groups, dict_nodes_traj
@@ -62,12 +63,20 @@ def do_plop():
 		p2 = get_coords(n2)
 		return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
-	print trajectories
-	print
-	probabilities = {n:1./float(len(G.G_nav.nodes())) for n in G.G_nav.nodes()}	
+	#print trajectories
+	#print
+	#probabilities = {n:1./float(len(G.G_nav.nodes())) for n in G.G_nav.nodes()}	
 	#print probabilities.keys()
+
+	groups = {}
+	for n in G.G_nav.nodes():
+		gg = np.random.choice(["A", "B"])
+		groups[gg] = groups.get(gg, []) + [n]
+
+	probabilities = {"A":0.7, "B":0.3}
+
 	traj_eff = rectificate_trajectories(trajectories, 0.995, dist_func = d, add_node_func = add_node, coords_func =  get_coords,
-		 G = G.G_nav, probabilities = probabilities)
+		 G = G.G_nav, groups = groups, probabilities = probabilities)
 
 	print traj_eff
 
