@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+sys.path.insert(1,'../Modules')
 from string import split
 import os
 from math import *
@@ -463,7 +464,6 @@ def get_set(paras, save=True, my_company='', redo_FxS=True, force=0, devset=Fals
         print 'done.'
     except (IOError, AssertionError):
         print 'fail.'
-        raise
         try :
             print 'I try to load the set (' + paras['mode'] + ') from data_init...',
             assert not force
@@ -487,10 +487,6 @@ def get_set(paras, save=True, my_company='', redo_FxS=True, force=0, devset=Fals
             db.close()
             if save:
                 seth.save_pieces()
-        except:
-            raise
-    except:
-        raise
 
     # Legacy
     if not hasattr(seth, "paras"):
@@ -1514,7 +1510,7 @@ class DevSet(Set):
         
         self.type_of_deviation=paras['type_of_deviation']
         self.big_filtre=paras['filtre'] + '_' + paras['type_zone'] + paras['zone']
-        self.period=paras['period']
+        #self.period=paras['period']
         self.cut_alt=paras['cut_alt']
         self.only_net=only_net
         self.d=paras['d']
@@ -2044,6 +2040,21 @@ def bet(G,nodes,flights,d,all_pairs):
             bc[n]=sig/float(len(pairs_entry_exit))
         return bc
 
+def bet_OD(G, OD=None):
+    if OD==None:
+        return nx.betweenness_centrality(G)
+    else:
+        shortest_paths = {p:list(nx.all_shortest_paths(G, source=p[0], target=p[1])) for p in OD}
+
+        bc={n:0 for n in G.nodes()}
+        for n in bc.keys():
+            sig = 0.
+            for p in shortest_paths.values():
+                if len(p)!=0:
+                    sig += float(len([1 for pp in p if n in pp]))/float(len(p))
+            bc[n] = sig/float(len(OD))
+        return bc
+
 def build_path(paras,version,full=True, prefix=None):
     if prefix == None:
         prefix = paras['main_rep']
@@ -2329,7 +2340,6 @@ def extract_flows_from_data(paras, nodes, pairs = []):
                 flights_selected.append(f)
 
     return flows, times, flights_selected
-
 
 if __name__=='__main__':
     paras = get_paras()

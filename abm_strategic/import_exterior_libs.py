@@ -22,9 +22,10 @@ list_of_external_files = ['/home/earendil/Documents/ELSA/Modules/general_tools.p
 if len(sys.argv)>1 and sys.argv[1] == 'b':
 	for fil in list_of_external_files:
 		#libdir = os.path.join(thisdir, '../' + fil)
-
+		print "Copying lib from "
 		libdir = os.path.join(thisdir, '../libs/' + split(fil, "/")[-1])
 
 		os.system("cp " + fil + " " + libdir)
 		if libdir not in sys.path:
 			sys.path.insert(1, libdir)
+

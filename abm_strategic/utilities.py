@@ -22,6 +22,7 @@ from os.path import join
 from string import split
 
 from general_tools import  delay, date_human, date_st
+from tools_airports import bet_OD
 version='2.9.1'
 
 #seed(3)
@@ -30,6 +31,7 @@ _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRe
 #shuffle(_colors)
 
 def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=True, load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True):
+    print "Drawing network..."
     x_min=min([G.node[n]['coord'][0]/60. for n in G.nodes()])-0.5
     x_max=max([G.node[n]['coord'][0]/60. for n in G.nodes()])+0.5
     y_min=min([G.node[n]['coord'][1]/60. for n in G.nodes()])-0.5
@@ -86,9 +88,7 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
             pass
     
     max_w=np.max([w for vois in weights.values() for w in vois.values()])
-    
-    print 'max_w', max_w
-    
+     
     for n,vois in weights.items():
         for v,w in vois.items():
            # if G.node[n]['m1'] and G.node[v]['m1']:
@@ -410,6 +410,36 @@ def post_process_paras(paras):
     paras.analyse_dependance()
 
     return paras
+
+def select_interesting_navpoints(G, OD=None, N_per_sector=1, metric="centrality"):
+    """
+    Select N_per_sector interesting navpoints per sector.
+    Shall we compute the metric on the subnetwork?
+    """
+
+    try:
+        assert hasattr(G, "G_nav")
+    except AssertionError:
+        raise Exception("Need an hybrid network (sectors+navpoints) in input.")
+
+    if metric=="centrality":
+        print "Computing betweenness centrality (", len(OD), "pairs) ..."
+        bet = bet_OD(G.G_nav, OD=OD)
+    else:
+        raise Exception("Metric", metric, "is not implemented.")
+
+    # For each sector, sort the navpoints in increasing centrality and selected the N_per_sector last
+    n_best = {sec:np.argsort([bet[nav] for nav in G.node[sec]['navs']])[-N_per_sector:] for sec in G.nodes()}
+    
+    return n_best
+
+def OD(trajectories):
+    """
+    Return the Origin-Destination pairs based on the trajectories.
+    TODO: indirected version
+    """
+    
+    return set([(t[0], t[1]) for t in trajectories])
 
 ##################################################################################
 """

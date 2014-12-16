@@ -25,6 +25,7 @@ import contextlib
 import sys
 import subprocess
 import datetime
+from numpy.random import randint
 
 from math import sqrt
 
@@ -637,6 +638,37 @@ def getDistribution(data):
         def _pdf(self, x):
             return kernel.evaluate(x)
     return rv(name='kdedist')
+
+def bootstrap_test(sample1, sample2, k = 1000, p_value = 0.05, two_tailed = True):
+    """
+    Test the null hypothesis that the two samples are independent from each other 
+    thanks to pearson coefficients.
+    Note that we keep nan values during the resampling (and eliminate them to compute 
+    the pearson coefficient. 
+    """
+    # eliminate all entries which have an nan in one of the sample. 
+    
+    sample1_bis, sample2_bis = zip(*[zz for zz in zip(sample1, sample2) if not np.isnan(zz[0]) and not np.isnan(zz[1])])
+    r_sample = pearsonr(sample1_bis, sample2_bis)[0]
+    
+    n = len(sample1)
+    try:
+        assert n == len(sample2)
+    except:
+        Exception("Samples must have same sizes.")
+
+    r_resample = np.zeros(k)
+    for i in xrange(k):
+        s1_rand = sample1[randint(0, n, n)] # Resampling with the same size
+        s2_rand = sample2[randint(0, n, n)] 
+        s1_rand_bis, s2_rand_bis = zip(*[zz for zz in zip(s1_rand, s2_rand) if not np.isnan(zz[0]) and not np.isnan(zz[1])])
+        r_resample[i] = pearsonr(s1_rand_bis, s2_rand_bis)[0]
+        
+    ci = np.percentile(r_resample, [p_value/2., 1.-p_value/2.])
+    
+    #print "Percentiles:", ci
+    
+    return  ci[0]<r_sample<ci[1]
 
 if __name__=='__main__':
     #Tests-

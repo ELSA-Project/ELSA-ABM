@@ -63,8 +63,33 @@ def find_group(element, groups):
 	return g
 	#b = {c:g for g in a.keys() for c in a[g]}
 
+def rectificate_trajectories_network(trajs, eff_target,	G, groups = {}, probabilities = {}, n_iter_max = 1000000, remove_nodes = False):
+	"""
+	Wrapper, to use with a network.
+	"""
+
+	def get_coords(nvp):
+		return G.G_nav.node[nvp]['coord']
+
+	def add_node(trajs, G, coords, f, p):
+		new_node = len(G.nodes())
+		G.add_node(new_node, coord = coords)
+
+		#trajs[f].remove(n)
+		trajs[f][p] = new_node
+
+		return new_node, trajs, G
+		
+	def d((n1, n2)):
+		p1 = get_coords(n1)
+		p2 = get_coords(n2)
+		return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+	return rectificate_trajectories(trajs, eff_target, add_node_func=add_node, dist_func=d, coords_func=get_coords, \
+		n_iter_max=n_iter_max, G=G, groups=groups, probabilities=probabilities, remove_nodes=remove_nodes)
+
 def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func = dist, coords_func = lambda x: x, \
-	n_iter_max = 1000000, G=None, groups = {}, probabilities = {}, remove_nodes = False):
+	n_iter_max=1000000, G=None, groups={}, probabilities = {}, remove_nodes = False):
 	"""
 	Given all trajectories and a value of efficiency, modify the trajectories 
 	by creating a new point between two existing points chosen at random
