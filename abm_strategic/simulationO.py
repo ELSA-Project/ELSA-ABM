@@ -23,7 +23,8 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import copy
-from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, compute_M1_trajectories, convert_trajectories
+from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
+    compute_M1_trajectories, convert_trajectories
 from math import ceil
 from general_tools import draw_network_and_patches, header, delay, clock_time
 from tools_airports import extract_flows_from_data
@@ -156,6 +157,7 @@ class Simulation:
 
         if clean:
             Netman.initialize_load(self.G, length_day = int(self.day/60.)) # TODO: check why I am doing this again.
+
 
         self.queue = Netman.build_queue(self.ACs)
 
@@ -528,7 +530,25 @@ def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, 
     print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
     print
 
+
+    for i in range(len(queue)):
+        for j in range(i+1, len(queue)):
+            try:
+                assert not queue[i] is queue[j]
+            except:
+                print "flights", i, "and", j, "point to the same object" 
+                raise
+
     trajectories = compute_M1_trajectories(queue)
+
+    for i in range(len(trajectories)):
+        for j in range(i+1, len(trajectories)):
+            try:
+                assert not trajectories[i] is trajectories[j]
+            except:
+                print "trajectories", i, "and", j, "point to the same object" 
+                raise
+
     if coordinates:
         trajectories_coords = convert_trajectories(G.G_nav, trajectories)
 

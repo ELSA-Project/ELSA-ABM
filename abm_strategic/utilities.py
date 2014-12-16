@@ -54,9 +54,7 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
     for i,pol in enumerate(polygons):
         patch = PolygonPatch(pol,alpha=0.5, zorder=2, color=_colors[i%len(_colors)])
         ax.add_patch(patch) 
-       # for n in self.nodes():
-       #     print self.node[n]['load']
-       #     print [self.node[n]['load'][i][1] for i in range(len(self.node[n]['load'])-1)]
+
     if load:
         sze=[(np.average([G.node[n]['load'][i][1] for i in range(len(G.node[n]['load'])-1)],\
         weights=[(G.node[n]['load'][i+1][0] - G.node[n]['load'][i][0]) for i in range(len(G.node[n]['load'])-1)])
@@ -67,32 +65,25 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
     coords={n:m(y[i],x[i]) for i,n in enumerate(G.nodes())}
     
     ax.set_title(title)
-    #sca = ax.scatter([self.node[n]['coord'][0] for n in self.nodes()],[self.node[n]['coord'][0] for n in self.nodes()],marker='o',zorder=6,s=sze)#,s=snf,lw=0,c=[0.,0.45,0.,1])
     sca=ax.scatter([coords[n][0] for n in G.nodes()],[coords[n][1] for n in G.nodes()],marker='o',zorder=6,s=sze,c='b')#,s=snf,lw=0,c=[0.,0.45,0.,1])
     if airports:
         scairports=ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o',zorder=6,s=20,c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
-       # scaa=ax.scatter(x_a,y_a,marker='s',zorder=5,s=sna,c=[0.7,0.133,0.133,1],edgecolor=[0,0,0,1],lw=0.7)
-       # scat = ax.scatter(x_m1t,y_m1t,marker='d',zorder=6,s=snt,lw=0,c=[0.,0.45,0.,1])
 
     if 1:
         for e in G.edges():
-            # if G.node[e[0]]['m1'] and G.node[e[1]]['m1']:
-            #     print e,width(G[e[0]][e[1]]['weight'])
-            #        xe1,ye1=m(self.node[e[0]]['coord'][1]/60.,self.node[e[0]]['coord'][0]/60.)
-            #        xe2,ye2=m(self.node[e[1]]['coord'][1]/60.,self.node[e[1]]['coord'][0]/60.)
-                plt.plot([coords[e[0]][0],coords[e[1]][0]],[coords[e[0]][1],coords[e[1]][1]],'k-',lw=0.5)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
+            plt.plot([coords[e[0]][0],coords[e[1]][0]],[coords[e[0]][1],coords[e[1]][1]],'k-',lw=0.5)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
           
-    weights={n:{v:0. for v in G.neighbors(n)} for n in G.nodes()}
+    #weights={n:{v:0. for v in G.neighbors(n)} for n in G.nodes()}
+    weights={n:{} for n in G.nodes()}
     for path in trajectories:
         try:
             #path=f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p
             for i in range(0,len(path)-1):
-                print path[i], path[i+1]
-                weights[path[i]][path[i+1]]+=1.
-        except ValueError:
+                #print path[i], path[i+1]
+                #weights[path[i]][path[i+1]]+=1.
+                weights[path[i]][path[i+1]] = weights[path[i]].get(path[i+1], 0.) + 1.
+        except ValueError: # Why?
             pass
-        except:
-            raise
     
     max_w=np.max([w for vois in weights.values() for w in vois.values()])
     
@@ -233,8 +224,11 @@ def compute_M1_trajectories(queue):
     All altitudes are set to 0.
     """
     trajectories_nav=[]
+
     for f in queue:
         try:
+            # Find the accepted flight plan, select the trajectory in navpoints.
+            accepted_FP = f.FPs[[fpp.accepted for fpp in f.FPs].index(True)]
             trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
         except ValueError:
             pass
@@ -416,6 +410,44 @@ def post_process_paras(paras):
     paras.analyse_dependance()
 
     return paras
+
+##################################################################################
+"""
+Functions for checking various things
+"""
+
+def check_nav_paths(queue):
+    print "Checknig references to nav paths in queue..."
+    for i in range(len(queue)):
+        f1 = queue[i]
+        for j in range(i+1, len(queue)):
+            f2 = queue[j]
+            for fp1 in f1.FPs:
+                for fp2 in f2.FPs:
+                    try:
+                        assert not fp1.p_nav is fp2.p_nav
+                    except:
+                        print "Nav paths of flight plans", fp1, "and", fp2, "of", f1, "and", f2, "point to the same object"
+                        raise     
+
+def check_nav_paths2(ACs):
+    print "Checknig references to nav paths in ACs..."
+    acs = ACs.values()
+
+    flights = [f for ac in ACs.values() for f in ac.flights]
+
+
+    for i in range(len(flights)):
+        f1 = flights[i]
+        for j in range(i+1, len(flights)):
+            f2 = flights[j]
+            for fp1 in f1.FPs:
+                for fp2 in f2.FPs:
+                    try:
+                        assert not fp1.p_nav is fp2.p_nav
+                    except:
+                        print "Nav paths of flight plans", fp1, "and", fp2, "of", f1, "and", f2, "point to the same object"
+                        raise     
 
 ##################################################################################
 """
