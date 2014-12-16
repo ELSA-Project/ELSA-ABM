@@ -93,7 +93,7 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	Changed in 1.1: efficiency is computed internally. Stop criteria on efficiency is < instead of <=.
 		Added kwarg dist_func.
 	Changed in 1.2: added dist_func, coords_func, n_iter_max, add_node_func, G.
-	Changed in 1.3: added probabilities. Broken the legacy with coordinatesbased tarjectories.
+	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based tarjectories.
 	"""
 
 	def add_node_func_coords(trajs, G, coords, f, p):
@@ -107,6 +107,7 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	print "Rectificating trajectories..."
 	eff, S = compute_efficiency(trajs, dist_func = dist_func)
 	print "Old efficiency:", eff
+	print "Target efficiency:", eff_target
 	Nf = len(trajs)
 
 	# Compatible with legacy ?
@@ -135,7 +136,7 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 
 	n_iter = 0
 	print
-	while eff < eff_target or n_iter>n_iter_max:
+	while eff < eff_target and n_iter<n_iter_max:
 		g = choice(all_groups, p=probas_g)
 		#print "g=", g, "; len(groups[g]) = ", len(groups[g])
 		try:
@@ -143,7 +144,12 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 		except ValueError:
 			print "Group", g, "is empty, I remove it."
 			del groups[g]
-			break
+			all_groups = groups.keys()
+			probas_g = np.array([probabilities[gg] for gg in all_groups])/sum(np.array([probabilities[gg] for gg in all_groups])) # Recompute probabilities
+			if len(groups)==0: 
+				break
+			else:
+				continue
 
 		#print "n=", n, "; len(dict_nodes_traj[n]) = ", len(dict_nodes_traj[n])
 		f = choice(dict_nodes_traj[n])
@@ -185,6 +191,7 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 
 		n_iter += 1
 
+	if n_iter == n_iter_max:	print "Hit maximum number of iterations"
 	print "New efficiency:", eff
 	return trajs
 
