@@ -54,7 +54,17 @@ def compute_efficiency(trajectories, dist_func = dist):
 	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
 	return pl.mean(S)/pl.mean(L), pl.mean(S)
 
-def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func = dist, coords_func = lambda x: x, n_iter_max = 1000000, G=None, groups = {}, probabilities = {}, group_new_nodes = None):
+def find_group(element, groups):
+	for g, els in groups.items():
+		for el in els:
+			if el == element: break
+		if el == element: break
+
+	return g
+	#b = {c:g for g in a.keys() for c in a[g]}
+
+def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func = dist, coords_func = lambda x: x, \
+	n_iter_max = 1000000, G=None, groups = {}, probabilities = {}, remove_nodes = False):
 	"""
 	Given all trajectories and a value of efficiency, modify the trajectories 
 	by creating a new point between two existing points chosen at random
@@ -86,16 +96,11 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	Changed in 1.3: added probabilities. Broken the legacy with coordinatesbased tarjectories.
 	"""
 
-	def add_node_func_coords(trajs, G, coords, f, p, groups, dict_nodes_traj):
-		dict_nodes_traj[tuple(trajs[f][p])].remove(f) # PROBLEM: TO Update
-
+	def add_node_func_coords(trajs, G, coords, f, p):
 		trajs[f][p][0] = coords[0]
 		trajs[f][p][1] = coords[1]
 
-		groups[group_new_node].append(tuple(coords))
-		
-		dict_nodes_traj[tuple(coords)] = [f]
-		return trajs, G, groups, dict_nodes_traj
+		return coords, trajs, G
 
 	if add_node_func==None: add_node_func = add_node_func_coords
 
@@ -108,8 +113,12 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	dict_nodes_traj = {}
 	for f in range(Nf):
 		for p in trajs[f][1:-1]:
+			# if p == 191:
+			# 	print "adding flight", f, "to flights crossing node", p
 			dict_nodes_traj[p] = dict_nodes_traj.get(p, []) + [f] # to each point, associates the list of flights going through.
 
+	# print "flights of nodes 191:", dict_nodes_traj[191]
+	# print "trajectory of flight", 23, ":", trajs[23]
 	if groups=={}: 
 		groups['all'] = dict_nodes_traj.keys() 
 		probabilities['all'] = 1.
@@ -125,24 +134,53 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	probas_g = np.array([probabilities[gg] for gg in all_groups])
 
 	n_iter = 0
+	print
 	while eff < eff_target or n_iter>n_iter_max:
 		g = choice(all_groups, p=probas_g)
 		#print "g=", g, "; len(groups[g]) = ", len(groups[g])
-		n = choice(groups[g])
+		try:
+			n = choice(groups[g])
+		except ValueError:
+			print "Group", g, "is empty, I remove it."
+			del groups[g]
+			break
+
 		#print "n=", n, "; len(dict_nodes_traj[n]) = ", len(dict_nodes_traj[n])
 		f = choice(dict_nodes_traj[n])
 
 		if len(trajs[f])<3:
 			continue
 
-		p = trajs[f].index(n)
+		try:
+			p = trajs[f].index(n)
+		except:
+			print "flight:", f
+			print "trajs[f]", trajs[f]
+			raise
 
 		cc_before, cc_after = coords_func(trajs[f][p-1]), coords_func(trajs[f][p+1])
  		old = dist_func([trajs[f][p-1], trajs[f][p]]) + dist_func([trajs[f][p+1], trajs[f][p]])
  		new = dist_func([trajs[f][p-1], trajs[f][p+1]])
  		if new < old :
  			coords = [pl.mean([cc_before[0], cc_after[0]]), pl.mean([cc_before[1], cc_after[1]])]
- 			trajs, G, groups, dict_nodes_traj = add_node_func(trajs, G, coords, f, p, groups, dict_nodes_traj)
+ 			
+ 			# There is room for optimization here...
+ 			n = trajs[f][p]
+			g = find_group(n, groups)
+			if len(dict_nodes_traj[n])>1:
+				dict_nodes_traj[n].remove(f)
+			else:
+				del dict_nodes_traj[n]
+				groups[g].remove(n)
+ 			
+ 			if remove_nodes	:
+ 				trajs[f].remove(n)
+ 			else:
+ 				new_node, trajs, G = add_node_func(trajs, G, coords, f, p)
+ 				dict_nodes_traj[new_node] = [f]
+ 				groups[g].append(new_node)
+			
+			
 			eff=S/(S/eff+ ((new-old)/Nf))
 
 		n_iter += 1
