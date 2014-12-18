@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+sys.path.insert(1, '..')
+
 import networkx as nx
 import sys
 from paths import path_ksp
@@ -17,10 +20,12 @@ import pickle
 import os
 import matplotlib.pyplot as plt
 from utilities import draw_network_map
-from general_tools import counter, silence
+
 from string import split
 import copy
 from os.path import join
+
+from libs.general_tools import counter, silence
 
 version='2.9.9'
 
@@ -715,10 +720,10 @@ class Net(nx.Graph):
                 for n in G.nodes():
                     self.add_node(self.idx_sectors[n], name=n, **G.node[n])
                 for e in G.edges():
-                    self.add_edge(self.idx_sectors[e[0]], self.idx_sectors[e[1]])
+                    self.add_edge(self.idx_sectors[e[0]], self.idx_sectors[e[1]], weight = 1.)
 
-            e1=G.edges()[0]
-            e2=G.edges()[1]
+            e1=self.edges()[0]
+            e2=self.edges()[1]
             self.weighted=not (self[e1[0]][e1[1]]['weight']==self[e2[0]][e2[1]]['weight']==1.)
             
             if verb:

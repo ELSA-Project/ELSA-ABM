@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+sys.path.insert(1, '..')
+
 from collections import Counter 
 import pylab as pl
 import random as rd
@@ -12,6 +15,10 @@ from shapely.geometry import LineString
 from igraph import *
 
 from datetime import datetime,timedelta
+
+from abm_strategic.utilities import select_interesting_navpoints, OD
+from libs.tools_airports import build_long_2d
+from libs.general_tools import insert_list_in_list
 
 gall = lambda x: [6371000.*pl.pi*x[1]/(180.*pl.sqrt(2)), 6371000.*pl.sqrt(2)*pl.sin(pl.pi*(x[0]/180.))]
 invgall = lambda x: [(180./pl.pi)*pl.arcsin(x[1]/(6371000.*pl.sqrt(2))) , x[0]*180*pl.sqrt(2)/(6371000.*pl.pi)]
@@ -28,20 +35,33 @@ tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f'
 
 __version__ = "1.3"
 
-def select_heigths(th):
+
+def uniform_rectification():
+	pass
+
+
+def partial_rectification(trajectories, eff_target, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
 	"""
-	Sorts the altitude th increasingly, decreasingly or half/half at random.
+	High level functions for rectification. Fix completely N_per_sector points with 
+	highest metric value per sector.
 	"""
-	coin=rd.choice(['up','down','both'])
-	if coin=='up' : th.sort()
-	if coin=='down': th.sort(reverse=True)
-	if coin=='both':
-		a=th[:len(th)/2]
-		a.sort()
-		b=th[len(th)/2:]
-		b.sort(reverse=True)
-		th=a+b
-	return th
+	# Make groups
+	n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	n_best = [n for sec, points in n_best.items() for n in points]
+
+	groups = {"C":[], "N":[]} # C for "critical", N for "normal"
+	for n in G.G_nav.nodes():
+		if n in n_best:
+			groups["C"].append(n)
+		else:
+			groups["N"].append(n)
+	probabilities = {"C":0., "N":1.}
+
+	
+	final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories, eff_target, G.G_nav, groups=groups, probabilities=probabilities,\
+		remove_nodes=True, **kwargs_rectificate)
+
+	return final_trajs, final_eff, final_G, final_groups
 
 def compute_efficiency(trajectories, dist_func = dist):
 	"""
@@ -55,21 +75,23 @@ def compute_efficiency(trajectories, dist_func = dist):
 	return pl.mean(S)/pl.mean(L), pl.mean(S)
 
 def find_group(element, groups):
+	"""
+	Beware: use b = {c:g for g in a.keys() for c in a[g]}
+	"""
 	for g, els in groups.items():
 		for el in els:
 			if el == element: break
 		if el == element: break
 
 	return g
-	#b = {c:g for g in a.keys() for c in a[g]}
 
-def rectificate_trajectories_network(trajs, eff_target,	G, groups = {}, probabilities = {}, n_iter_max = 1000000, remove_nodes = False):
+def rectificate_trajectories_network(trajs, eff_target,	G, groups={}, probabilities={}, n_iter_max=1000000, remove_nodes=False, hard_fixed=True):
 	"""
 	Wrapper, to use with a network.
 	"""
 
 	def get_coords(nvp):
-		return G.G_nav.node[nvp]['coord']
+		return G.node[nvp]['coord']
 
 	def add_node(trajs, G, coords, f, p):
 		new_node = len(G.nodes())
@@ -85,11 +107,41 @@ def rectificate_trajectories_network(trajs, eff_target,	G, groups = {}, probabil
 		p2 = get_coords(n2)
 		return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
-	return rectificate_trajectories(trajs, eff_target, add_node_func=add_node, dist_func=d, coords_func=get_coords, \
-		n_iter_max=n_iter_max, G=G, groups=groups, probabilities=probabilities, remove_nodes=remove_nodes)
+	trajs_old = trajs[:]
+	trajs_rec, eff, G, groups_rec = rectificate_trajectories(trajs, eff_target, add_node_func=add_node, dist_func=d, coords_func=get_coords, \
+		n_iter_max=n_iter_max, G=G, groups=groups, probabilities=probabilities, remove_nodes=remove_nodes, hard_fixed=hard_fixed)
 
-def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func = dist, coords_func = lambda x: x, \
-	n_iter_max=1000000, G=None, groups={}, probabilities = {}, remove_nodes = False):
+	if remove_nodes: # Resample trajectories
+		for i in range(len(trajs_old)):
+			n_old = len(trajs_old[i])
+			n_new = len(trajs_rec[i])
+			n_gen = n_old - n_new
+
+			long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in trajs_rec[i]]) # Compute linear distance after each point
+
+			long_dis_new_points = [(j+1.)*(long_dis_cul[-1]-long_dis_cul[0])/float(n_gen+1.) for j in range(n_gen)] # regularly spaced points along the trajectories.
+
+			new_point_coords = []
+			new_point_indices = []
+			for d in long_dis_new_points:
+				point_before = long_dis_cul[d>long_dis_cul].index(True) # Index of point before future point
+
+				dn = np.array(trajs_rec[point_before+1]) - np.array(trajs_rec[point_before]) # direction vector
+				dn = dn/np.norm(dn)
+				new_point_coords.append(np.array(trajs_rec[point_before]) + (d-long_dis_cul[point_before])*dn)
+				new_point_indices.append(point_before)
+
+			# Change the trajectory
+			trajs_rec[i] = insert_list_in_list(trajs_rec[i], new_point_coords, new_point_indices)
+
+			# Add to network
+			for coords in new_point_coords:
+				G.add_node(len(G.nodes()), coord = coords)
+
+	return trajs_rec, eff, G, groups_rec
+
+def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func=None, dist_func=dist, coords_func=lambda x: x, \
+	n_iter_max=1000000, probabilities={}, remove_nodes=False, hard_fixed=False):
 	"""
 	Given all trajectories and a value of efficiency, modify the trajectories 
 	by creating a new point between two existing points chosen at random
@@ -118,7 +170,7 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	Changed in 1.1: efficiency is computed internally. Stop criteria on efficiency is < instead of <=.
 		Added kwarg dist_func.
 	Changed in 1.2: added dist_func, coords_func, n_iter_max, add_node_func, G.
-	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based tarjectories.
+	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based tarjectories. Added groups, remove_nodes, hard_fixed.
 	"""
 
 	def add_node_func_coords(trajs, G, coords, f, p):
@@ -139,8 +191,6 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	dict_nodes_traj = {}
 	for f in range(Nf):
 		for p in trajs[f][1:-1]:
-			# if p == 191:
-			# 	print "adding flight", f, "to flights crossing node", p
 			dict_nodes_traj[p] = dict_nodes_traj.get(p, []) + [f] # to each point, associates the list of flights going through.
 
 	# print "flights of nodes 191:", dict_nodes_traj[191]
@@ -160,7 +210,6 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 	probas_g = np.array([probabilities[gg] for gg in all_groups])
 
 	n_iter = 0
-	print
 	while eff < eff_target and n_iter<n_iter_max:
 		g = choice(all_groups, p=probas_g)
 		#print "g=", g, "; len(groups[g]) = ", len(groups[g])
@@ -170,7 +219,13 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 			print "Group", g, "is empty, I remove it."
 			del groups[g]
 			all_groups = groups.keys()
-			probas_g = np.array([probabilities[gg] for gg in all_groups])/sum(np.array([probabilities[gg] for gg in all_groups])) # Recompute probabilities
+			if sum(np.array([probabilities[gg] for gg in all_groups]))>0.:
+				probas_g = np.array([probabilities[gg] for gg in all_groups])/sum(np.array([probabilities[gg] for gg in all_groups])) # Recompute probabilities
+			else:
+				if not hard_fixed:
+					probas_g = np.array([1./len(all_groups) for gg in all_groups]) # If the last groups have zero probability they are fixed a non-zero probability again.
+				else:
+					break
 			if len(groups)==0: 
 				break
 			else:
@@ -218,7 +273,22 @@ def rectificate_trajectories(trajs, eff_target, add_node_func = None, dist_func 
 
 	if n_iter == n_iter_max:	print "Hit maximum number of iterations"
 	print "New efficiency:", eff
-	return trajs
+	return trajs, eff, G, groups
+
+def select_heigths(th):
+	"""
+	Sorts the altitude th increasingly, decreasingly or half/half at random.
+	"""
+	coin=rd.choice(['up','down','both'])
+	if coin=='up' : th.sort()
+	if coin=='down': th.sort(reverse=True)
+	if coin=='both':
+		a=th[:len(th)/2]
+		a.sort()
+		b=th[len(th)/2:]
+		b.sort(reverse=True)
+		th=a+b
+	return th
 
 def calculate_time(C, T, vm):
 	"""

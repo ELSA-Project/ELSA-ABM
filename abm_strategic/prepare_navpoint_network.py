@@ -12,6 +12,7 @@ user can build a totally new network, or take some data from elsewhere.
 """
 
 import sys
+sys.path.insert(1, '..')
 import pickle
 import networkx as nx
 from descartes.patch import PolygonPatch
@@ -29,11 +30,11 @@ from simAirSpaceO import Net, NavpointNet
 from utilities import restrict_to_connected_components
 
 #Distance
-from tools_airports import get_paras, extract_flows_from_data#, get_flights
+from libs.tools_airports import get_paras, extract_flows_from_data#, get_flights
 #Modules
-from general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval
+from libs.general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval
 
-if 1:
+if 0:
     # Manual seed
     see_=1
     #see_ = 15 #==> the one I used for new, old_good, etc.. 
@@ -212,7 +213,7 @@ def prepare_sectors_network(paras_G, no_airports=False):
     G.type_of_net = paras_G['type_of_net']
 
     if paras_G['net_sec'] !=None:
-        G.import_from(paras_G['net_sec'], numberize = ((type(G.nodes()[0])!=type(1.)) and (type(G.nodes()[0])!=type(1))))
+        G.import_from(paras_G['net_sec'], numberize = ((type(paras_G['net_sec'].nodes()[0])!=type(1.)) and (type(paras_G['net_sec'].nodes()[0])!=type(1))))
     else:
         G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'],put_nodes_at_corners = True)
 
@@ -793,7 +794,7 @@ def compute_possible_outer_pairs(G):
 
     return pairs
 
-def prepare_hybrid_network(paras_G, rep = '.'):
+def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=True):
     """
     New in 2.9.6: refactorization.
     """
@@ -1014,7 +1015,7 @@ def prepare_hybrid_network(paras_G, rep = '.'):
 
     if paras_G['flights_selected']!=None:
         flights_selected = deepcopy(paras_G["flights_selected"])
-    #if mode == 'real': 
+
         # we remove from the selected flights all those which are not valid anymore, because of the airports we deleted.
         fl_s = flights_selected[:]
 
@@ -1022,9 +1023,10 @@ def prepare_hybrid_network(paras_G, rep = '.'):
             if not (G.G_nav.idx_navs[f['route_m1'][0][0]], G.G_nav.idx_navs[f['route_m1'][-1][0]]) in G.G_nav.short.keys():
                 flights_selected.remove(f)
                 print 'I remove a flights because it was flying from', G.G_nav.idx_navs[f['route_m1'][0][0]], 'to', G.G_nav.idx_navs[f['route_m1'][-1][0]]
+                print 'and this pair is not in the connections of the network.'
 
-        # readjust capacities and weights based on the new set of flights
-        G = give_capacities_and_weights(G, mode, paras_G)
+        # Give capacities and weights based on the new set of flights
+        G = give_capacities_and_weights(G, paras_G)
         print 'Selected finally', len(flights_selected)
 
         G.check_all_real_flights_are_legitimate(flights_selected) # no action taken here
@@ -1063,13 +1065,16 @@ def prepare_hybrid_network(paras_G, rep = '.'):
     else:
         name=long_name #Automatic is used only if the name is not specified otherwise
         
-    save_path = join(rep, name)
+    
     G.name=name
     G.comments={'long name':long_name, 'made with version':version}
-    G.basic_statistics(rep = save_path + '_')
     
-    with open(save_path + '.pic','w') as f:
-        pickle.dump(G, f)
+    if save:
+        if save_path==None: save_path = join(rep, name)
+        with open(save_path + '.pic','w') as f:
+            pickle.dump(G, f)
+
+    G.basic_statistics(rep = save_path + '_')
 
     print 'Network saved as', save_path + '.pic'
     #show_everything(G.polygons,G,save=True,name=name,show=False)       
@@ -1078,7 +1083,9 @@ def prepare_hybrid_network(paras_G, rep = '.'):
     print 'Number of navpoints:', len(G.G_nav.nodes())
     print 'Done.'
         
-    draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values(), rep = rep)
+    if show:
+        draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values(), rep = rep)
+    
     return G
 
 if  __name__=='__main__':

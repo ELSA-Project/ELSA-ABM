@@ -101,6 +101,7 @@ paras_G['file_flights_selected'] = None
 
 # -------------- Airports -----------------
 # Leave "None" for generation of new airports.
+# TODO: add extraction of airports and pairs from data.
 
 paras_G['file_airports'] = None
 if paras_G['file_airports'] == None:
@@ -142,8 +143,9 @@ paras_G['make_entry_exit_points'] = True
 # creation of border points on the outer boundary.
 paras_G['make_borders_points'] = False
 
-# Linear density of points on the borders
-paras_G['lin_dens_borders'] = 5
+if paras_G['make_borders_points']:
+	# Linear density of points on the borders
+	paras_G['lin_dens_borders'] = 5
 
 # --------------- Distance ---------------- #
 # This block is useful if you use the Distance library to select
@@ -171,5 +173,6 @@ if paras_G['generate_weights_from_traffic'] or paras_G['generate_capacities_from
 
 # -------------- Read files --------------
 # For now, only pickle files are supported.
+# TODO: automatically detect and read csv files.
 
 paras_G = extract_data_from_files(paras_G)

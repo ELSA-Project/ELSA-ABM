@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr  9 17:54:23 2013
-
-@author: earendil
-
-Path of external libraries.
+Paths for utilities or libraries.
 """
+import os
 
-path_ksp='/home/earendil/Programmes/YenKSP-master'
+path_ksp = '/home/earendil/Programmes/YenKSP-master'
+path_codes = '/home/earendil/Documents/ELSA/Codes/'
+path_utilities = '/home/earendil/Documents/ELSA/Utilities/'
+path_modules = os.path.join(os.path.dirname(__file__), '../libs')

@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
+from paths import path_codes, path_utilities, path_modules
+
 import sys
-sys.path.insert(1,'../Modules')
+sys.path.insert(1, path_modules)
 from string import split
 import os
+from  os.path import join as jn
 from math import *
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -17,36 +20,32 @@ from MySQLdb.constants import FIELD_TYPE
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap as lsc
 from scipy.optimize import curve_fit
-import pandas as pd
+#import pandas as pd
 import datetime
 
 from general_tools import date_db, delay, date_human, date_st, cumulative
 
 __version__='5.8'
 
-
-
-col=['ro-','bs-','c*-','m^-','kh-','gp-','rv-','gh-','rH-','b+-','kx-','ro-','bs-','c*-','m^-','kh-','gp-','rv-','gh-','rH-','b+-',\
+col = ['ro-','bs-','c*-','m^-','kh-','gp-','rv-','gh-','rH-','b+-','kx-','ro-','bs-','c*-','m^-','kh-','gp-','rv-','gh-','rH-','b+-',\
      'kx-','ro-','bs-','c*-','m^-','kh-','gp-','rv-','gh-','rH-','b+-','kx-']
 
-color=['midnightblue','red','blue','green','brown','gold','maroon','cyan','magenta','black','turquoise']
-color2=['midnightblue','lightskyblue','forestgreen','orange','limegreen','red','yellowgreen','gold','turquoise','mediumorchid','dodgerblue','brown', 'salmon','magenta','black','plum',\
+color = ['midnightblue','red','blue','green','brown','gold','maroon','cyan','magenta','black','turquoise']
+color2 = ['midnightblue','lightskyblue','forestgreen','orange','limegreen','red','yellowgreen','gold','turquoise','mediumorchid','dodgerblue','brown', 'salmon','magenta','black','plum',\
         'dimgray','purple','slategrey', 'teal','darkgreen','firebrick','darkseagreen','maroon','lightcoral','aquamarine','goldenrod','green','sandybrown','navy','cyan','royalblue','turquoise']#,'cadetblue']
 
 
+with open(jn(path_codes, 'StatiEurocontrol.txt'),'r') as list_f:
+    list1 = list_f.readlines()
+list_countries = [split(o)[1] for o in list1]
+#pattern_delay=1
+#standard_delay=15 # in minutes
+with open(jn(path_codes, 'aircraft.pic'),'r') as f:
+    aircraft = pickle.load(f)
 
-list_f=open('/home/earendil/Documents/ELSA/Codes/StatiEurocontrol.txt','r')
-list1=list_f.readlines()
-list_f.close()
-list_countries=[split(o)[1] for o in list1]
-pattern_delay=1
-standard_delay=15 # in minutes
-with open('/home/earendil/Documents/ELSA/Codes/aircraft.pic','r') as f:
-    aircraft=pickle.load(f)
-
-with open('/home/earendil/Documents/ELSA/Codes/companies.pic','r') as f:
-    companies=pickle.load(f)
-companies_c=companies.values()  
+with open(jn(path_codes, 'companies.pic'),'r') as f:
+    companies = pickle.load(f)
+companies_c = companies.values()  
 
 my_conv = { FIELD_TYPE.LONG: int, FIELD_TYPE.FLOAT: float, FIELD_TYPE.DOUBLE: float }
 
@@ -340,7 +339,7 @@ def local_area(a,b,p,k1,k2,debug=False):
 
 def build_long(a):
     """
-    Given a list of coordinates a, compute the longitudinal distance since 
+    Given a list of coordinates 3d a, compute the longitudinal distance since 
     beginning of trajectory. Compute also the cumulative distance
     """
     lonG = [(norm(np.array(a[i+1][:2]) - np.array(a[i][:2])), a[i+1][2]/32.8) for i in range(len(a)-1)] # Why do I divide by 32.8? Ot have altitude in meters?
@@ -348,6 +347,18 @@ def build_long(a):
     long_cul, pouic = [], 0.
     for i in range(len(lonG)):
         pouic += lonG[i][0]
+        long_cul.append(pouic)
+    return lonG, long_cul
+
+def build_long_2d(a):
+    """
+    2d version of previous function.
+    """
+    lonG = [norm(np.array(a[i+1][:2]) - np.array(a[i][:2])) for i in range(len(a)-1)]
+    lonG.insert(0, 0.)
+    long_cul, pouic = [], 0.
+    for i in range(len(lonG)):
+        pouic += lonG[i]
         long_cul.append(pouic)
     return lonG, long_cul
 
@@ -446,11 +457,16 @@ def get_results(paras, save=True, my_company='', redo_FxS=True, force=0, devset=
 
 def get_set(paras, save=True, my_company='', redo_FxS=True, force=0, devset=False, only_net=False, prefix='', from_version=None):
     """
-    This is to get set without deviations results.
+    This is to get a set without deviations results.
     """
     print
-    if from_version == None:
-        from_version = __version__
+    # For legacy.
+    if paras['data_version'] == None:
+        if from_version == None:
+            from_version = __version__
+    else:
+        from_version = paras['data_version']
+
     rep = build_path(paras, from_version, full=False,prefix=prefix)
     print 'Searching in', rep
     if not devset:
@@ -654,6 +670,7 @@ class Set(object):
                             """WHERE f.aircraftId = a.Id and am.aircraftType = a.type and aircraftModel = 'L' and f.flightGId = fg.Id 
                             and fg.type = 'S' and fg.company!='ISS' and fg.company=IATA.company and IATA.IATACode!=''""" + time_sql + my_company + type_sql +"""  GROUP BY f.id) as fr, SegmentT_M1 as m1
             WHERE m1.heightEnd=0 and m1.flightTId=fr.id and time_to_sec(timediff(m1.datetimeEnd,fr.datetimeDep))>600"""
+            print query
             db.query(query)
         elif self.filtre=='Medium':
             db.query("""CREATE TABLE FlightR
@@ -701,6 +718,11 @@ class Set(object):
                     db.query("""CREATE TEMPORARY TABLE Pouet SELECT EXTEND_BOUNDARY(0.005,boundary) as bd FROM CountryBoundary WHERE regionId='""" + self.zone + "'")
                 else:
                     db.query("""CREATE TEMPORARY TABLE Pouet SELECT boundary as bd FROM CountryBoundary WHERE regionId='""" + self.zone + "'")
+            elif len(self.zone)==4 or self.zone!='ECAC':
+                if self.ext_area:
+                    db.query("""CREATE TEMPORARY TABLE Pouet SELECT EXTEND_BOUNDARY(0.005,boundary) as bd FROM ACCBoundary WHERE accName='""" + self.zone + "'")
+                else:
+                    db.query("""CREATE TEMPORARY TABLE Pouet SELECT boundary as bd FROM ACCBoundary WHERE accName='""" + self.zone + "'")                
             else:
                 if self.ext_area:
                     db.query("""CREATE TEMPORARY TABLE Pouet SELECT EXTEND_BOUNDARY(0.005,boundary) as bd FROM ASBoundary WHERE asName='""" + self.zone + "'")
@@ -899,7 +921,7 @@ class Set(object):
         
         if self.verb:
             print 'Number of flights before cleaning:',len(self.flights)
-        bl=open('../Utilities/black_list_italy.txt')
+        bl=open(jn(path_utilities, 'black_list_italy.txt'))
         bll = bl.readlines()
         bl.close()
         for l in bll:
@@ -964,7 +986,7 @@ class Set(object):
     
     def cleaning(self,cut=False):
         print 'Number of flights before cleaning:',len(self.flights)
-        bl=open('../Utilities/black_list_italy.txt')
+        bl=open(jn(path_utilities, 'black_list_italy.txt'))
         bll = bl.readlines()
         bl.close()
         for l in bll:
@@ -981,7 +1003,7 @@ class Set(object):
         print 'Number of flights after cleaning:',len(self.flights)
     
     def dis_to_border(self,airac):
-        fille=open('../Modules/' + self.zone + '_shape_' + str(airac) + '.pic','r')
+        fille=open(jn(path_modules, self.zone + '_shape_' + str(airac) + '.pic'),'r')
         self.zone_shape=pickle.load(fille)
         fille.close()
         n,self.dis=0,0.
@@ -1174,7 +1196,7 @@ class Set(object):
         if cleaning:
             if self.verb:
                 print 'Number of flights before cleaning:',len(self.flights)
-            bl=open('../Utilities/black_list_italy.txt')
+            bl=open(jn(path_utilities , 'black_list_italy.txt'))
             bll = bl.readlines()
             bl.close()
             for l in bll:
@@ -2099,35 +2121,35 @@ def build_path(paras,version,full=True, prefix=None):
     else:
         return rep
     
-def loading_network(rep,airports=False,nav_sec=False):
-    assert not (airports and nav_sec)
-    #big_filtre, period, rep = build_path(paras,version,airports=airports)
-    print 'Loading Network...'
+# def loading_network(rep,airports=False,nav_sec=False):
+#     assert not (airports and nav_sec)
+#     #big_filtre, period, rep = build_path(paras,version,airports=airports)
+#     print 'Loading Network...'
     
-    if not airports and not nav_sec:
-        stri='data_results_m1_absolute'
-        compress=False
-        if not os.path.exists(rep + '/' + stri + '.pic'):
-            compress=True
-            os.system('cd ' + rep + ' && tar -xzf ' + stri + '.tar.gz')
+#     if not airports and not nav_sec:
+#         stri='data_results_m1_absolute'
+#         compress=False
+#         if not os.path.exists(rep + '/' + stri + '.pic'):
+#             compress=True
+#             os.system('cd ' + rep + ' && tar -xzf ' + stri + '.tar.gz')
         
-        f=open(rep + '/' + stri + '.pic','r')
-        seth=pickle.load(f)
-        f.close()
+#         f=open(rep + '/' + stri + '.pic','r')
+#         seth=pickle.load(f)
+#         f.close()
         
-        if compress:
-            os.system('rm ' + rep + '/' + stri + '.pic')
-        G=seth.G.copy()
-    elif airports:
-        f=open(rep + '/airport_network.pic','r')
-        G=pickle.load(f)
-        f.close()
-    elif nav_sec:
-        f=open(rep + '/nav_sec_network.pic','r')
-        G=pickle.load(f)
-        f.close()
-        #G=G.subgraph([n for n in G.nodes() if G.degree(n)!=0])
-    return G
+#         if compress:
+#             os.system('rm ' + rep + '/' + stri + '.pic')
+#         G=seth.G.copy()
+#     elif airports:
+#         f=open(rep + '/airport_network.pic','r')
+#         G=pickle.load(f)
+#         f.close()
+#     elif nav_sec:
+#         f=open(rep + '/nav_sec_network.pic','r')
+#         G=pickle.load(f)
+#         f.close()
+#         #G=G.subgraph([n for n in G.nodes() if G.degree(n)!=0])
+#     return G
     
 def filter_graph(G, airports=False, m1=True, m3=False, nonzero=True):
     if not airports:
@@ -2273,7 +2295,7 @@ def make_plots_network_metrics(rep,results, fig_id=100000):
             plt.savefig(rep + '/network_metrics_' + m + '_' + 'full_loglog.png')
             
 def restrict_to_ECAC(airac,G):
-    f=open('../Modules/All_shapes_' + str(airac) + '.pic','r')
+    f=open(jn(path_modules, 'All_shapes_' + str(airac) + '.pic'),'r')
     shape=pickle.load(f)['ECAC']['boundary'][0]
     f.close()
     return nx.subgraph(G,[n for n in G.nodes() if \

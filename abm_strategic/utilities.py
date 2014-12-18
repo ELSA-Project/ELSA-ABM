@@ -6,7 +6,8 @@ Created on Thu May 23 11:24:00 2013
 
 Utilies for the ABM. TODO: use general tools?
 """
-
+import sys
+sys.path.insert(1, '..')
 import os
 from mpl_toolkits.basemap import Basemap
 from math import sqrt, cos, sin, pi
@@ -21,8 +22,8 @@ import pickle
 from os.path import join
 from string import split
 
-from general_tools import  delay, date_human, date_st
-from tools_airports import bet_OD
+from libs.general_tools import  delay, date_human, date_st
+from libs.tools_airports import bet_OD
 version='2.9.1'
 
 #seed(3)

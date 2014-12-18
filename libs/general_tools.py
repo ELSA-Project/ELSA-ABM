@@ -43,7 +43,7 @@ def flip_polygon(pol):
     """
     return Polygon([(p[1], p[0]) for p in list(pol.exterior.coords)])
 
-def draw_network_and_patches(G,G_nav,polygons,draw_navpoints_edges=True, \
+def draw_network_and_patches(G, G_nav, polygons, draw_navpoints_edges=True, \
     draw_sectors_edges=False, rep='.', save=True, name='network', \
     show=True, flip_axes=False, trajectories=[], \
     trajectories_type='navpoints', dpi = 100, figsize = None):
@@ -258,6 +258,9 @@ def date_db(date,dateonly=False): # y,m,d,h,m,
         return str(date[0]) + '-' + str(date[1])  + '-' + str(date[2]) + ' ' + str(date[3]) + ':' + str(date[4]) + ':' + str(date[5])
 
 def date_human(date,dateonly=False): # y,m,d,h,m,
+    """
+    For humans. Don't use it you're a bot.
+    """
     if dateonly:
         return str(date[0]) + '-' + str(date[1])  + '-' + str(date[2])
     else:
@@ -319,8 +322,8 @@ def cumulative(a):
         cdf[1]=np.array(cdf[1])/float(cdf[1][0])
     return cdf
     
-def hyper_test(X,K,n,N):
-    return (1 -  sum([comb(K,x)*comb(N-K,n-x)/float(comb(N,n)) for x in range(X)]))
+def hyper_test(X, K, n, N):
+    return (1 - sum([comb(K,x)*comb(N-K,n-x)/float(comb(N,n)) for x in range(X)]))
     
 def draw_zonemap(x_min,y_min,x_max,y_max,res):
     m = Basemap(projection='gall',lon_0=0.,llcrnrlon=y_min,llcrnrlat=x_min,urcrnrlon=y_max,urcrnrlat=x_max,resolution=res)
@@ -669,6 +672,25 @@ def bootstrap_test(sample1, sample2, k = 1000, p_value = 0.05, two_tailed = True
     #print "Percentiles:", ci
     
     return  ci[0]<r_sample<ci[1]
+
+def get_sorted_indices(a):
+    # Note: can also use argsort from numpy.
+    return [i[0] for i in sorted(enumerate(a), key=lambda x:x[1])]
+
+def insert_list_in_list(l1, l2, list_indices):
+    """
+    Insert l2 in l1 given the list of indices AFTER which 
+    each element in l2 must be put in l1.
+    Example:
+    >>> l1 = [0, 4, 6]
+    >>> l2 = [1, 2, 3, 5]
+    >>> list_indices = [0, 0, 0, 1]
+    returns [0, 1, 2, 3, 4, 5, 6]
+    """
+    assert len(list_indices)==len(l2)
+    for i in range(len(l2)-1, -1, -1):
+        l1.insert(list_indices[i]+1, l2[i])
+    return l1
 
 if __name__=='__main__':
     #Tests-
