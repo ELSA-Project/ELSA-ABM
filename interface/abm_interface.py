@@ -15,7 +15,7 @@ from abm_strategic import *
 from abm_strategic.utilities import draw_network_map
 
 
-if 1:
+if 0:
     # Manual seed
     see_=1
     #see_ = 15 #==> the one I used for new, old_good, etc.. 
@@ -49,7 +49,6 @@ def do_ABM_tactical(input_file, output_file):
 
 	print "M1 source:", inpt[1]
 	print "Destination output:", inpt[2]
-	print
 	print
 	print "Running ABM Tactical model..."
 
