@@ -14,7 +14,6 @@ from random import sample, uniform, gauss, shuffle, choice
 import numpy as np
 from numpy.random import lognormal
 import matplotlib.delaunay as triang
-from triangular_lattice import build_triangular
 from math import sqrt, log
 import pickle
 import os
@@ -25,7 +24,7 @@ from string import split
 import copy
 from os.path import join
 
-from libs.general_tools import counter, silence
+from libs.general_tools import counter, silence, build_triangular
 
 version='2.9.9'
 
@@ -716,22 +715,27 @@ class Net(nx.Graph):
                 self.add_nodes_from(G.nodes(data=True))
                 self.add_weighted_edges_from([(e[0],e[1],G[e[0]][e[1]]['weight']) for e in G.edges()])
             else:
-                self.idx_sectors={s:i for i,s in enumerate(G.nodes())}
+                self.idx_nodes={s:i for i,s in enumerate(G.nodes())}
                 for n in G.nodes():
-                    self.add_node(self.idx_sectors[n], name=n, **G.node[n])
+                    self.add_node(self.idx_nodes[n], name=n, **G.node[n])
                 for e in G.edges():
-                    self.add_edge(self.idx_sectors[e[0]], self.idx_sectors[e[1]], weight = 1.)
+                    self.add_edge(self.idx_nodes[e[0]], self.idx_nodes[e[1]], weight = 1.)
 
-            e1=self.edges()[0]
-            e2=self.edges()[1]
-            self.weighted=not (self[e1[0]][e1[1]]['weight']==self[e2[0]][e2[1]]['weight']==1.)
-            
+            if len(self.edges())>0:
+                e1=self.edges()[0]
+                e2=self.edges()[1]
+                self.weighted=not (self[e1[0]][e1[1]]['weight']==self[e2[0]][e2[1]]['weight']==1.)
+            else:
+                print "Network has no edge!"
+                self.weighted = False
+
             if verb:
                 if self.weighted:
                     print 'Network was found weighted'
                 else:
                     print 'Network was found NOT weighted'
-                    print 'Example:', self[e1[0]][e1[1]]['weight']     
+                    if len(self.edges())>0:
+                        print 'Example:', self[e1[0]][e1[1]]['weight']     
         else:
             print 'Network was found empty!'   
             
@@ -947,9 +951,9 @@ class Net(nx.Graph):
     
     def infer_airports_from_navpoints(self, C_airport, singletons=False):
         """
-        Detects all sectors having at least one navpoint begin a source or a destination. 
+        Detects all sectors having at least one navpoint being a source or a destination. 
         Mark them as airports, with a given capacity.
-        Shouldd only be used by sector networks.
+        Should only be used by sector networks.
         @input C_airport: capacity of the airports.
         @input singletons: passed to @fix_airports.
         """
@@ -985,7 +989,7 @@ class Net(nx.Graph):
         """
         return sum([self[p[i]][p[i+1]]['weight'] for i in range(len(p)-1)])
         
-    def compute_shortest_paths(self, Nfp, repetitions=True, use_sector_path=False, old=False, pairs = [], verb = 1):
+    def compute_shortest_paths(self, Nfp, repetitions=True, use_sector_path=False, old=False, pairs=[], verb=1, singletons=False):
         """
         Pre-Build Nfp weighted shortest paths between each pair of airports. 
         If repetitions is set to True, a path can have a given node twice or more. Otherwise, the function makes
@@ -1070,17 +1074,17 @@ class Net(nx.Graph):
                                 #print 'a:', a, 'b:', b, 'len(self.short[(a,b)]):', len(self.short[(a,b)])
                                 print "kspyen can't find enough paths (only " + str(len(paths)) + ')', "for the pair", a, b, "; I delete this pair."
                                 print 'Number of duplicates:', len(duplicates)
+                                #print 'Number of duplicates:', len(duplicates)
                                 #print 'Number of paths with duplicates:', len(paths_init)
                                 deleted_pairs.append((a,b))
                                 del self.short[(a,b)]
                                 #self.pairs = list(self.pairs)
-                                raise
+                                #raise
                             except:
                                 raise
                         Nfp = Nfp_init
                         if self.short.has_key((a,b)):
-                            self.short[(a,b)] = paths[:]
-
+                            self.short[(a,b)] = paths[:]                 
             else:
                 for it, (a,b) in enumerate(pairs):
                     #if verb:
@@ -1167,9 +1171,8 @@ class Net(nx.Graph):
         New in 2.9.0: Computes the k shortest paths of navpoints restricted to shortest path of sectors.
         Changed in 2.9.1: save all Nfp shortest paths of navpoints for each paths of sectors (Nfp also).
         Changed in 2.9.7: added pairs kwarg in order to compute less paths.
-        Note: this is black magic. Don't make any change unless you know what you are doing. And you probably don't.
+        Note: this is black magic. Don't make any change unless you know what you are doing (and you probably don't).
         """
-
 
         if not hasattr(self, 'short_nav'):
             self.short_nav={}
@@ -1180,16 +1183,22 @@ class Net(nx.Graph):
             pairs = [p for p in pairs if p in self.G_nav.short.keys()]
 
         for idx,(p0,p1) in enumerate(pairs):
-            counter(idx, len(pairs), message='Computing shortest paths (navpoints)...')
+            #counter(idx, len(pairs), message='Computing shortest paths (navpoints)...')
             s0,s1=self.G_nav.node[p0]['sec'], self.G_nav.node[p1]['sec']
             self.G_nav.short[(p0,p1)] = []
             self.short_nav[(p0,p1)] = {}
-            assert len(self.short[(s0,s1)]) == self.Nfp
+            try:
+                assert len(self.short[(s0,s1)]) == self.Nfp
+            except:
+                print "s0, s1:", s0, s1
+                print "len(self.short[(s0,s1)]), self.Nfp", len(self.short[(s0,s1)]), self.Nfp
+                raise
+
             try:
                 for idx_sp, sp in enumerate(self.short[(s0,s1)]): # Compute the network of navpoint restricted of each shortest paths.
                     H_nav=NavpointNet()
                     with silence(silent):
-                        print 'Shortest path in sectors:', sp
+                        #print 'Shortest path in sectors:', sp
                         HH=nx.Graph()
                         # Add every nodes in the sectors of the shortest paths.
                         for n in self.G_nav.nodes(): 
@@ -1529,50 +1538,73 @@ class Net(nx.Graph):
                 del self.short[(s1,s2)]
                 print 'I remove', s1, s2, 'from the airports of sectors because there is no corresponding pairs in navpoints.'
 
-    def check_all_real_flights_are_legitimate(self, flights_selected):
+    def check_all_real_flights_are_legitimate(self, flights_selected, repair=False):
         """
         Changed in 2.9.8: flights_selected is an external argument.
         """
-        for f in flights_selected:
+        fl_s = flights_selected[:]
+        for f in fl_s:
             try:
-                assert (self.G_nav.idx_navs[f['route_m1'][0][0]], self.G_nav.idx_navs[f['route_m1'][-1][0]]) in self.G_nav.short.keys()
+                assert (self.G_nav.idx_nodes[f['route_m1'][0][0]], self.G_nav.idx_nodes[f['route_m1'][-1][0]]) in self.G_nav.short.keys()
             except AssertionError:
-                print 'A flight has a ouple source/destination not in the list of pairs of the network.'
-                print f
-                raise
-            except:
-                raise
+                if repair:
+                    flights_selected.remove(f)
+                    continue
+                else:
+                    print
+                    print 'A flight has a couple source/destination not in the list of pairs of the network.'
+                    print f
+                    raise
 
-            navpoints = set([self.G_nav.idx_navs[p[0]] for p in f['route_m1']])
+            navpoints = set([self.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
             try:
                 assert navpoints.issubset(set(self.G_nav.nodes()))
             except AssertionError:
-                print 'A flight has navpoints not existing in the network:'
-                print f
-                print 'Navpoints not in network:', navpoints.difference(set(self.G_nav.nodes()))
-                raise
-            except:
-                raise
+                if repair:
+                    flights_selected.remove(f)
+                    continue
+                else:
+                    print
+                    print 'A flight has navpoints not existing in the network:'
+                    print f
+                    print 'Navpoints not in network:', navpoints.difference(set(self.G_nav.nodes()))
+                    raise
 
-            edges = set([(self.G_nav.idx_navs[f['route_m1'][i][0]], self.G_nav.idx_navs[f['route_m1'][i+1][0]]) for i in range(len(f['route_m1']) -1)])
+            edges = set([(self.G_nav.idx_nodes[f['route_m1'][i][0]], self.G_nav.idx_nodes[f['route_m1'][i+1][0]]) for i in range(len(f['route_m1']) -1)])
 
             for e1, e2 in edges:
                 try:
                     assert e2 in self.G_nav.neighbors(e1)
                 except AssertionError:
-                    print 'A flight is going from one point to the another while they are not connected:'
-                    print f
-                    print 'Edges not in network:', e1, e2
-                    raise
-                except:
-                    raise
+                    if repair:
+                        flights_selected.remove(f)
+                        break
+                    else:
+                        print
+                        print 'A flight is going from one point to the another while they are not connected:'
+                        print f
+                        print 'Edges not in network:', e1, e2
+                        raise
+        return flights_selected
 
     def connections(self):
         """
-        New in 2.9.8: compute the possible connections between airports.
+        New in 2.9.8: returns the possible connections between airports.
         """
 
         return self.short.keys()
+
+    def get_airports(self):
+        """
+        New in 2.9.8: returns the airports based on connections.
+        """
+        return set([e for ee in self.connections() for e in ee])
+
+    def stamp_airports(self):
+        """
+        New in 2.9.8: compute the list of airports based on short.
+        """
+        self.airports = self.get_airports()
 
 class NavpointNet(Net):
     """
@@ -1636,7 +1668,7 @@ class NavpointNet(Net):
     def clean_borders(self):
         """
         Remove all links between border points. 
-        Previously: Remover all links between navpoints in two different sectors
+        Previously: Remove all links between navpoints in two different sectors
         which are both non border points.
         Changed in 2.9.8: don't do the second operation anymore. 
         """

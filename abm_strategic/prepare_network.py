@@ -24,22 +24,23 @@ version='2.9.0'
 def area(p):
     return 0.5 * abs(sum(x0*y1 - x1*y0
                          for ((x0, y0), (x1, y1)) in segments(p)))
+    
 def segments(p):
     return zip(p, p[1:] + [p[0]])
 
 def prepare_network(paras_G, generate_new=False):
     ####################### Generate/load network #####################
     
-#    type_of_net='D'                 #type of graph ('D'=Delaunay triangulation, 'T'=triangular lattice, "E"=Erdos-Renyi random graph)
-#    N=30                            #order of the graph (in the case net='T' verify that the order is respected)        
-#    #airports=[65,20]                #IDs of the nodes used as airports
-#    airports=['LFMME3', 'LFFFTB']   #LFBBN2 (vers Perpignan)
-#    nairports=2                     #number of airports
-#    pairs=[]#[(22,65)]              #available connections between airports
-#    #[65,20]
-#    #[65,22]
-#    #[65,62]
-#    min_dis=2                       #minimum number of nodes between two airpors
+    # type_of_net='D'                 #type of graph ('D'=Delaunay triangulation, 'T'=triangular lattice, "E"=Erdos-Renyi random graph)
+    # N=30                            #order of the graph (in the case net='T' verify that the order is respected)        
+    # #airports=[65,20]                #IDs of the nodes used as airports
+    # airports=['LFMME3', 'LFFFTB']   #LFBBN2 (vers Perpignan)
+    # nairports=2                     #number of airports
+    # pairs=[]#[(22,65)]              #available connections between airports
+    # #[65,20]
+    # #[65,22]
+    # #[65,62]
+    # min_dis=2                       #minimum number of nodes between two airpors
     
     #network_name='generic'
     
@@ -76,12 +77,12 @@ def prepare_network(paras_G, generate_new=False):
     
     ####################### Capacities/weights #####################
     
-#    generate_weights=True
-#    typ_weights='coords'
-#    sigma=0.01
-#    generate_capacities=True
-#    typ_capacities='manual'
-#    C=5                             #sector capacity
+    # generate_weights=True
+    # typ_weights='coords'
+    # sigma=0.01
+    # generate_capacities=True
+    # typ_capacities='manual'
+    # C=5                             #sector capacity
     
     #file_capacities='capacities_sectors_Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0.pic'
     

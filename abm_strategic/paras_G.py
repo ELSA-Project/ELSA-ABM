@@ -147,6 +147,17 @@ if paras_G['make_borders_points']:
 	# Linear density of points on the borders
 	paras_G['lin_dens_borders'] = 5
 
+# Attach non-airport nodes with degree 1 to closest neighbor.
+paras_G['attach_termination_nodes'] = True
+
+# Keep singletons, i.e. the same sec-aiport in entry and exit, or not.
+paras_G['singletons'] = False
+
+# Expand polygons outwards in case all points are not in detected to be in one of them.
+# The value is the approximate fraction of maximum expansion (0 for no expansion).
+# The function "expand" is in libs.tools_airports.
+paras_G['expansion'] = 1.
+
 # --------------- Distance ---------------- #
 # This block is useful if you use the Distance library to select
 # sectors, navpoints, polygons, or traffic data

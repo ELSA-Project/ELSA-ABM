@@ -2397,7 +2397,7 @@ def build_network_based_on_shapes(password_db, airac, zone, layer):
     db.close()
 
     if max_height<layer:
-        print "There is no sectors at the requested layer (", layer, "),\n"
+        print "There is no sectors at the requested layer (", layer, "),"
         layer=max_height-5
         print "so I set it to the maximum height - 5FL (", layer, ")."
 

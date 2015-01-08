@@ -477,7 +477,7 @@ def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, 
 
     New in 2.9.4.
     """
-    print "Generation traffic on network..."
+    print "Generating traffic on network..."
 
     paras = read_paras(paras_file=paras_file, post_process = False)
     if simple_setup:
