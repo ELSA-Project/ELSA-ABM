@@ -1,6 +1,9 @@
 abm_strategic/*.pyc
 abm_strategic/*sublime*
 abm_tactical/*.pyc
+scripts/*.pyc
+libs/*.pyc
+libs/general_tools.pyc
 interface/*.pyc
 abm_tactical/*.so
 abm_tactical/*.o
