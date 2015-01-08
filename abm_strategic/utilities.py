@@ -310,8 +310,8 @@ def post_process_paras(paras):
         paras['G'] = None
 
     if paras['file_traffic']!=None:
-        with open(paras['   '], 'r') as _f:
-            flights = _pickle.load(_f)
+        with open(paras['file_traffic'], 'r') as _f:
+            flights = pickle.load(_f)
         paras['flows'] = {}
         for f in flights:
             # _entry = G.G_nav.idx_navs[f['route_m1t'][0][0]]
@@ -323,9 +323,9 @@ def post_process_paras(paras):
         paras['departure_times'] = 'exterior'
         paras['ACtot'] = sum([len(v) for v in paras['flows'].values()])
         paras['control_density'] = False
-        density=_func_density_vs_ACtot_na_day(paras['ACtot'], na, day)
+        density=_func_density_vs_ACtot_na_day(paras['ACtot'], paras['na'], paras['day'])
 
-        # There is no update requisites here, because the traffic shoul dnot be changed
+        # There is no update requisites here, because the traffic should not be changed
         # when it is extracted from data.
 
     else:
@@ -334,7 +334,7 @@ def post_process_paras(paras):
         if paras['file_times'] != None:
             if paras['departure_times']=='from_data': #TODO
                 with open('times_2010_5_6.pic', 'r') as f:
-                    paras['times']=_pickle.load(f)
+                    paras['times']=pickle.load(f)
         else:
             if paras['control_density']:
                 # ACtot is not an independent variable and is computed thanks to density

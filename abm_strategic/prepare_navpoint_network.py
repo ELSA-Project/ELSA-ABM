@@ -98,6 +98,27 @@ def attach_two_sectors(s1, s2, G):
     G.G_nav.add_edge(n1_selected,n2_selected, weight=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord'])))
     return G
 
+def automatic_name(G, paras_G):
+    long_name=G.type_of_net + '_N' + str(len(G.nodes()))
+    
+    if G.airports!=[] and len(G.airports)==2:
+       long_name+='_airports' +  str(G.airports[0]) + '_' + str(G.airports[1])
+    elif len(G.airports)>2:
+        long_name+='_nairports' + str(len(G.airports))
+    if paras_G['pairs']!=[] and len(G.airports)==2:
+        long_name+='_direction_' + str(paras_G['pairs'][0][0]) + '_' + str(paras_G['pairs'][0][1])
+    long_name+='_cap_' + G.typ_capacities
+    
+    if G.typ_capacities!='manual':
+        long_name+='_C' + str(paras_G['C'])
+    long_name+='_w_' + G.typ_weights
+    
+    if G.typ_weights=='gauss':
+        long_name+='sig' + str(paras_G['sigma'])
+    long_name+='_Nfp' + str(G.Nfp)
+
+    return long_name
+
 def check_and_fix_empty_sectors(G, checked, repair=False):
     # Check if every sectors have at least one navpoint left. 
     # TODO: another way to go would be to add a constant number of navpoints per sector. On the other
@@ -1133,14 +1154,12 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
 
 
     ########## Generate Capacities and weights ###########
-
     print "Choosing capacities and weights..."
     G = give_capacities_and_weights(G, paras_G)
     print
 
 
     ############# Computing shortest paths ###########
-    
     G.Nfp=paras_G['Nfp']
     G.G_nav.Nfp=G.Nfp
     
@@ -1176,26 +1195,8 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
 
     if paras_G['flights_selected']!=None:
         flights_selected = G.check_all_real_flights_are_legitimate(paras_G['flights_selected'], repair=True)
-        G.check_all_real_flights_are_legitimate(paras_G['flights_selected'], repair=False)
-    #     flights_selected = deepcopy(paras_G["flights_selected"])
-
-    #     # we remove from the selected flights all those which are not valid anymore, because of the airports we deleted.
-    #     fl_s = flights_selected[:]
-
-    #     for f in fl_s:
-
-    #         if (not (G.G_nav.idx_nodes[f['route_m1'][0][0]], G.G_nav.idx_nodes[f['route_m1'][-1][0]]) in G.G_nav.short.keys() and\
-    #             not (G.G_nav.idx_nodes[f['route_m1'][-1][0]], G.G_nav.idx_nodes[f['route_m1'][0][0]]) in G.G_nav.short.keys()) or\
-    #             (not set([G.G_nav.idx_nodes[p[0]] for p in f['route_m1']]) <= set(G.G_nav.nodes())):
-    #             flights_selected.remove(f)
-    #             #print 'I remove a flights because it was flying from', G.G_nav.idx_nodes[f['route_m1'][0][0]], 'to', G.G_nav.idx_nodes[f['route_m1'][-1][0]]
-    #             #print 'and this pair is not in the connections of the network.'
-    #         else:
-    #             edges = set([(G.G_nav.idx_nodes[f['route_m1'][i][0]], G.G_nav.idx_nodes[f['route_m1'][i+1][0]]) for i in range(len(f['route_m1']) -1)])
-
-    #         for e1, e2 in edges:
-    #             try:
-    #                 assert e2 in G.G_nav.neighbors(e1)
+        #G.check_all_real_flights_are_legitimate(paras_G['flights_selected'], repair=False)
+        G.check_all_real_flights_are_legitimate(flights_selected, repair=False)
 
         # Give capacities and weights based on the new set of flights
         G = give_capacities_and_weights(G, paras_G)
@@ -1210,28 +1211,10 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
 
 
     ##################### Automatic Name #######################
-    
-    long_name=G.type_of_net + '_N' + str(len(G.nodes()))
-    
-    if G.airports!=[] and len(G.airports)==2:
-       long_name+='_airports' +  str(G.airports[0]) + '_' + str(G.airports[1])
-    elif len(G.airports)>2:
-        long_name+='_nairports' + str(len(G.airports))
-    if paras_G['pairs']!=[] and len(G.airports)==2:
-        long_name+='_direction_' + str(paras_G['pairs'][0][0]) + '_' + str(paras_G['pairs'][0][1])
-    long_name+='_cap_' + G.typ_capacities
-    
-    if G.typ_capacities!='manual':
-        long_name+='_C' + str(paras_G['C'])
-    long_name+='_w_' + G.typ_weights
-    
-    if G.typ_weights=='gauss':
-        long_name+='sig' + str(paras_G['sigma'])
-    long_name+='_Nfp' + str(G.Nfp)
+    long_name = automatic_name(G, paras_G)
     
 
     ##################### Manual name #################
-
     if paras_G['name']!='': 
         name = paras_G['name']
     else:
@@ -1241,9 +1224,12 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     G.comments = {'long name':long_name, 'made with version':version}
     
     if save:
-        if save_path==None: save_path = join(rep, name)
+        if save_path==None: 
+            save_path = join(rep, name)
         with open(save_path + '.pic','w') as f:
             pickle.dump(G, f)
+        with open(save_path + '_flights_selected.pic','w') as f:
+            pickle.dump(flights_selected, f)
 
     G.basic_statistics(rep = save_path + '_')
 

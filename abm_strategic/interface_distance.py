@@ -17,6 +17,14 @@ from libs.general_tools import date_generation
 from prepare_navpoint_network import prepare_hybrid_network
 
 
+def name(paras_nav, data_version):
+	version = data_version if data_version!=None else distance_version
+	path = build_path(paras_nav, version, full=False)
+	_name = 'Real'
+	for piece in split(split(path, 'Distance/')[1], '/'):
+		_name += '_' + piece
+	return _name
+
 def paras_strategic(zone='LF', airac=334, starting_date=[2010,5,6], n_days=1, cut_alt=240.,\
 	mode='navpoints', data_version=None):
 
@@ -128,12 +136,7 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 	paras_G['type_of_net'] = 'R'
 
 	# Building name
-	version = data_version if data_version!=None else distance_version
-	path = build_path(paras_nav, version, full=False)
-	name = 'Real'
-	for piece in split(split(path, 'Distance/')[1], '/'):
-		name += '_' + piece
-	paras_G['name'] = name
+	paras_G['name'] = name(paras_nav, data_version)
 
 	if checks:
 		try:

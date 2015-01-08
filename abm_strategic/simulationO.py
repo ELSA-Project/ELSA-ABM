@@ -222,8 +222,8 @@ class Simulation:
         self.ACs={}
         k=0
         for ((source, destination), times) in self.flows.items():
-            idx_s = self.G.G_nav.idx_navs[source]
-            idx_d = self.G.G_nav.idx_navs[destination]
+            idx_s = self.G.G_nav.idx_nodes[source]
+            idx_d = self.G.G_nav.idx_nodes[destination]
             if idx_s in self.G.G_nav.airports and idx_d in self.G.G_nav.airports and self.G.G_nav.short.has_key((idx_s, idx_d)):    
                 n_flights_tot = len(times)
                 n_flights_A = int(self.nA*n_flights_tot)
@@ -629,17 +629,17 @@ if __name__=='__main__':
     trajectories_real = []
     print len(sim.G.flights_selected)
     for f in sim.G.flights_selected:
-        navpoints = set([sim.G.G_nav.idx_navs[p[0]] for p in f['route_m1']])
-        if navpoints.issubset(set(sim.G.G_nav.nodes())) and (sim.G.G_nav.idx_navs[f['route_m1'][0][0]], sim.G.G_nav.idx_navs[f['route_m1'][-1][0]]) in sim.G.G_nav.short.keys():
-            trajectories_real.append([sim.G.G_nav.idx_navs[p[0]] for p in f['route_m1']])
+        navpoints = set([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
+        if navpoints.issubset(set(sim.G.G_nav.nodes())) and (sim.G.G_nav.idx_nodes[f['route_m1'][0][0]], sim.G.G_nav.idx_nodes[f['route_m1'][-1][0]]) in sim.G.G_nav.short.keys():
+            trajectories_real.append([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
     # real_flights = extract_flows_from_data(sim.G.paras_real, [sim.G.G_nav.node[n]['name'] for n in sim.G.G_nav.nodes()])[2]
 
     print len(trajectories_real)
 
     # trajectories_real = []
     # for f in real_flights:
-    #     navpoints = set([sim.G.G_nav.idx_navs[p[0]] for p in f['route_m1']])
-    #     #edges = set([(sim.G.G_nav.idx_navs[f['route_m1'][i][0]], sim.G.G_nav.idx_navs[f['route_m1'][i+1][0]]) for i in range(len(f['route_m1'])-1)])
+    #     navpoints = set([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
+    #     #edges = set([(sim.G.G_nav.idx_nodes[f['route_m1'][i][0]], sim.G.G_nav.idx_nodes[f['route_m1'][i+1][0]]) for i in range(len(f['route_m1'])-1)])
         
     # # print len(trajectories_real)
     

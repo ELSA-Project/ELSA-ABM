@@ -25,7 +25,7 @@ if __name__=='__main__':
 	for country in ['LF', 'LE', 'EG', 'EB', 'LI']:
 		paras = paras_strategic(zone=country, airac=airac, starting_date=starting_date, n_days=n_days, cut_alt=cut_alt,\
 			mode=mode, data_version=data_version)
-		db=_mysql.connect("localhost","root", paras['password_db'], "ElsaDB_A" + str(paras['airac']), conv=my_conv)
+		db=_mysql.connect("localhost","root", paras['password_db'], "ElsaDB_A" + str(airac), conv=my_conv)
 
 		db.query("""SELECT accName FROM ACCBoundary WHERE accName LIKE '""" + country + """%'""")
 		r=db.store_result()

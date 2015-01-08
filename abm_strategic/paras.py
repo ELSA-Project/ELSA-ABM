@@ -11,7 +11,7 @@ import pickle as _pickle
 import sys as _sys
 from math import ceil as _ceil
 
-from utilities import Paras as _Paras#, network_whose_name_is as _network_whose_name_is
+from utilities import Paras as _Paras
 
 version='2.9.5' # Forked from version 2.9.5 of ABMvars.
 
