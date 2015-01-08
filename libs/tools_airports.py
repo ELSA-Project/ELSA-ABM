@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-from paths import path_codes, path_utilities, path_modules
-
 import sys
-sys.path.insert(1, path_modules)
-from string import split
 import os
+sys.path.insert(1, os.path.dirname(__file__))
+from paths import path_codes, path_utilities, path_modules
+sys.path.insert(1, path_modules)
+
+from string import split
 from  os.path import join as jn
 from math import *
 import networkx as nx
@@ -13,6 +14,7 @@ import matplotlib.pyplot as plt
 import pickle
 from scipy.stats.mstats import mquantiles
 from shapely.geometry import Polygon,Point
+from shapely.ops import cascaded_union
 from time import time
 #import matplotlib.cm as cm
 import _mysql
@@ -20,10 +22,11 @@ from MySQLdb.constants import FIELD_TYPE
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap as lsc
 from scipy.optimize import curve_fit
+from descartes.patch import PolygonPatch
 #import pandas as pd
 import datetime
 
-from general_tools import date_db, delay, date_human, date_st, cumulative
+from general_tools import date_db, delay, date_human, date_st, cumulative, draw_network_and_patches
 
 __version__='5.8'
 
@@ -72,7 +75,7 @@ ICAO={'LE':'Spain', 'LP':'Portugal', 'LX':'Gibraltar', 'DA':'Algeria', 'GM':'Mor
     
 
 
-def country_of_ICAO(icao):
+def country_of_ICAO(icao): # Useless
     return ICAO[icao]
     
 def ICAO_from_country(country):
@@ -670,7 +673,6 @@ class Set(object):
                             """WHERE f.aircraftId = a.Id and am.aircraftType = a.type and aircraftModel = 'L' and f.flightGId = fg.Id 
                             and fg.type = 'S' and fg.company!='ISS' and fg.company=IATA.company and IATA.IATACode!=''""" + time_sql + my_company + type_sql +"""  GROUP BY f.id) as fr, SegmentT_M1 as m1
             WHERE m1.heightEnd=0 and m1.flightTId=fr.id and time_to_sec(timediff(m1.datetimeEnd,fr.datetimeDep))>600"""
-            print query
             db.query(query)
         elif self.filtre=='Medium':
             db.query("""CREATE TABLE FlightR
@@ -1014,8 +1016,8 @@ class Set(object):
                 n+=1
         self.dis=self.dis/float(n)
         
-    def build_sectors(self,db):
-        self.SG=nx.Graph()
+    # def build_sectors(self,db):
+    #     self.SG = nx.Graph()
 
     def build_flights_sec(self,db,redo_FxS=True,experiment=False,cleaning=True):
         if self.verb:
@@ -2363,18 +2365,176 @@ def extract_flows_from_data(paras, nodes, pairs = []):
 
     return flows, times, flights_selected
 
-if __name__=='__main__':
-    paras = get_paras()
+def _OLD_select_layer_sector(password_db, airac, zone, level = 250.):
+    db=_mysql.connect("localhost","root", password_db,"ElsaDB_A" + str(airac), conv=my_conv)
 
-#    paras_nav=paras.copy()
-#    paras_nav['mode']='navpoints'
-#    paras_sec=paras.copy()
-#    paras_sec['cut_alt']=0.
-#    paras_sec['mode']='sectors'
-#    
-#    seth_nav=get_set(paras_nav)
-#    seth_sec=get_set(paras_sec)
-    seth=get_set(paras)
+    query = """SELECT S.sectorId#, SS.airblockUId#,  REPLACE(REPLACE(REPLACE(AsText(A.boundary), '(',''),'POLYGON',''),')','') as boundary
+            FROM SectorSlice as SS, Sector as S, Airblock as A
+            WHERE minHeight <""" + str(int(level))  + """ AND maxHeight >""" + str(int(level)) + \
+            """ AND SS.sectorUId=S.uniqueId AND S.sectorId like '""" + zone + \
+            """%' AND A.uniqueId=SS.airblockUId AND S.type='ES' AND S.airspaceCategory='_'
+            ORDER BY S.sectorId"""
+
+    db.query(query)
+    r=db.store_result()
+    rr=r.fetch_row(maxrows=0, how=0)
+
+    db.close()
+
+    return [rrr[0] for rrr in rr]
+
+def build_network_based_on_shapes(password_db, airac, zone, layer):
+    # Finding the max height of sectors in this area
+    db=_mysql.connect("localhost","root", password_db,"ElsaDB_A" + str(airac), conv=my_conv)
+    query="""SELECT max(maxHeight)
+    FROM SectorSlice as SS, Sector as S, Airblock as A
+    WHERE SS.sectorUId=S.uniqueId AND S.sectorId like '""" + zone + """%' 
+    AND A.uniqueId=SS.airblockUId AND S.type='ES' AND S.airspaceCategory='_' """
+
+    db.query(query)
+    r=db.store_result()
+    max_height = float(r.fetch_row(maxrows=0,how=0)[0][0])
+    db.close()
+
+    if max_height<layer:
+        print "There is no sectors at the requested layer (", layer, "),\n"
+        layer=max_height-5
+        print "so I set it to the maximum height - 5FL (", layer, ")."
+
+    sectors = select_layer_sector(password_db, airac, zone, layer)
+    with open(jn(path_modules, 'All_shapes_334.pic'),'r') as f:
+        all_shapes = pickle.load(f)
+
+    shapes = {s:all_shapes[s]['boundary'][0] for s in sectors}
+
+    # Remove overlapping sectors.
+    to_remove = []
+    items = shapes.items()
+    for i, (sec1, shape1) in enumerate(items):
+        for j in range(i+1, len(items)):
+            sec2, shape2 = items[j]
+            if shape1.intersects(shape2) and not shape1.touches(shape2): #overlap
+                #overlapping_sectors.append(sorted([sec1, sec2], key:lambda x:x.area))
+                #to_remove.append([sec1, sec2][np.argmin([shape1, shape2])]) #Flag the smallest to be removed
+                cut_shape = shape1.difference(shape2)
+                if not cut_shape.is_empty:
+                    shapes[sec1] = cut_shape
+                else:
+                    del shapes[sec1]                    
+    # print "Removing sectors", set(to_remove)
+    # for s in set(to_remove):
+    #     del shapes[s]
+
+    # Make the network detecting which sectors are touching which others.
+    G = nx.Graph()
+    items = shapes.items()
+    for i, (sec1, shape1) in enumerate(items):
+        G.add_node(sec1, coord=list(shape1.representative_point().coords)[0], shape=shape1)
+        for j in range(i+1, len(items)):
+            sec2, shape2 = items[j]
+            if shape1.touches(shape2):
+                G.add_edge(sec1, sec2)
+
+    return G, shapes
+
+def select_layer_sector(password_db, airac, zone, layer):
+    """
+    Taken from Module/build_one_layer_sector.py
+    """
+    print 'Extracting the layer...'
+
+    db=_mysql.connect("localhost","root", password_db,"ElsaDB_A" + str(airac), conv=my_conv)
+    
+    query=  """SELECT S.sectorId,  REPLACE(REPLACE(REPLACE(AsText(A.boundary), '(',''),'POLYGON',''),')','') as boundary
+    FROM SectorSlice as SS, Sector as S, Airblock as A
+    WHERE minHeight <""" +str(layer) + """ AND maxHeight >""" + str(layer) + """ AND SS.sectorUId=S.uniqueId AND S.sectorId like '""" + zone + \
+    """%' AND A.uniqueId=SS.airblockUId AND S.type='ES' AND S.airspaceCategory='_' ORDER BY S.sectorId"""
+
+    db.query(query)
+        
+    r=db.store_result()
+    sects=r.fetch_row(maxrows=0,how=1)
+
+    try:
+        assert len(sects)>0
+    except AssertionError:
+        print "Could not find any sector in zone", zone, "at altitude", layer, "in database."
+        print "Corresponding query:"
+        print query
+        raise
+
+    sector=sects[0]['sectorId']
+    bounds={}
+    i=0
+    while i<len(sects):
+        bounds[sector]=[]
+        while i<len(sects) and sects[i]['sectorId']==sector:
+            bd=[(float(split(p,' ')[0]), float(split(p,' ')[1])) for p in split(sects[i]['boundary'],',')]
+            bounds[sector].append(Polygon(bd))
+            i+=1
+        if len(bounds[sector])>1:
+            bounds[sector]=cascaded_union(bounds[sector])
+        else:
+            bounds[sector]=bounds[sector][0]
+        if i<len(sects):
+            sector=sects[i]['sectorId']
+
+    db.close()
+
+    return bounds
+
+def _test_build_network_based_on_shapes():
+    G, shapes = build_network_based_on_shapes('4ksut79f', 334, 'LF', 350.)
+
+    draw_network_and_patches(G, None, shapes, draw_navpoints_edges=False, \
+    draw_sectors_edges=True, rep='.', save=False, name='network', \
+    show=True, flip_axes=True, trajectories=[], \
+    trajectories_type='navpoints', dpi = 100, figsize = None)
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # for pol in shapes.values():
+    #     patch = PolygonPatch(pol,alpha=0.5, zorder=2)
+    #     ax.add_patch(patch) 
+    # plt.plot([46.],[1.])
+    # plt.show()
+
+def _test_select_layer_sector():
+    sectors = select_layer_sector('4ksut79f', 334, 'LF', 350.)
+    #print sectors
+    with open(jn(path_modules, 'All_shapes_334.pic'),'r') as f:
+        all_shapes = pickle.load(f)
+
+    shapes = {s:all_shapes[s]['boundary'][0] for s in sectors}
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for pol in shapes.values():
+        patch = PolygonPatch(pol,alpha=0.5, zorder=2)
+        ax.add_patch(patch) 
+    plt.plot([46.],[1.])
+    #plt.show()
+
+    #print shapes
+
+
+if __name__=='__main__':
+    # paras = get_paras()
+
+    # paras_nav=paras.copy()
+    # paras_nav['mode']='navpoints'
+    # paras_sec=paras.copy()
+    # paras_sec['cut_alt']=0.
+    # paras_sec['mode']='sectors'
+
+    # seth_nav=get_set(paras_nav)
+    # seth_sec=get_set(paras_sec)
+    # seth=get_set(paras)
+
+    _test_select_layer_sector()
+    _test_build_network_based_on_shapes()
+
+
 
         
             
