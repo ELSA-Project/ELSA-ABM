@@ -10,7 +10,7 @@ import sys
 sys.path.insert(1, '..')
 import os
 from mpl_toolkits.basemap import Basemap
-from math import sqrt, cos, sin, pi
+from math import sqrt, cos, sin, pi, atan2
 import numpy as np
 import matplotlib.gridspec as gridspec
 from descartes import PolygonPatch
@@ -21,6 +21,7 @@ import imp
 import pickle
 from os.path import join
 from string import split
+from random import choice
 
 from libs.general_tools import  delay, date_human, date_st
 from libs.tools_airports import bet_OD
@@ -153,13 +154,27 @@ def draw_zonemap(x_min,y_min,x_max,y_max,res):
 
 def restrict_to_connected_components(G):
     """
-    Remove all isolated nodes of a networkx graph.
+    Remove all nodes which are not in the biggest
+    connected component.
     """
     CC=nx.connected_component_subgraphs(G)[0]
-    for n in G.nodes():
+    removed = []
+    for n in G.nodes()[:]:
         if not n in CC.nodes():
             G.remove_node(n)
-    return G
+            removed.append(n)
+    return G, removed
+
+def clean_network(G):
+    """
+    Remove all nodes with degree 0 from a networkx object.
+    """
+    removed=[]
+    for n in G.nodes()[:]:
+        if G.degree(n)==0:
+            G.remove_node(n)
+            removed.append(n)
+    return G, removed
 
 class Paras(dict):
     """
@@ -441,6 +456,55 @@ def OD(trajectories):
     """
     
     return set([(t[0], t[1]) for t in trajectories])
+
+#def insert_altitudes(trajectories, sample_trajectories):
+    """
+    To use after convert_trajectories to generate altitude based on given sample.
+    Generate constant altitudes for now. TODO: generate non-constant altitudes.
+    """
+    for traj in trajectories:
+        alt = choice(sample_trajectories) # NO!
+        for i, (x, y, z, t) in enumerate(traj):
+            traj[i] = (x, y, alt, t)
+
+def select_heigths(th):
+    """
+    Sorts the altitude th increasingly, decreasingly or half/half at random.
+    """
+    coin=rd.choice(['up','down','both'])
+    if coin=='up' : th.sort()
+    if coin=='down': th.sort(reverse=True)
+    if coin=='both':
+        a=th[:len(th)/2]
+        a.sort()
+        b=th[len(th)/2:]
+        b.sort(reverse=True)
+        th=a+b
+    return th
+
+def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
+    """
+    Insert altitudes in trajectories based on distribution extracted from sample_trajectories.
+    The vertical trajectories can be of three kinds: increasing, decreasing, or increasing then decreasing.
+    """
+   
+    # Angles of real flights with respect to horizontal (between -pi and +pi).
+    entry_exit = [(t[0], t[-1]) for t in trajectories]
+    angles = [atan2(-(y1-y2),(x1-x2)) for (x1, y1, z1, t1), (x2, y2, z2, t2) in entry_exit]]
+    
+    # Sample the heights
+    h = [(int(b[1])/10)*10. for a in sample_trajectories for b in a if b[1]>=min_FL]
+    hp = [a for a in h if a%20==0] # This is for putting half flights on odd FL and the other half on even FLs.
+    hd = [a for a in h if a%20!=0]
+    h = [hp, hd]
+    
+    # Put new altitudes in trajectories
+    for i, traj in enumerate(trajectories):
+        th = select_heigths([choice(h[angles[i]<0]) for j in len(traj)])
+        trajectories[i] = [(x, y, th[j], t) for i, (x, y, z, t) in enumerate(traj)]
+
+    return trajectories
+
 
 ##################################################################################
 """

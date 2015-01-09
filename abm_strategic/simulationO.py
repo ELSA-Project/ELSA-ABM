@@ -30,7 +30,7 @@ from general_tools import draw_network_and_patches, header, delay, clock_time
 from tools_airports import extract_flows_from_data
 #from utilitiesO import compare_networks
 
-version='2.9.4'
+version='2.9.5'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
 
 if 0:
@@ -461,7 +461,8 @@ def do_standard((paras, G, i)):
     del sim
     return results
 
-def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, starting_date = [2010, 6, 5, 10, 0, 0], coordinates = True, **paras_control):
+def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
+     coordinates=True, sample_flights=None, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -474,8 +475,14 @@ def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, 
         paras_control: dictionary of values which are externally controlled. Typically,
     the number of flights.
         save_file: file for saving trajectories with the abm_tactical format.
+        coordinates: return list of coordinates instead list of names of navpoints.
+        simple_setup: if False, all parameters must be informed. Otherwise some default
+        parameters are used.
+        sample_flights: flights (under of trajectories of navpoints) from which altitudes 
+        are extracted. If None, altitudes are constant and set to 0.
 
     New in 2.9.4.
+    Changed in 2.9.5: Added synthetic altitudes generation.
     """
     print "Generating traffic on network..."
 
@@ -483,7 +490,7 @@ def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, 
     if simple_setup:
         paras['file_net'] = None
         paras['G'] = G
-        paras['Nfp'] = 2
+        paras['Nfp'] = 2 # Remark: must match number of pre-computed nav-shortest paths per sec-shortest paths.
         paras['Nsp_nav'] = 2
         paras['unit'] = 15
         paras['days'] = 24.*60.
@@ -551,6 +558,10 @@ def generate_traffic(G, paras_file = None, save_file = None, simple_setup=True, 
 
     if coordinates:
         trajectories_coords = convert_trajectories(G.G_nav, trajectories)
+
+        if sample_flights!=None: 
+            # Insert synthetic altitudes in trajectories based on sample from sample_flights.
+            trajectories_coords = insert_altitudes(trajectories_coords, convert_trajectories(G.G_nav, sample_flights))
 
         if save_file!=None:
             write_trajectories_for_tact(trajectories_coords, fil=save_file, starting_date = starting_date)
