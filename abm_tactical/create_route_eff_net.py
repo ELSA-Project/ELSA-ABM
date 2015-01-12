@@ -39,7 +39,6 @@ __version__ = "1.3"
 def uniform_rectification():
 	pass
 
-
 def partial_rectification(trajectories, eff_target, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
 	"""
 	High level functions for rectification. Fix completely N_per_sector points with 
@@ -344,14 +343,14 @@ def create_traffic(config, N_flights):
 	
 	'Calculate angle between different OD'
 	# This is for putting half flights on odd FL and the other half on even FLs.
-	Ang=[mt.atan2(-(a[0][1]-a[1][1]),(a[0][0]-a[1][0]))  for a in [[gall(a[0]),gall(a[1])] for a in Ap]]
+	Ang=[mt.atan2(-(a[0][1]-a[1][1]),(a[0][0]-a[1][0]))  for a in [[gall(a[0]),gall(a[1])] for a in Ap]] 
 	'Select from distribution height for fligths'
 	h=[(int(b[1])/10)*10. for a in x for b in a if b[1]>=240.]
 	hp=[a for a in h if a%20==0]
 	hd=[a for a in h if a%20!=0]
 	h=[hp,hd]
 	'Choice different heights respect to the direction - odd rule'
-	H=[rd.choice(h[Ang[i]<0]) for i in range(N_flights)]
+	H=[rd.choice(h[Ang[i]<0]) for i in range(N_flights)] # Not used
 	T=[rd.choice([a[0][2] for a in x]) for i in range(N_flights)]
 	T=[tf_time(a) for a in T]
 	

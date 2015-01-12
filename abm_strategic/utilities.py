@@ -266,6 +266,32 @@ def convert_trajectories(G, trajectories, starting_date = [2010, 6, 5, 10, 0, 0]
         trajectories_coords.append(traj_coords)
     return trajectories_coords
 
+def convert_distance_trajectories(G_nav, flights):
+    """
+    Convert trajectories from Distance library into trajectories for strategic model. 
+    Use integers for navpoints.
+    """
+
+    return [[G_nav.idx_nodes[nav] for nav, alt in flight['route_m1']] for flight in flights]
+
+def convert_distance_trajectories_coords(G_nav, flights):
+    """
+    Convert trajectories from Distance library into trajectories based on coordinates. 
+    Preserve the altitude and the times.
+    """
+    trajectories = []
+    for flight in flights:
+        traj = []
+        for i, (nav, alt) in enumerate(flight['route_m1']):
+            x, y = tuple(G_nav.node[G_nav.idx_nodes[nav]]['coord'])
+            t = flight['route_m1t'][i][0]
+            traj.append((x, y, alt, t))
+        trajectories.append(traj)
+
+    return trajectories
+
+
+
 def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
     """
     Write a set of trajectories in the format for abm_tactical
@@ -327,6 +353,7 @@ def post_process_paras(paras):
     if paras['file_traffic']!=None:
         with open(paras['file_traffic'], 'r') as _f:
             flights = pickle.load(_f)
+        paras['traffic'] = flights
         paras['flows'] = {}
         for f in flights:
             # _entry = G.G_nav.idx_navs[f['route_m1t'][0][0]]
@@ -471,7 +498,7 @@ def select_heigths(th):
     """
     Sorts the altitude th increasingly, decreasingly or half/half at random.
     """
-    coin=rd.choice(['up','down','both'])
+    coin=choice(['up','down','both'])
     if coin=='up' : th.sort()
     if coin=='down': th.sort(reverse=True)
     if coin=='both':
@@ -490,17 +517,17 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
    
     # Angles of real flights with respect to horizontal (between -pi and +pi).
     entry_exit = [(t[0], t[-1]) for t in trajectories]
-    angles = [atan2(-(y1-y2),(x1-x2)) for (x1, y1, z1, t1), (x2, y2, z2, t2) in entry_exit]]
+    angles = [atan2(-(y1-y2),(x1-x2)) for (x1, y1, z1, t1), (x2, y2, z2, t2) in entry_exit]
     
     # Sample the heights
-    h = [(int(b[1])/10)*10. for a in sample_trajectories for b in a if b[1]>=min_FL]
+    h = [(int(z)/10)*10. for a in sample_trajectories for x, y, z, t in a if z>=min_FL]
     hp = [a for a in h if a%20==0] # This is for putting half flights on odd FL and the other half on even FLs.
     hd = [a for a in h if a%20!=0]
     h = [hp, hd]
     
     # Put new altitudes in trajectories
     for i, traj in enumerate(trajectories):
-        th = select_heigths([choice(h[angles[i]<0]) for j in len(traj)])
+        th = select_heigths([choice(h[angles[i]<0]) for j in range(len(traj))])
         trajectories[i] = [(x, y, th[j], t) for i, (x, y, z, t) in enumerate(traj)]
 
     return trajectories

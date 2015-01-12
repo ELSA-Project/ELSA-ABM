@@ -102,17 +102,18 @@ def draw_network_and_patches(G, G_nav, polygons, draw_navpoints_edges=True, \
                 #path=f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p
                 for i in range(0,len(path)-1):
                     #print path[i], path[i+1]
-                    weights[path[i]][path[i+1]] = weights[path[i]].get(path[i+1],0.) + 1.
+                    if path[i] in weights.keys():
+                        weights[path[i]][path[i+1]] = weights[path[i]].get(path[i+1],0.) + 1.
             except ValueError:
-                pass
-            except:
-                raise
+                paras_to_display
 
         max_w=np.max([w for vois in weights.values() for w in vois.values()])
         
         for n,vois in weights.items():
-            for v,w in vois.items():
-                plt.plot([H.node[n]['coord'][0],H.node[v]['coord'][0]],[H.node[n]['coord'][1],H.node[v]['coord'][1]],'r-',lw=w/max_w*4.)
+            if n in H.nodes():
+                for v,w in vois.items():
+                    if v in H.nodes():
+                        plt.plot([H.node[n]['coord'][0],H.node[v]['coord'][0]],[H.node[n]['coord'][1],H.node[v]['coord'][1]],'r-',lw=w/max_w*4.)
        
     if save:
         plt.savefig(rep + '/' + name +'.png', dpi = dpi)
@@ -408,7 +409,7 @@ class DummyFile(object): # used for silence
 @contextlib.contextmanager
 def silence(silent):
     """
-    Silence you program :).
+    Silence your program :).
     """
     if silent:
         save_stdout = sys.stdout

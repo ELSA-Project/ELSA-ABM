@@ -27,7 +27,7 @@ from copy import deepcopy
 from os.path import join
 
 from simAirSpaceO import Net, NavpointNet
-from utilities import restrict_to_connected_components
+from utilities import clean_network
 
 #Distance
 from libs.tools_airports import get_paras, extract_flows_from_data, expand#, get_flights
@@ -44,7 +44,7 @@ if 0:
     print "===================================="
     seed(see_)
 
-version='2.9.7'
+version='2.9.8'
 
 _colors = ('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed')
 
@@ -447,20 +447,20 @@ def extract_weights_from_traffic(G, flights):
     print 'Extracting weights from data...'
 
     #flights=get_flights(paras_real)
-    weights={}
-    pop={}
+    weights = {}
+    pop = {}
     for f in flights:
-        r=f['route_m1t']
+        r = f['route_m1t']
         for i in range(len(r)-1):
             if G.idx_nodes.has_key(r[i][0]) and G.idx_nodes.has_key(r[i+1][0]):
-                p1=G.idx_nodes[r[i][0]]
-                p2=G.idx_nodes[r[i+1][0]]
+                p1 = G.idx_nodes[r[i][0]]
+                p2 = G.idx_nodes[r[i+1][0]]
                 if G.has_edge(p1,p2):
-                    weights[(p1,p2)]= weights.get((p1, p2),0.) + delay(np.array(r[i+1][1]),starting_date=np.array(r[i][1]))/60.
-                    pop[(p1,p2)]= pop.get((p1, p2),0.) + 1
+                    weights[(p1,p2)] = weights.get((p1, p2),0.) + delay(np.array(r[i+1][1]),starting_date=np.array(r[i][1]))/60.
+                    pop[(p1,p2)] = pop.get((p1, p2),0.) + 1
 
     for k in weights.keys():
-        weights[k]=weights[k]/float(pop[k])
+        weights[k] = weights[k]/float(pop[k])
 
     if len(weights.keys())<len(G.edges()):
         print 'Warning! Some edges do not have a weight!'
@@ -902,6 +902,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     New in 2.9.6: refactorization.
     Changed in 2.9.7: - navpoints are not contained in any sectors but touch one are linked to it.
                       - numberize also airports and pairs.
+    Changed in 2.9.8: supports single sector network.
     """
     print
 
@@ -941,7 +942,10 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
             if not G.global_shape.contains(LineString([G.G_nav.node[e[0]]['coord'], G.G_nav.node[e[1]]['coord']])):
                 print "I remove edge", e, "because it is outside the area."
                 G.G_nav.remove_edge(*e)
-        G.G_nav=restrict_to_connected_components(G.G_nav)
+        #G.G_nav, removed = restrict_to_connected_components(G.G_nav)
+        #print "Removed the following nodes which were not connected to the biggest connected component:", removed
+        G.G_nav, removed = clean_network(G.G_nav)
+        print "Removed the following nodes with zero degree:", removed
         if numberize:
             paras_G['airports_nav'] = [G.G_nav.idx_nodes[a] for a in paras_G['airports_nav']]
             paras_G['pairs_nav'] = [(G.G_nav.idx_nodes[e1], G.G_nav.idx_nodes[e2]) for e1, e2 in paras_G['pairs_nav']]
@@ -952,8 +956,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print
     #G.G_nav.show(stack=True)
 
-    a_n = list(paras_G['airports_nav'])[:]
-    for n in a_n:
+    for n in list(paras_G['airports_nav'])[:]:
         if not n in G.G_nav.nodes():
             paras_G['airports_nav'].remove(n)
 
@@ -1164,7 +1167,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     G.G_nav.Nfp=G.Nfp
     
     print 'Computing shortest_paths (sectors) ...'
-    pairs_deleted = G.compute_shortest_paths(G.Nfp, repetitions=False, old=False)   
+    pairs_deleted = G.compute_shortest_paths(G.Nfp, repetitions=False, old=False, delete_pairs=False)   
     G.infer_airports_from_short_list() # This could be removed in principle, because G.airports is not used anymore, only short.keys()
 
     pairs = G.G_nav.short.keys()[:]
@@ -1183,7 +1186,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print 'Computing shortest_paths (navpoints) ...'
     print 'Number of pairs before computation:', len(G.G_nav.short.keys())  
     # TODO: resolve this problem of silence.
-    G.compute_sp_restricted(G.Nfp, silent=False)
+    G.compute_sp_restricted(G.Nfp, silent=False, delete_pairs=False)
     G.G_nav.infer_airports_from_short_list()
     G.check_repair_sector_airports()
     G.stamp_airports()
@@ -1193,22 +1196,24 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print 'Number of flights before checking flights:', len(paras_G["flights_selected"])
     G.check_airports_and_pairs() # No action here
 
-    if paras_G['flights_selected']!=None:
-        flights_selected = G.check_all_real_flights_are_legitimate(paras_G['flights_selected'], repair=True)
-        #G.check_all_real_flights_are_legitimate(paras_G['flights_selected'], repair=False)
-        G.check_all_real_flights_are_legitimate(flights_selected, repair=False)
+    # if paras_G['flights_selected']!=None:
+    #     flights_selected = G.check_all_real_flights_are_legitimate(paras_G['flights_selected'], repair=True)
+    #     #G.check_all_real_flights_are_legitimate(paras_G['flights_selected'], repair=False)
+    #     G.check_all_real_flights_are_legitimate(flights_selected, repair=False)
 
-        # Give capacities and weights based on the new set of flights
-        G = give_capacities_and_weights(G, paras_G)
-        print 'Selected finally', len(flights_selected), "flights."
+    #     # Give capacities and weights based on the new set of flights
+    #     G = give_capacities_and_weights(G, paras_G)
+    flights_selected = paras_G["flights_selected"][:]
+    print 'Selected finally', len(flights_selected), "flights."
 
-        G.check_all_real_flights_are_legitimate(flights_selected) # no action taken here
+        #G.check_all_real_flights_are_legitimate(flights_selected) # no action taken here
 
+    print 'Final number of sectors:', len(G.nodes())
+    print 'Final number of navpoints:', len(G.G_nav.nodes())
     print 'Final number of airports (sectors):', len(G.airports)
     print 'Final number of connections (sectors):', len(G.connections())
     print 'Final number of airports (navpoints):', len(G.G_nav.airports)
     print 'Final number of connections (navpoints):', len(G.G_nav.connections()) 
-
 
     ##################### Automatic Name #######################
     long_name = automatic_name(G, paras_G)
@@ -1236,8 +1241,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print 'Network saved as', save_path + '.pic'
     #show_everything(G.polygons,G,save=True,name=name,show=False)       
     
-    print 'Number of sectors:', len(G.nodes())
-    print 'Number of navpoints:', len(G.G_nav.nodes())
+
     print 'Done.'
         
     if show:

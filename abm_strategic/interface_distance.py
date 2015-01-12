@@ -94,6 +94,9 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
 	seth = get_set(paras_nav, force = False)
 	G_nav, flights_nav = seth.G, seth.flights
+	#print "Number of navpoints with degree 0:", len([n for n in G_nav.nodes() if G_nav.degree(n)])
+	#print "Number of flights:", len(flights_nav)
+
 	paras_G['net_nav'] = G_nav
 	print "Number of nodes in navpoint network:", len(G_nav.nodes())
 

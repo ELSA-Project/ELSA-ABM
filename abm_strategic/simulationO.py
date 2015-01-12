@@ -24,9 +24,9 @@ import os
 import numpy as np
 import copy
 from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
-    compute_M1_trajectories, convert_trajectories
+    compute_M1_trajectories, convert_trajectories, insert_altitudes, convert_distance_trajectories_coords
 from math import ceil
-from general_tools import draw_network_and_patches, header, delay, clock_time
+from general_tools import draw_network_and_patches, header, delay, clock_time, silence
 from tools_airports import extract_flows_from_data
 #from utilitiesO import compare_networks
 
@@ -94,7 +94,7 @@ def check_object(G):
     Use to check if you have an old object. Used for legacy.
     """
     return hasattr(G, 'comments')
-        
+            
 class Simulation:
     """
     Class Simulation. 
@@ -217,7 +217,8 @@ class Simulation:
     def build_ACs_from_flows(self):
         """
         New in 2.9.2: the list of ACs is built from the flows (given by times). 
-        (Only the number of flights can be matched, or also the times, which are taken as desired times.)
+        (Only the number of flights can be matched, or also the times, which\
+         are taken as desired times.) TODO
         """
         self.ACs={}
         k=0
@@ -239,9 +240,11 @@ class Simulation:
                         k+=1
                         l+=1
             else:
-                print "I do " + (not idx_s in self.G.G_nav.airports)*'not', "find", idx_s, ", I do " + (not idx_d in self.G.G_nav.airports)*'not', "find", idx_d,\
-                 'and the couple is ' + (not self.G.G_nav.short.has_key((idx_s, idx_d)))*'not', 'in pairs.'
-                print 'I skip this flight.'
+                if self.storymode:
+                    print "I do " + (not idx_s in self.G.G_nav.airports)*'not', "find", idx_s, ", I do " + (not idx_d in self.G.G_nav.airports)*'not', "find", idx_d,\
+                     'and the couple is ' + (not self.G.G_nav.short.has_key((idx_s, idx_d)))*'not', 'in pairs.'
+                    print 'I skip this flight.'
+                pass
         # if clean:   
         #     self.Netman.initialize_load(self.G)
 
@@ -462,7 +465,7 @@ def do_standard((paras, G, i)):
     return results
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
-     coordinates=True, sample_flights=None, **paras_control):
+     coordinates=True, generate_altitudes=True, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -473,13 +476,13 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     
     Args:
         paras_control: dictionary of values which are externally controlled. Typically,
-    the number of flights.
+            the number of flights.
         save_file: file for saving trajectories with the abm_tactical format.
         coordinates: return list of coordinates instead list of names of navpoints.
         simple_setup: if False, all parameters must be informed. Otherwise some default
-        parameters are used.
-        sample_flights: flights (under of trajectories of navpoints) from which altitudes 
-        are extracted. If None, altitudes are constant and set to 0.
+            parameters are used.
+        generate_traffic: if True and paras['file_traffic'] is informed, generates 
+            synthetic altitudes. 
 
     New in 2.9.4.
     Changed in 2.9.5: Added synthetic altitudes generation.
@@ -559,9 +562,14 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     if coordinates:
         trajectories_coords = convert_trajectories(G.G_nav, trajectories)
 
-        if sample_flights!=None: 
-            # Insert synthetic altitudes in trajectories based on sample from sample_flights.
-            trajectories_coords = insert_altitudes(trajectories_coords, convert_trajectories(G.G_nav, sample_flights))
+        if generate_altitudes and paras['file_traffic']!=None: 
+            print "Generating synthetic altitudes..."
+            # Insert synthetic altitudes in trajectories based on a sampling of file_traffic
+            with silence(True):
+                small_sample = G.check_all_real_flights_are_legitimate(paras['traffic'], repair=True)
+            print "Kept", len(small_sample), "flights."
+            sample_trajectories = convert_distance_trajectories_coords(G.G_nav, small_sample)
+            trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
 
         if save_file!=None:
             write_trajectories_for_tact(trajectories_coords, fil=save_file, starting_date = starting_date)
