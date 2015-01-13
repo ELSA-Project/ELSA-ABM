@@ -214,11 +214,11 @@ class Simulation:
         # if clean:  # Not sure if this is useful.
         #     self.Netman.initialize_load(self.G)
 
-    def build_ACs_from_flows(self):
+    def build_ACs_from_flows(self, match_numbers=True, match_times=True):
         """
         New in 2.9.2: the list of ACs is built from the flows (given by times). 
-        (Only the number of flights can be matched, or also the times, which\
-         are taken as desired times.) TODO
+        (Only the number of flights can be matched, or also the times, which
+        are taken as desired times.) TODO
         """
         self.ACs={}
         k=0

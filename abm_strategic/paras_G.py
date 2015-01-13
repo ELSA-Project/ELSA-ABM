@@ -112,6 +112,8 @@ if paras_G['file_airports'] == None:
 	#airports=[65,22,10,45, 30, 16]
 	#airports=[]
                
+	paras_G['function_airports_nav'] = None #TODO
+	
 paras_G['pairs']=[]#[(22,65)]              #available connections between airports, set to [] for all possible connections (given min_dis).
 #[65,20]
 #[65,22]

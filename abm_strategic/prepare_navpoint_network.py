@@ -417,6 +417,7 @@ def extract_airports_from_traffic(G, flows): #,paras_G):
     Changed in 2.9: gives pairs as well. Gives all airports.
     Changed in 2.9.4: added paras_real.
     Chanded in 2.9.5: flows are given externally
+    Obsolete probably TODO.
     """
     # paras['zone']=G.country
     # paras['airac']=G.airac
@@ -902,7 +903,9 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     New in 2.9.6: refactorization.
     Changed in 2.9.7: - navpoints are not contained in any sectors but touch one are linked to it.
                       - numberize also airports and pairs.
-    Changed in 2.9.8: supports single sector network.
+    Changed in 2.9.8: supports single sector network TODO. Supports custom external function 
+        for choosing airports.
+    TODO: make an object and different methods.
     """
     print
 
@@ -946,7 +949,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
         #print "Removed the following nodes which were not connected to the biggest connected component:", removed
         G.G_nav, removed = clean_network(G.G_nav)
         print "Removed the following nodes with zero degree:", removed
-        if numberize:
+        if numberize and paras_G['airports_nav']!=None and paras_G['pairs_nav']!=None:
             paras_G['airports_nav'] = [G.G_nav.idx_nodes[a] for a in paras_G['airports_nav']]
             paras_G['pairs_nav'] = [(G.G_nav.idx_nodes[e1], G.G_nav.idx_nodes[e2]) for e1, e2 in paras_G['pairs_nav']]
 
@@ -1058,9 +1061,19 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
             G.add_airports(paras_G['airports_sec'], -10, pairs=paras_G['pairs_sec'], C_airport = paras_G['C_airport'])
             G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
         elif paras_G['airports_sec']==None and paras_G['airports_nav']!=None:
-            if not paras_G['singletons'] and paras_G['pairs_nav']!=None: 
-                paras_G['pairs_nav'] = remove_singletons(G, paras_G['pairs_nav'])
-            G.G_nav.add_airports(paras_G['airports_nav'], -10, pairs=paras_G['pairs_nav'], C_airport = paras_G['C_airport'])
+            if paras_G['function_airports_nav']!=None:
+                # Custom function of airport building based on traffic.
+                print "Extracting airports and pairs with custom function..."
+                assert 'flights_selected' in paras_G.keys() and paras_G['flights_selected']!=None
+                flights_selected, airports_nav, pairs_nav = paras_G['function_airports_nav'](G.G_nav, paras_G['flights_selected'])
+                print "Deleted flights because no navpoints of the trajectories belonged to the network:", len(paras_G['flights_selected']) - len(flights_selected)
+            else:
+                airports_nav, pairs_nav = paras_G['airports_nav'], paras_G['pairs_nav']
+            
+            if not paras_G['singletons'] and pairs_nav!=None: 
+                # Remove the pairs of navpoints which yield the same sec-entry and sec-exit.
+                pairs_nav = remove_singletons(G, pairs_nav)
+            G.G_nav.add_airports(airports_nav, -10, pairs=pairs_nav, C_airport = paras_G['C_airport'])
             G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=paras_G['singletons'])
         else: # TODO: add generate nav-airports feature
             G.generate_airports(paras_G['nairports'], -10, C_airport=paras_G['C_airport'])
@@ -1193,7 +1206,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     G.G_nav.stamp_airports()
 
     print 'Number of pairs nav-entry/exit before checking flights:', len(G.G_nav.short.keys())
-    print 'Number of flights before checking flights:', len(paras_G["flights_selected"])
+    #print 'Number of flights before checking flights:', len(paras_G["flights_selected"])
     G.check_airports_and_pairs() # No action here
 
     # if paras_G['flights_selected']!=None:
@@ -1203,7 +1216,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
 
     #     # Give capacities and weights based on the new set of flights
     #     G = give_capacities_and_weights(G, paras_G)
-    flights_selected = paras_G["flights_selected"][:]
+    #flights_selected = paras_G["flights_selected"][:]
     print 'Selected finally', len(flights_selected), "flights."
 
         #G.check_all_real_flights_are_legitimate(flights_selected) # no action taken here

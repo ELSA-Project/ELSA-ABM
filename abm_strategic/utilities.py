@@ -284,13 +284,11 @@ def convert_distance_trajectories_coords(G_nav, flights):
         traj = []
         for i, (nav, alt) in enumerate(flight['route_m1']):
             x, y = tuple(G_nav.node[G_nav.idx_nodes[nav]]['coord'])
-            t = flight['route_m1t'][i][0]
+            t = flight['route_m1t'][i][0] # TODO: Check this.
             traj.append((x, y, alt, t))
         trajectories.append(traj)
 
     return trajectories
-
-
 
 def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
     """
@@ -358,8 +356,23 @@ def post_process_paras(paras):
         for f in flights:
             # _entry = G.G_nav.idx_navs[f['route_m1t'][0][0]]
             # _exit = G.G_nav.idx_navs[f['route_m1t'][-1][0]]
-            _entry = f['route_m1t'][0][0]
-            _exit = f['route_m1t'][-1][0]
+            if paras['G']!=None:
+                # Find the first node in trajectory which is in airports
+                idx_entry = 0
+                while idx_entry<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_entry][0]] in paras['G'].G_nav.airports:
+                    idx_entry += 1
+                if idx_entry==len(f['route_m1t']): idx_entry = 0
+                
+                # Find the first node in trajectory which is in airports (backwards).
+                idx_exit = -1
+                while abs(idx_exit)<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_exit][0]] in paras['G'].G_nav.airports:
+                    idx_exit -= 1
+                if idx_exit==len(f['route_m1t']): idx_exit = -1
+            else:
+                idx_entry = 0
+                idx_exit = -1
+            _entry = f['route_m1t'][idx_entry][0]
+            _exit = f['route_m1t'][idx_exit][0]
             paras['flows'][(_entry, _exit)] = paras['flows'].get((_entry, _exit),[]) + [f['route_m1t'][0][1]]
 
         paras['departure_times'] = 'exterior'

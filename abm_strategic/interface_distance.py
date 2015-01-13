@@ -87,6 +87,40 @@ def paras_strategic(zone='LF', airac=334, starting_date=[2010,5,6], n_days=1, cu
 
 	return paras
 
+def extract_airports_from_traffic(G_nav, flights):
+	"""
+	This is a function you can pass to the builder (prepare_hybrid_network) in 
+	order to infer the airports and pairs from traffic. 
+	You can build your own custom function (for instance to restrict to some navpoints/pairs).
+	By default, this one extract every possible entry/exit from flights, finding the first node
+	(forward and backward) which are in the list of nodes of the network.
+	"""
+
+	assert G_nav.type=='nav'
+	entry_exit = []
+	for f in flights[:]:
+		# Find the first node in trajectory which is in the list of nodes of G_nav.
+		idx_entry = 0
+		while idx_entry<len(f['route_m1t']) and not G_nav.idx_nodes[f['route_m1t'][idx_entry][0]] in G_nav.nodes():
+			idx_entry += 1
+		if idx_entry==len(f['route_m1t']): 
+			flights.remove(f)
+			continue
+		
+		# Find the first node in trajectory which is in the list of nodes of G_nav (backwards).
+		idx_exit = -1
+		while abs(idx_exit)<len(f['route_m1t']) and not G_nav.idx_nodes[f['route_m1t'][idx_exit][0]] in G_nav.nodes():
+			idx_exit -= 1
+		if idx_exit==len(f['route_m1t']):
+			flights.remove(f)
+			continue
+
+		entry_exit.append((G_nav.idx_nodes[f['route_m1t'][idx_entry][0]], G_nav.idx_nodes[f['route_m1t'][idx_exit][0]]))
+
+	airports_nav = list(set([e for ee in entry_exit for e in ee]))
+
+	return flights, airports_nav, entry_exit
+
 def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, show=True, **kwargs_distance):
 	from paras_G import paras_G
 
@@ -129,11 +163,15 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 
 	# Extract entry/exit from traffic data:
 	route = 'route_' + paras_nav['nodes']
-	entry_exit = [(f[route][0][0], f[route][-1][0]) for f in paras_G['flights_selected']]
-	airports = set([e for ee in entry_exit for e in ee])
-	paras_G['airports_nav'] = airports
+	#entry_exit = [(f[route][0][0], f[route][-1][0]) for f in paras_G['flights_selected']]
+	#airports = set([e for ee in entry_exit for e in ee])
+	#paras_G['airports_nav'] = airports
+	paras_G['airports_nav'] = []
+	paras_G['function_airports_nav'] = extract_airports_from_traffic
+	#paras_G['pairs_nav'] = entry_exit
+	paras_G['pairs_nav'] = []
+
 	paras_G['airports_sec'] = None
-	paras_G['pairs_nav'] = entry_exit
 	paras_G['pairs_sec'] = None
 
 	paras_G['type_of_net'] = 'R'
@@ -141,19 +179,19 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 	# Building name
 	paras_G['name'] = name(paras_nav, data_version)
 
-	if checks:
-		try:
-			for f in paras_G['flights_selected']:
-				for n, alt in f[route]:
-					assert n in G_nav.nodes()
-		except AssertionError:
-			raise Exception("Some nodes in trajectories are missing in the network's nodes.")
+	# if checks:
+	# 	try:
+	# 		for f in paras_G['flights_selected']:
+	# 			for n, alt in f[route]:
+	# 				assert n in G_nav.nodes()
+	# 	except AssertionError:
+	# 		raise Exception("Some nodes in trajectories are missing in the network's nodes.")
 
-		try:
-			for a in airports:
-				assert a in G_nav.nodes()
-		except AssertionError:
-			raise Exception("Some airports are missing in the network's nodes.")
+	# 	try:
+	# 		for a in airports:
+	# 			assert a in G_nav.nodes()
+	# 	except AssertionError:
+	# 		raise Exception("Some airports are missing in the network's nodes.")
 
 	# Make network
 	G = prepare_hybrid_network(paras_G, rep = "../networks", show=show)
