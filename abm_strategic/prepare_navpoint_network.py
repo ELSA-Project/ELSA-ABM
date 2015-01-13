@@ -892,6 +892,23 @@ def write_down_network(G):
 
         pickle.dump(dic, f)
 
+def find_entry_exit(G, f):
+    # Find the first node in trajectory which is in airports
+    idx_entry = 0
+    while idx_entry<len(f['route_m1t']) and not G.G_nav.idx_nodes[f['route_m1t'][idx_entry][0]] in G.G_nav.nodes():
+        idx_entry += 1
+    if idx_entry==len(f['route_m1t']): idx_entry = 0
+    
+    # Find the first node in trajectory which is in airports (backwards).
+    idx_exit = -1
+    while abs(idx_exit)<len(f['route_m1t']) and not G.G_nav.idx_nodes[f['route_m1t'][idx_exit][0]] in G.G_nav.nodes():
+        idx_exit -= 1
+    if idx_exit==len(f['route_m1t']): idx_exit = -1
+    _entry = G.G_nav.idx_nodes[f['route_m1t'][idx_entry][0]]
+    _exit = G.G_nav.idx_nodes[f['route_m1t'][idx_exit][0]]
+
+    return _entry, _exit
+
 class NoEdges(Exception):
     pass
 
@@ -1092,6 +1109,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print 'Number of airports (navpoints) at this point:', len(G.G_nav.airports)
     print 'Number of connections (navpoints) at this point:', len(G.G_nav.connections()) 
 
+    #assert (316, 88) in G.G_nav.connections()
 
     ############# Repair some stuff #############
     print "Repairing mutiple issues..."
@@ -1167,7 +1185,6 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
 
     #draw_network_and_patches(None, G.G_nav, G.polygons, name = 'network3', show=False, flip_axes=True, dpi = 300, rep = rep)
     print
-
 
     ########## Generate Capacities and weights ###########
     print "Choosing capacities and weights..."

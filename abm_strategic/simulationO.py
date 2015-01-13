@@ -240,7 +240,7 @@ class Simulation:
                         k+=1
                         l+=1
             else:
-                if self.storymode:
+                if 1:#self.storymode:
                     print "I do " + (not idx_s in self.G.G_nav.airports)*'not', "find", idx_s, ", I do " + (not idx_d in self.G.G_nav.airports)*'not', "find", idx_d,\
                      'and the couple is ' + (not self.G.G_nav.short.has_key((idx_s, idx_d)))*'not', 'in pairs.'
                     print 'I skip this flight.'
@@ -515,6 +515,8 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
     paras = post_process_paras(paras)
 
+    print "Number of flights in traffic:", len(paras['traffic'])
+    
     with clock_time():
         sim=Simulation(paras, G=G, make_dir=True, verbose=True)
         sim.make_simu(storymode=False)
@@ -567,7 +569,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             # Insert synthetic altitudes in trajectories based on a sampling of file_traffic
             with silence(True):
                 small_sample = G.check_all_real_flights_are_legitimate(paras['traffic'], repair=True)
-            print "Kept", len(small_sample), "flights."
+            print "Kept", len(small_sample), "flights for sampling altitudes."
             sample_trajectories = convert_distance_trajectories_coords(G.G_nav, small_sample)
             trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
 

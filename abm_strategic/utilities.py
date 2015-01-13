@@ -356,16 +356,16 @@ def post_process_paras(paras):
         for f in flights:
             # _entry = G.G_nav.idx_navs[f['route_m1t'][0][0]]
             # _exit = G.G_nav.idx_navs[f['route_m1t'][-1][0]]
-            if paras['G']!=None:
+            if paras['G']!=None: 
                 # Find the first node in trajectory which is in airports
                 idx_entry = 0
-                while idx_entry<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_entry][0]] in paras['G'].G_nav.airports:
+                while idx_entry<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_entry][0]]:# in paras['G'].G_nav.airports:
                     idx_entry += 1
                 if idx_entry==len(f['route_m1t']): idx_entry = 0
                 
                 # Find the first node in trajectory which is in airports (backwards).
                 idx_exit = -1
-                while abs(idx_exit)<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_exit][0]] in paras['G'].G_nav.airports:
+                while abs(idx_exit)<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_exit][0]]:# in paras['G'].G_nav.airports:
                     idx_exit -= 1
                 if idx_exit==len(f['route_m1t']): idx_exit = -1
             else:
