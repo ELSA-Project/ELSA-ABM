@@ -9,6 +9,7 @@
 #include<stdlib.h>
 #include<time.h>
 
+// Entry for wrapper.
 int simulation(char **args){
 
 	srand(time(NULL));
@@ -39,7 +40,7 @@ int simulation(char **args){
 	return 0;
 }
 
-
+// Manual entry
 int main(int argc,char *argv[]){
 	simulation(argv);
 }

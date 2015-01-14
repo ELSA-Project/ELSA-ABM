@@ -1096,7 +1096,8 @@ class Net(nx.Graph):
                             while len(self.short[(a,b)])<Nfp:
                                 self.short[(a,b)].append(self.short[(a,b)][-1])
                             assert len(self.short[(a,b)])==Nfp
-
+                    else:
+                        self.short[(a,b)] = [[a] for i in range(Nfp)]
             else:
                 for it, (a,b) in enumerate(pairs):
                     #if verb:
@@ -1170,7 +1171,6 @@ class Net(nx.Graph):
                                 print  "Pair", (a,b), "do not have enough path, I duplicate the last one..."
                             while len(self.short[(a,b)])<Nfp:
                                 self.short[(a,b)].append(self.short[(a,b)][-1])  
-
 
         # enough_paths=True
         # for (a,b) in self.short.keys():

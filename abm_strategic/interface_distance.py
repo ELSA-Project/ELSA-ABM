@@ -158,7 +158,7 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 	paras_G['make_entry_exit_points'] = False
 	paras_G['make_borders_points'] = False
 	paras_G['attach_termination_nodes'] = True
-	paras_G['singletons'] = False
+	paras_G['singletons'] = True
 	paras_G['expansion'] = 0.1
 
 	# Extract entry/exit from traffic data:

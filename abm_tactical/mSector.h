@@ -16,7 +16,7 @@
 
 #define V_THR 500.
 
-/*If is define read the temporary point from a file*/
+/*If is defined read the temporary point from a file*/
 #define TMP_FROM_FILE
 
 /*Structure of shock*/

@@ -27,7 +27,7 @@ from copy import deepcopy
 from os.path import join
 
 from simAirSpaceO import Net, NavpointNet
-from utilities import clean_network
+from utilities import clean_network, find_entry_exit
 
 #Distance
 from libs.tools_airports import get_paras, extract_flows_from_data, expand#, get_flights
@@ -892,22 +892,7 @@ def write_down_network(G):
 
         pickle.dump(dic, f)
 
-def find_entry_exit(G, f):
-    # Find the first node in trajectory which is in airports
-    idx_entry = 0
-    while idx_entry<len(f['route_m1t']) and not G.G_nav.idx_nodes[f['route_m1t'][idx_entry][0]] in G.G_nav.nodes():
-        idx_entry += 1
-    if idx_entry==len(f['route_m1t']): idx_entry = 0
-    
-    # Find the first node in trajectory which is in airports (backwards).
-    idx_exit = -1
-    while abs(idx_exit)<len(f['route_m1t']) and not G.G_nav.idx_nodes[f['route_m1t'][idx_exit][0]] in G.G_nav.nodes():
-        idx_exit -= 1
-    if idx_exit==len(f['route_m1t']): idx_exit = -1
-    _entry = G.G_nav.idx_nodes[f['route_m1t'][idx_entry][0]]
-    _exit = G.G_nav.idx_nodes[f['route_m1t'][idx_exit][0]]
 
-    return _entry, _exit
 
 class NoEdges(Exception):
     pass
@@ -948,10 +933,11 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
         #nav_at_borders = []
         G.G_nav.build((paras_G['N_by_sectors']-1)*len(G.nodes()),paras_G['nairports'],paras_G['min_dis'], generation_of_airports=False, \
                 sector_list=[G.node[n]['coord'] for n in G.nodes()], navpoints_borders=nav_at_borders, shortcut=0.01) #ATTENTION: min_dis is not the right one. TODO
-        
+        idx=max(G.G_nav.nodes())
     else:
         numberize = ((type(paras_G['net_nav'].nodes()[0])!=type(1.)) and (type(paras_G['net_nav'].nodes()[0])!=type(1)))
         G.G_nav.import_from(paras_G['net_nav'], numberize=numberize) 
+        idx=max(G.G_nav.nodes())
         convert_minutes = max([abs(cc) for n in G.G_nav.nodes() for cc in G.G_nav.node[n]['coord']])>180. and max([abs(cc) for ccs in G.global_shape.exterior.coords for cc in ccs])<180
         if convert_minutes:
             print "I detected that the coordinates of navpoints were in minutes whereas coordinates of the area were in degree."
@@ -1109,11 +1095,19 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print 'Number of airports (navpoints) at this point:', len(G.G_nav.airports)
     print 'Number of connections (navpoints) at this point:', len(G.G_nav.connections()) 
 
-    #assert (316, 88) in G.G_nav.connections()
+    try:
+        for f in flights_selected:
+            e1, e2 = find_entry_exit(G.G_nav, f)
+            assert e1, e2 in G.G_nav.connections()
+    except:
+        print "e1, e2", e1, e2
+
+    #assert 333 in G.G_nav.nodes()
+    #assert (333, 197) in G.G_nav.connections()
 
     ############# Repair some stuff #############
     print "Repairing mutiple issues..."
-    idx=max(G.G_nav.nodes())
+    
     change=paras_G['file_net_nav']==None
     
     # We check if edges of navpoints are crossing sectors other than the two sectors of the two nodes.

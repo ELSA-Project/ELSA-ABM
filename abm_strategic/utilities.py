@@ -110,6 +110,30 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
     if show:
         plt.show()
 
+def find_entry_exit(G_nav, f, names=False):
+    """
+    Returns the first nodes (forward/backward) of flight f which belongs to G_nav.  
+    """
+    # Find the first node in trajectory which is in airports
+    idx_entry = 0
+    while idx_entry<len(f['route_m1t']) and not G_nav.idx_nodes[f['route_m1t'][idx_entry][0]] in G_nav.nodes():
+        idx_entry += 1
+    if idx_entry==len(f['route_m1t']): idx_entry = 0
+    
+    # Find the first node in trajectory which is in airports (backwards).
+    idx_exit = -1
+    while abs(idx_exit)<len(f['route_m1t']) and not G_nav.idx_nodes[f['route_m1t'][idx_exit][0]] in G_nav.nodes():
+        idx_exit -= 1
+    if idx_exit==len(f['route_m1t']): idx_exit = -1
+
+    if names:
+        return f['route_m1t'][idx_entry][0], f['route_m1t'][idx_exit][0]
+    else:
+        _entry = G_nav.idx_nodes[f['route_m1t'][idx_entry][0]]
+        _exit = G_nav.idx_nodes[f['route_m1t'][idx_exit][0]]
+
+        return _entry, _exit
+
 def split_coords(G,nodes,r=0.04):
     lines=[]
     for n in G.nodes():
@@ -357,22 +381,30 @@ def post_process_paras(paras):
             # _entry = G.G_nav.idx_navs[f['route_m1t'][0][0]]
             # _exit = G.G_nav.idx_navs[f['route_m1t'][-1][0]]
             if paras['G']!=None: 
-                # Find the first node in trajectory which is in airports
-                idx_entry = 0
-                while idx_entry<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_entry][0]]:# in paras['G'].G_nav.airports:
-                    idx_entry += 1
-                if idx_entry==len(f['route_m1t']): idx_entry = 0
+                # # Find the first node in trajectory which is in airports
+                # idx_entry = 0
+                # while idx_entry<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_entry][0]]:# in paras['G'].G_nav.airports:
+                #     idx_entry += 1
+                # if idx_entry==len(f['route_m1t']): idx_entry = 0
                 
-                # Find the first node in trajectory which is in airports (backwards).
-                idx_exit = -1
-                while abs(idx_exit)<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_exit][0]]:# in paras['G'].G_nav.airports:
-                    idx_exit -= 1
-                if idx_exit==len(f['route_m1t']): idx_exit = -1
+                # # Find the first node in trajectory which is in airports (backwards).
+                # idx_exit = -1
+                # while abs(idx_exit)<len(f['route_m1t']) and not paras['G'].G_nav.idx_nodes[f['route_m1t'][idx_exit][0]]:# in paras['G'].G_nav.airports:
+                #     idx_exit -= 1
+                # if idx_exit==len(f['route_m1t']): idx_exit = -1
+
+                _entry, _exit = find_entry_exit(paras['G'].G_nav, f, names=True)
             else:
                 idx_entry = 0
                 idx_exit = -1
-            _entry = f['route_m1t'][idx_entry][0]
-            _exit = f['route_m1t'][idx_exit][0]
+                _entry = f['route_m1t'][idx_entry][0]
+                _exit = f['route_m1t'][idx_exit][0]
+            #assert 333 in paras['G'].G_nav.nodes()
+            # try:
+            #     assert (_entry, _exit) in paras['G'].G_nav.connections()
+            # except:
+            #     print "entry/exit", _entry, _exit , "are not in the connections."
+            #     raise
             paras['flows'][(_entry, _exit)] = paras['flows'].get((_entry, _exit),[]) + [f['route_m1t'][0][1]]
 
         paras['departure_times'] = 'exterior'
