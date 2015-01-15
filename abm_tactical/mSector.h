@@ -17,7 +17,7 @@
 #define V_THR 500.
 
 /*If is defined read the temporary point from a file*/
-#define TMP_FROM_FILE
+//#define TMP_FROM_FILE
 
 /*Structure of shock*/
 typedef struct {

@@ -150,6 +150,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).f_lvl[1] = _find_value_string(config_file, "shock_f_lvl_max");
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
+	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
 	(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";//TODO: change this. //_find_value_string(config_file, "main_dir");
 	return 1;
 }
@@ -213,6 +214,9 @@ int get_temp_shock(CONF_t *conf){
 }
 
 int add_nsim_output(char *file_out,char *file_in, int n){
+	/*
+	
+	*/
 	int i;
 	for(i=0;file_in[i]!='\0';i++);
 	for(;file_in[i]!='.';i--);

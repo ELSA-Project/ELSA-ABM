@@ -60,26 +60,29 @@ int generate_temporary_point(CONF_t *config){
 	
 	(*config).tmp_nvp = falloc_matrix((*config).n_tmp_nvp, 2);
 	int n;
-#ifdef TMP_FROM_FILE
-	printf("Attention! read temporary nvp from file\n");
-	int i;
-	char c[500];
+//#ifdef TMP_FROM_FILE
 
 	char* rep_tail = "/abm_tactical/config/temp_nvp.dat";
 	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
 	sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
 
-	FILE *rstream=fopen(rep,"r");
-	if(rstream==NULL) BuG("Impossible to open temp_nvp.dat\n");
-	for(n=0;fgets(c,500,rstream);n++){
-		(*config).tmp_nvp[n][0]=atof(c);
-		for(i=0;c[i]!='\t';i++);
-		(*config).tmp_nvp[n][1]=atof(&c[++i]);
+	if((*config).tmp_from_file){
+		printf("Attention! read temporary nvp from file\n");
+		int i;
+		char c[500];
+
+		FILE *rstream=fopen(rep,"r");
+		if(rstream==NULL) BuG("Impossible to open temp_nvp.dat\n");
+		for(n=0;fgets(c,500,rstream);n++){
+			(*config).tmp_nvp[n][0]=atof(c);
+			for(i=0;c[i]!='\t';i++);
+			(*config).tmp_nvp[n][1]=atof(&c[++i]);
+		}
+		fclose(rstream);
+		free(rep);
+		return 1;
 	}
-	fclose(rstream);
-	free(rep);
-	return 1;
-#endif
+//#endif
 	
 	long double Mx= _find_extrem((*config).bound,(*config).Nbound,0,1);
 	long double mx= _find_extrem((*config).bound,(*config).Nbound,0,0);

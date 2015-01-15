@@ -25,6 +25,32 @@ if 0:
     print "===================================="
     np.random.seed(see_)
 
+def choose_paras(name_para, new_value):
+	with open("../abm_tactical/config/config.cfg") as f:
+		lines = f.readlines()
+
+	#print lines
+	new_lines = []
+	for i, l in enumerate(lines):
+		#print i, l, len(l)
+		if l[0]!='#' and len(l)>1: # If not a comment and not a blank line
+			value, name = l.strip('\n').split('\t#')#split(l.strip(), '\t#')
+			#name = 
+			if name == name_para:
+				line = str(new_value) + "\t#" + name + '\n'*(line[-1]=='\n') # last bit because of shock_f_lvl_min
+			else:
+				line = l[:]
+		else:
+			line = l[:]
+		new_lines.append(line)
+		#print line
+	#print new_lines
+
+	with open("../abm_tactical/config/config_test.cfg", 'w') as f:
+		for line in new_lines:
+			f.write(line)
+
+
 
 def do_efficiency():
 	# Choice of the network
@@ -69,6 +95,8 @@ if __name__ == '__main__':
 	input_file = os.path.join(main_dir, "trajectories/M1/trajectories_alt.dat")
 	output_file = os.path.join(main_dir, "results/output.dat")
 	#do_ABM_tactical(input_file, output_file)
-	do_efficiency()
+	#do_efficiency()
+
+	choose_paras('nsim', 10)
 
 

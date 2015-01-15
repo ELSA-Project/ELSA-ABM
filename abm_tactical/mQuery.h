@@ -110,6 +110,9 @@ typedef struct {
 	/*Width of distribution of noise on velocity*/
 	long double sig_V;
 
+	/* Boolean. If 1, new temporary navpoints are read from the disk. Otherwise they are generated. */
+	int tmp_from_file;
+
 	/*Main directory*/
 	char *main_dir;
 } CONF_t ;
