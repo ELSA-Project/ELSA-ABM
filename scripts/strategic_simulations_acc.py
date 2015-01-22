@@ -29,7 +29,7 @@ if __name__=='__main__':
 	data_version=None
 	n_iter = 100
 	
-	for country in ['LF', 'LE', 'EG', 'EB', 'LI']:
+	for country in ['LE', 'EG', 'EB', 'LI']:
 		paras = paras_strategic(zone=country, airac=airac, starting_date=starting_date, n_days=n_days, cut_alt=cut_alt,\
 			mode=mode, data_version=data_version)
 

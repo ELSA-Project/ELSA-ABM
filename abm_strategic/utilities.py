@@ -316,16 +316,17 @@ def convert_distance_trajectories_coords(G_nav, flights):
 
 def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
     """
-    Write a set of trajectories in the format for abm_tactical
+    Write a set of trajectories in the format for abm_tactical.
+    Note: counts begin at 1 to comply with older trajectories.
     @G: navpoint network.
     """ 
     os.system("mkdir -p " + os.path.dirname(fil))
     with open(fil, 'w') as f:
         print >>f, str(len(trajectories)) + "\tNflights"
         for i,trajectory in enumerate(trajectories):
-            print >>f, str(i) + "\t" + str(len(trajectory)) + '\t',
+            print >>f, str(i+1) + "\t" + str(len(trajectory)) + '\t',
             for x, y, z, t in trajectory:
-                print >>f, str(x) + "," + str(y) + "," + str(z) + "," + date_abm_tactic(date_st(t, starting_date = starting_date)) + '\t',
+                print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(date_st(t, starting_date = starting_date)) + '\t',
             print >>f, ''
 
     print "Trajectories saved in", fil  
@@ -571,10 +572,11 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
     h = [hp, hd]
     
     # Put new altitudes in trajectories
-    for i, traj in enumerate(trajectories):
-        th = select_heigths([choice(h[angles[i]<0]) for j in range(len(traj))])
-        trajectories[i] = [(x, y, th[j], t) for i, (x, y, z, t) in enumerate(traj)]
+    for idx, traj in enumerate(trajectories):
 
+        th = select_heigths([choice(h[angles[idx]<0]) for j in range(len(traj))])
+        trajectories[idx] = [(x, y, th[j], t) for i, (x, y, z, t) in enumerate(traj)]
+        #print "Altitude picked:",th[j] 
     return trajectories
 
 

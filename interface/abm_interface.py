@@ -46,7 +46,7 @@ def choose_paras(name_para, new_value):
 		#print line
 	#print new_lines
 
-	with open("../abm_tactical/config/config_test.cfg", 'w') as f:
+	with open("../abm_tactical/config/config.cfg", 'w') as f:
 		for line in new_lines:
 			f.write(line)
 
@@ -81,22 +81,21 @@ def do_ABM_tactical(input_file, output_file):
 	tactical_simulation(inpt)
 
 	print
-	print
 	print "Done."
 
 
 if __name__ == '__main__':
 	main_dir = os.path.abspath(__file__)
 	main_dir = os.path.split(os.path.dirname(main_dir))[0]
-	print main_dir
 
-	print
+	choose_paras('tmp_from_file', 1)
 	#input_file = os.path.join(main_dir, "trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat")
-	input_file = os.path.join(main_dir, "trajectories/M1/trajectories_alt.dat")
-	output_file = os.path.join(main_dir, "results/output.dat")
-	#do_ABM_tactical(input_file, output_file)
+	input_file = os.path.join(main_dir, "trajectories/M1/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
+	#output_file = os.path.join(main_dir, "results/output.dat")
+	output_file = os.path.join(main_dir, "trajectories/M3/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
+	do_ABM_tactical(input_file, output_file)
 	#do_efficiency()
 
-	choose_paras('nsim', 10)
+	#choose_paras('nsim', 10)
 
 
