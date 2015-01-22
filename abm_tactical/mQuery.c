@@ -70,6 +70,8 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 		for(j=1;c[j]!='\t';j++);
 		
 		(*flight)[i].n_nvp=atoi(&c[++j]);
+
+		if((*flight)[i].n_nvp==0) BuG("BUG in M1 File: flight has no navpoint\n");
 		
 		(*flight)[i].nvp=falloc_matrix((*flight)[i].n_nvp,4);
 		(*flight)[i].time=falloc_vec((*flight)[i].n_nvp);

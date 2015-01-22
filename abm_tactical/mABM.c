@@ -85,7 +85,7 @@ int copy_flight(Aircraft_t *F, int N, Aircraft_t **f ){
 	int i,j,k;
 	
 	(*f)=(Aircraft_t *) malloc(N*sizeof(Aircraft_t));
-	if(*f==NULL) BuG("Not enoght memory\n");
+	if(*f==NULL) BuG("Not enough memory\n");
 	
 	for(i=0;i<N;i++){
 		(*f)[i].ID = F[i].ID;
@@ -183,6 +183,7 @@ int _nvp_to_close(long double *d,long double *t_c,long double *vel,long double d
 int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_step, long double t_r, long double dV){
 	int i,j;
 	long double l_nvp,d,t_c;
+	//printf("%d\n", (*f).st_indx-1);
 	long double t0 = (*f).time[(*f).st_indx-1] + haversine_distance(st_point, (*f).nvp[(*f).st_indx-1])/(*f).vel[(*f).st_indx-1];
 	int n_nvp=(*f).n_nvp;
 	long double **pos=(*f).pos;
@@ -377,6 +378,7 @@ int _calculate_st_point(Aircraft_t *f,CONF_t conf,long double t){
     (*f).st_point[3]=(*f).pos[t_x][3];
 	
 	(*f).st_indx = find_st_indx((*f).nvp, (*f).n_nvp, (*f).st_point,0,(*f).st_point);
+	//printf("%d\n", (*f).st_indx);
 		
 #ifdef DEBUG0
 	if((*f).st_indx ==-1) {
@@ -401,9 +403,22 @@ int _get_ready(Aircraft_t **f, int N_f,long double t,CONF_t conf){
 	int i;
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
 	
-	for(i=0;i<N_f;i++) if( (*f)[i].time[0]<=t&& (*f)[i].time[0]> (t-t_stp) )  {
-		(*f)[i].ready=1;
-		if(!_calculate_st_point(&((*f)[i]),conf,t)) (*f)[i].ready=0;
+	//printf("%d\n", N_f);
+	//printf("%Lf\n", t);
+	
+	//for(i=0;i<N_f;i++)  {
+	//	printf("%d: %Lf\n", i, (*f)[i].time[0]);
+		//(*f)[i].ready=1;
+		//if(!_calculate_st_point(&((*f)[i]),conf,t)) (*f)[i].ready=0;
+	//}
+
+	for(i=0;i<N_f;i++) {
+		(*f)[i].ready=0;
+		if( (*f)[i].time[0]<=t&& (*f)[i].time[0]> (t-t_stp) )  {
+			//printf("%d: %Lf\n", i, (*f)[i].time[0]);
+			(*f)[i].ready=1;
+			if(!_calculate_st_point(&((*f)[i]),conf,t)) (*f)[i].ready=0;
+		}
 	}
 	
 	int n_f=0;
@@ -815,7 +830,11 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 int _expected_fly(Aircraft_t **f, int N_f, CONF_t conf, TOOL_f tl){
 	int i;
 	for(i=0;i<N_f;i++){
-		if((*f)[i].ready) if(!_position(&(*f)[i], (*f)[i].st_point, conf.t_w*2, conf.t_i, conf.t_r, tl.dV[i])) (*f)[i].ready=0;	/*put the dv[i] here*/
+		//printf("%d: %d\n", i, (*f)[i].ready);
+		if((*f)[i].ready){
+			//printf("%d: %d\n", i, (*f)[i].ready);
+			if(!_position(&(*f)[i], (*f)[i].st_point, conf.t_w*2, conf.t_i, conf.t_r, tl.dV[i])) (*f)[i].ready=0;	/*put the dv[i] here*/
+		}
 	}
 	return 1;
 }
@@ -833,15 +852,20 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 	int n_f = _get_ready(f,N_f,t,conf); /*do nothing*/
 	//printf("%.2Lf\n",t/3600.);
 	_suffle_list(f,n_f,tl); /*do nothing*/
+	//printf("Coin\n");
 
 	_draw_dV(N_f, conf, &tl);
+	//printf("Coin2\n");
 	
 	_expected_fly(f,n_f,conf,tl); /*put dv here*/
+	//printf("Coin3\n");
 	
 	_check_safe_events(f,n_f,sh,tl,conf); /*put the dv here*/
+	//printf("Coin4\n");
 	
 	//cheak_inside_pos(*f,n_f,conf);
 	_set_st_point(f, n_f, conf); /*nothing here to do*/
+	//printf("Coin5\n");
 	
 #ifdef PLOT 
 	plot_movie(f,n_f,conf);
@@ -860,18 +884,23 @@ int ABM(Aircraft_t **f, int N_f, CONF_t conf, SHOCK_t sh){
 
 	// plot((*f)[i], conf);
 	TOOL_f tool;
+	//printf("Pouic1\n");
 	_init_tool(&tool,N_f,conf);
-	
+	//printf("Pouic2\n");	
 	_create_shock(&sh,conf);
-	
+	//printf("Pouic3\n");
 	_delay_on_m1(f,N_f,conf);
-	
+	//printf("Pouic4\n");
+
 	if(conf.laplacian_vel==1) _laplacian_change_vel(f,N_f);
+	//printf("Pouic5\n");
 
 	//printf("Inizio Evoluzione\n");
 	int t,step;
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
+	//printf("Pouic6\n");
 	for(t=t_stp,step=0 ;t<DAY; t+=t_stp, step++ ) _evolution(f,N_f, conf,sh,tool,t); 
+	//printf("Pouic7\n");
 	
 	_del_tool(&tool,conf);
 	

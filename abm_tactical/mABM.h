@@ -17,7 +17,7 @@
 #define MU 0.0071942
 #define B_LP 0.034241
 
-//#define DEBUG0
+#define DEBUG0
 
 //#define PLOT 
 

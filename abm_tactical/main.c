@@ -21,7 +21,7 @@ int simulation(char **args){
 	
 	char *input_ABM=args[1];
 	char *output_ABM=args[2];
-	char output_ABM_nsim[100];
+	char output_ABM_nsim[400]; //TODO: change this!
 	
 	init_Sector(&Flight,&Nflight,&config,&shock,input_ABM);
 	
@@ -31,7 +31,6 @@ int simulation(char **args){
 		copy_flight(Flight,Nflight,&flight);
 		printf("Sim %d\n",i+1);
 		ABM(&flight,Nflight,config,shock);
-		
 		add_nsim_output(output_ABM_nsim,output_ABM,i);
 		save_m3(flight,Nflight,Flight,output_ABM_nsim);
 		

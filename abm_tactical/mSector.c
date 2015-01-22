@@ -315,7 +315,7 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	free(rep);
 	free(rep2);
 
-	printf("Generate Point\n");
+	//printf("Generate Point\n");
 	generate_temporary_point(config);
 	
 	*Nflight=get_M1(input_ABM,flight);
