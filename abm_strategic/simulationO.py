@@ -465,7 +465,7 @@ def do_standard((paras, G, i)):
     return results
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
-     coordinates=True, generate_altitudes=True, **paras_control):
+     coordinates=True, generate_altitudes=True, put_sectors=False, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -562,7 +562,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
                 raise
 
     if coordinates:
-        trajectories_coords = convert_trajectories(G.G_nav, trajectories)
+        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors)
 
         if generate_altitudes and paras['file_traffic']!=None: 
             print "Generating synthetic altitudes..."
@@ -570,7 +570,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             with silence(True):
                 small_sample = G.check_all_real_flights_are_legitimate(paras['traffic'], repair=True)
             print "Kept", len(small_sample), "flights for sampling altitudes."
-            sample_trajectories = convert_distance_trajectories_coords(G.G_nav, small_sample)
+            sample_trajectories = convert_distance_trajectories_coords(G.G_nav, small_sample, put_sectors=put_sectors)
             trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
 
         if save_file!=None:

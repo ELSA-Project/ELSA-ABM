@@ -3,6 +3,7 @@
 
 import sys
 sys.path.insert(1, '..')
+sys.path.insert(1, '../libs/YenKSP')
 
 import networkx as nx
 import sys
@@ -24,7 +25,7 @@ import copy
 from os.path import join
 
 from libs.general_tools import counter, silence, build_triangular
-from libs.graph import DiGraph
+from libs.YenKSP.graph import DiGraph
 from libs.algorithms import ksp_yen, ksp_yen_old
 
 version='2.9.10'

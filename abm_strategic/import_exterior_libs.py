@@ -6,7 +6,7 @@ import os, sys
 from string import split
 
 """
-Just a method to copy automatically some other custom libs.
+Just a method to copy automatically external libs.
 """
 
 thisdir = os.path.dirname(__file__)
@@ -14,7 +14,9 @@ thisdir = os.path.dirname(__file__)
 list_of_external_files = ['/home/earendil/Documents/ELSA/Modules/general_tools.py', 
 							'/home/earendil/Documents/ELSA/Distance/tools_airports.py',
 							'/home/earendil/Programmes/YenKSP-master/graph.py',
-							'/home/earendil/Programmes/YenKSP-master/algorithms.py']
+							'/home/earendil/Programmes/YenKSP-master/algorithms.py', #TODO: change this
+							'/home/earendil/Programmes/YenKSP-master/graphviz.py']
+list_of_dir = [('/home/earendil/Programmes/YenKSP-master', 'YenKSP')]
 
 if __name__== '__main__':
 	for fil in list_of_external_files:
@@ -26,3 +28,8 @@ if __name__== '__main__':
 		if libdir not in sys.path:
 			sys.path.insert(1, libdir)
 
+	for rep, name in list_of_dir:
+		libdir = os.path.join(thisdir, '../libs/' + name)
+		print "Copying files from", rep
+		os.system("mkdir -p " + libdir)
+		os.system("cp -R " + rep + '/* ' + libdir + '/')
