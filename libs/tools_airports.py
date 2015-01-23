@@ -11,6 +11,7 @@ from  os.path import join as jn
 from math import *
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import pickle
 from scipy.stats.mstats import mquantiles
 from shapely.geometry import Polygon,Point
@@ -26,7 +27,7 @@ from descartes.patch import PolygonPatch
 #import pandas as pd
 import datetime
 
-from general_tools import date_db, delay, date_human, date_st, cumulative, draw_network_and_patches
+from general_tools import date_db, delay, date_human, date_st, cumulative, draw_network_and_patches, draw_zonemap
 
 __version__='5.8'
 
@@ -426,12 +427,11 @@ def get_data_results(ff):
     if compressed:
         os.system('rm ' + ff)
     #G, fl = seth.G, seth.flights
-
     #return G, fl
 
     return seth
 
-def get_results(paras, save=True, my_company='', redo_FxS=True, force=0, devset=False, only_net=False, prefix='', from_version=None):
+def get_results(paras, save=True, my_company='', redo_FxS=True, force=0, deviations=False, only_net=False, prefix='', from_version=None):
     """
     Used to fetch results, which can be a Set + deviations or a Set without deviations.
     """
@@ -441,7 +441,7 @@ def get_results(paras, save=True, my_company='', redo_FxS=True, force=0, devset=
     rep = build_path(paras, from_version, full=False, prefix=prefix)
     print 'Searching in', rep
 
-    if not devset:
+    if not deviations:
         seth=Set(**paras)
     else:
         seth=DevSet(paras,only_net=only_net)
@@ -454,7 +454,7 @@ def get_results(paras, save=True, my_company='', redo_FxS=True, force=0, devset=
     except (IOError, AssertionError):
         print 'fail.'
         print 'I try to load the set instead.'
-        seth = get_set(paras, save=save, my_company=my_company,redo_FxS=redo_FxS,force=force, devset=devset, only_net=only_net, prefix=prefix, from_version=from_version)
+        seth = get_set(paras, save=save, my_company=my_company,redo_FxS=redo_FxS,force=force, devset=deviations, only_net=only_net, prefix=prefix, from_version=from_version)
 
     return seth
 
@@ -517,6 +517,9 @@ def get_set(paras, save=True, my_company='', redo_FxS=True, force=0, devset=Fals
     return seth
     
 def get_network(paras,save=True,my_company='',redo_FxS=True,force=False, prefix='', filtering=False, restrict=False):
+    """
+    To update.
+    """
     rep=build_path(paras,'5.7',full=False,prefix=prefix)
     print 'Searching in', rep
     if paras['both']:
@@ -583,6 +586,9 @@ def get_network(paras,save=True,my_company='',redo_FxS=True,force=False, prefix=
     return network
     
 def get_flights(paras,save=True,my_company='',redo_FxS=True,force=False, devset=False):
+    """
+    To update.
+    """
     rep=build_path(paras,'5.7',full=False)
 
     try:
@@ -2482,6 +2488,101 @@ def select_layer_sector(password_db, airac, zone, layer):
     db.close()
 
     return bounds
+
+def map_of_net(G, colors='r', num=0, limits=(0,0,0,0), title='', size_nodes=1., size_edges=2., nodes=[], zone_geo=[], edges=True, fmt='svg', dpi=100, \
+        save_file = None, show=True, figsize=(9,6), background_color='', key_word_weight='weight', z_order_nodes=6):
+    """
+    Draw a net. TODO: maximum width.
+    """
+    if nodes==[]:
+        nodes = G.nodes()
+    if type(colors)==type({}):
+        colors = [colors[n] for n in nodes]
+    if type(z_order_nodes)==type({}):
+        z_order_nodes = [z_order_nodes[n] for n in nodes]
+    if type(size_nodes)==type(1) or type(size_nodes)== type(1.):
+        size_nodes = [size_nodes for n in nodes]
+    elif size_nodes==[]:
+        size_nodes = [1 for n in nodes]
+    elif type(size_nodes)==type((0,1)):
+        if size_nodes[0]=='strength':
+            size_nodes=[G.degree(n, weight=key_word_weight)*size_nodes[1] for n in nodes]
+        elif size_nodes[0]=='degree':
+            size_nodes=[G.degree(n)*size_nodes[1] for n in nodes]
+        else:
+            Exception("The following size function is not implemented:" + size_nodes)
+
+    if limits==(0,0,0,0):
+        limits = (min([G.node[n]['coord'][0]/60. for n in nodes]) - 0.2,
+                min([G.node[n]['coord'][1]/60. for n in nodes]) - 0.2,
+                max([G.node[n]['coord'][0]/60. for n in nodes]) + 0.2,
+                max([G.node[n]['coord'][1]/60. for n in nodes]) + 0.2)
+
+    x_min,y_min,x_max,y_max = limits
+    fig = plt.figure(num, figsize=figsize)
+    gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
+    ax = plt.subplot(gs[0])
+    ax.set_aspect(1./0.8)
+    m = draw_zonemap(x_min,y_min,x_max,y_max,'i', sea_color=background_color, continents_color=background_color, lake_color=background_color)
+    x,y = split_coords(G,nodes, r=0.1)
+    x,y = m(y,x)
+    ax.set_title(title)
+    sca = ax.scatter(x, y, marker='o', zorder=z_order_nodes, s=size_nodes, lw=0, c=colors)#,cmap=my_cmap)
+    max_wei = max([G[e[0]][e[1]]['weight'] for e in G.edges() if e[0] in nodes and e[1] in nodes])
+    if edges:
+        for e in G.edges():
+            if e[0] in nodes and e[1] in nodes:
+                #print e,width(G[e[0]][e[1]]['weight'])
+                xe1,ye1 = m(G.node[e[0]]['coord'][1]/60.,G.node[e[0]]['coord'][0]/60.)
+                xe2,ye2 = m(G.node[e[1]]['coord'][1]/60.,G.node[e[1]]['coord'][0]/60.)
+                plt.plot([xe1,xe2],[ye1,ye2], 'k-', lw=width(G[e[0]][e[1]]['weight'], max_wei, scale=size_edges), zorder=4)
+
+    if zone_geo!=[]:
+        patch=PolygonPatch(adapt_shape_to_map(zone_geo,m), facecolor='grey', edgecolor='grey', alpha=0.08, zorder=3)#edgecolor='grey', alpha=0.08,zorder=3)
+        ax.add_patch(patch)
+
+    if save_file!=None:
+        plt.savefig(save_file + '.' + fmt, dpi = dpi)
+        print 'Figure saved as', save_file + '.' + fmt
+    if show:
+        plt.show()
+
+def width(x,maxx, scale=2.):
+    return scale*x/maxx#+0.02#0.2
+    
+def split_coords(G,nodes, r=0.04):
+    lines=[]
+    for n in G.nodes():
+        if n in nodes:
+            added=False
+            for l in lines:
+                if dist_flat(G.node[n]['coord'],G.node[l[0]]['coord'])<1.: #nodes closer than 0.1 degree
+                    l.append(n)
+                    added=True
+            if not added:
+                lines.append([n])
+    
+    for l in lines[:]:
+        if len(l)==1:
+            lines.remove(l)
+
+    pouet={}
+    for l in lines:
+        for n in l:
+            pouet[n]=l
+    x,y=[],[]
+    for n in nodes:
+        if not n in pouet.keys():
+            x.append(G.node[n]['coord'][0]/60.)
+            y.append(G.node[n]['coord'][1]/60.)
+        else:
+            l=pouet[n]
+            #r=0.04
+            theta=2.*pi*float(l.index(n))/float(len(l))
+            x.append(G.node[n]['coord'][0]/60. + r*cos(theta))
+            y.append(G.node[n]['coord'][1]/60. + r*sin(theta))
+    return x,y
+
 
 def _test_build_network_based_on_shapes():
     G, shapes = build_network_based_on_shapes('4ksut79f', 334, 'LF', 350.)

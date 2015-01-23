@@ -71,7 +71,7 @@ def compute_efficiency(trajectories, dist_func = dist):
 	S = [dist_func([trajectories[f][0],trajectories[f][-1]]) for f in range(len(trajectories))]
 	#L=[g.shortest_paths(source=to_str2(a[0]), target=to_str2(a[1]), weights=g.es["weight"])[0][0] for a in Aps]
 	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
-	return pl.mean(S)/pl.mean(L), pl.mean(S)
+	return sum(S)/sum(L), sum(S)
 
 def find_group(element, groups):
 	"""
@@ -266,7 +266,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
  				groups[g].append(new_node)
 			
 			
-			eff=S/(S/eff+ ((new-old)/Nf))
+			eff=S/(S/eff+ (new-old))
 
 		n_iter += 1
 

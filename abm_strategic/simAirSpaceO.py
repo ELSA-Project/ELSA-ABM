@@ -6,10 +6,9 @@ sys.path.insert(1, '..')
 
 import networkx as nx
 import sys
-from paths import path_ksp
-sys.path.insert(1,path_ksp)
-from graph import DiGraph
-from algorithms import ksp_yen, ksp_yen_old
+#from paths import path_ksp
+#sys.path.insert(1,path_ksp)
+
 from random import sample, uniform, gauss, shuffle, choice
 import numpy as np
 from numpy.random import lognormal
@@ -25,6 +24,8 @@ import copy
 from os.path import join
 
 from libs.general_tools import counter, silence, build_triangular
+from libs.graph import DiGraph
+from libs.algorithms import ksp_yen, ksp_yen_old
 
 version='2.9.10'
 

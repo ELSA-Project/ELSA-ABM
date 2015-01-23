@@ -19,6 +19,7 @@ from mpl_toolkits.basemap import Basemap
 import pickle
 from MySQLdb.constants import FIELD_TYPE
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from descartes.patch import PolygonPatch
 from shapely.geometry import Polygon
 import contextlib
@@ -46,12 +47,14 @@ def flip_polygon(pol):
     """
     return Polygon([(p[1], p[0]) for p in list(pol.exterior.coords)])
 
+
 def draw_network_and_patches(G, G_nav, polygons, draw_navpoints_edges=True, \
     draw_sectors_edges=False, rep='.', save=True, name='network', \
     show=True, flip_axes=False, trajectories=[], \
     trajectories_type='navpoints', dpi = 100, figsize = None):
     """
     Quite general functions used to draw navigations points, sectors, and trajectories.
+    That's for the ABM mainly. TODO: move it?
     """
 
     # print "trajectories:"
@@ -69,14 +72,16 @@ def draw_network_and_patches(G, G_nav, polygons, draw_navpoints_edges=True, \
         if G_nav:
             for n in G_nav.nodes():
                 G_nav.node[n]['coord']=(G_nav.node[n]['coord'][1], G_nav.node[n]['coord'][0])
-        polygons={k:flip_polygon(pol) for k,pol in polygons.items()}
+        if polygons!=None:
+            polygons={k:flip_polygon(pol) for k,pol in polygons.items()}
 
     print  'Drawing networks and patches...'
     fig = plt.figure(figsize = figsize)
     ax = fig.add_subplot(111)
-    for pol in polygons.values():
-        patch = PolygonPatch(pol,alpha=0.5, zorder=2)
-        ax.add_patch(patch) 
+    if polygons!=None:
+        for pol in polygons.values():
+            patch = PolygonPatch(pol,alpha=0.5, zorder=2)
+            ax.add_patch(patch) 
     if G:
         ax.scatter([G.node[n]['coord'][0] for n in G.nodes()], [G.node[n]['coord'][1] for n in G.nodes()],c='r', marker='s')
         if draw_sectors_edges:
@@ -327,12 +332,15 @@ def cumulative(a):
     return cdf
     
 def hyper_test(X, K, n, N):
+    """
+    Hypergeometric test.
+    """
     return (1 - sum([comb(K,x)*comb(N-K,n-x)/float(comb(N,n)) for x in range(X)]))
     
-def draw_zonemap(x_min,y_min,x_max,y_max,res):
+def draw_zonemap(x_min,y_min,x_max,y_max,res, continents_color='white', lake_color='white', sea_color='white'):
     m = Basemap(projection='gall',lon_0=0.,llcrnrlon=y_min,llcrnrlat=x_min,urcrnrlon=y_max,urcrnrlat=x_max,resolution=res)
-    m.drawmapboundary(fill_color='white') #set a background colour
-    m.fillcontinents(color='white',lake_color='white')  # #85A6D9')
+    m.drawmapboundary(fill_color=sea_color) #set a background colour
+    m.fillcontinents(color=continents_color,lake_color=lake_color)  # #85A6D9')
     m.drawcoastlines(color='#6D5F47', linewidth=0.8)
     m.drawcountries(color='#6D5F47', linewidth=0.8)
     m.drawmeridians(np.arange(-180, 180, 5), color='#bbbbbb')
@@ -651,9 +659,9 @@ def bootstrap_test(sample1, sample2, k = 1000, p_value = 0.05, two_tailed = True
     Test the null hypothesis that the two samples are independent from each other 
     thanks to pearson coefficients.
     Note that we keep nan values during the resampling (and eliminate them to compute 
-    the pearson coefficient. 
+    the pearson coefficient). 
     """
-    # eliminate all entries which have an nan in one of the sample. 
+    # eliminate all entries which have a nan in one of the sample. 
     
     sample1_bis, sample2_bis = zip(*[zz for zz in zip(sample1, sample2) if not np.isnan(zz[0]) and not np.isnan(zz[1])])
     r_sample = pearsonr(sample1_bis, sample2_bis)[0]
@@ -737,6 +745,16 @@ def _test_build_triangular():
     for e in G.edges():
         plt.plot([G.node[e[0]]['coords'][0], G.node[e[1]]['coords'][0]], [G.node[e[0]]['coords'][1], G.node[e[1]]['coords'][1]], 'r-')
     plt.show()
+
+def clean_network(G):
+    """
+    Reomve nodes with 0 degree:
+    """
+    for n in G.nodes()[:]:
+        if G.degree(n)==0:
+            G.remove_node(n)
+
+    return G
 
 if __name__=='__main__':
     #Tests-

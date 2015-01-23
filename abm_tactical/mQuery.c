@@ -65,7 +65,7 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 	
 	for(i=0;i<Nflight;i++){
 		if(!fgets(c, R_BUFF, rstream)) BuG("BUG in M1 File -lx0\n");
-		
+		(*flight)[i].ready = 0;
 		(*flight)[i].ID=atoi(c);
 		for(j=1;c[j]!='\t';j++);
 		

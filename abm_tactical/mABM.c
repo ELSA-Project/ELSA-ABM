@@ -413,7 +413,6 @@ int _get_ready(Aircraft_t **f, int N_f,long double t,CONF_t conf){
 	//}
 
 	for(i=0;i<N_f;i++) {
-		(*f)[i].ready=0;
 		if( (*f)[i].time[0]<=t&& (*f)[i].time[0]> (t-t_stp) )  {
 			//printf("%d: %Lf\n", i, (*f)[i].time[0]);
 			(*f)[i].ready=1;

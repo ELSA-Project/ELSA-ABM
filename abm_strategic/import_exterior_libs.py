@@ -12,7 +12,9 @@ Just a method to copy automatically some other custom libs.
 thisdir = os.path.dirname(__file__)
 
 list_of_external_files = ['/home/earendil/Documents/ELSA/Modules/general_tools.py', 
-							'/home/earendil/Documents/ELSA/Distance/tools_airports.py']
+							'/home/earendil/Documents/ELSA/Distance/tools_airports.py',
+							'/home/earendil/Programmes/YenKSP-master/graph.py',
+							'/home/earendil/Programmes/YenKSP-master/algorithms.py']
 
 if __name__== '__main__':
 	for fil in list_of_external_files:
