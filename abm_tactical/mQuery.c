@@ -110,6 +110,7 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 
 long double _find_value_string(char *config_file,char *label){
 
+
 	FILE *rstream=fopen(config_file, "r");
 	if(rstream==NULL) BuG("BUG - configuration file doesn't exist\n");
 	
@@ -125,6 +126,37 @@ long double _find_value_string(char *config_file,char *label){
 		if(!memcmp(&c[++i], label, lsize)) {
 			fclose(rstream);
 			return atof(c);
+		}
+	}
+	
+	fclose(rstream);
+	printf("Impossible to find %s in config-file\n",label);
+	exit(0);
+}
+
+char * _find_value_string_char(char *config_file,char *label){
+	/*
+	Same function as previous for strings.
+	*/
+	FILE *rstream=fopen(config_file, "r");
+	if(rstream==NULL) BuG("BUG - configuration file doesn't exist\n");
+	
+	char *c = (char*) malloc((R_BUFF+1)*sizeof(char));
+	if(c==NULL) BuG("Memory\n");
+	//char c[R_BUFF];
+	int i,lsize;
+	//char *d;
+	for(lsize=0;label[lsize]!='\0';lsize++);
+	
+	while (fgets(c, R_BUFF, rstream)) {
+		if(c[0]=='#'||c[0]=='\n'||c[0]==' ') continue;
+		for(i=0;c[i]!='#'&&c[i]!='\0';i++);
+		if(c[i]=='\0') BuG("configuration file not standard\n");
+		if(!memcmp(&c[++i], label, lsize)) {
+			fclose(rstream);
+			for(i=0;c[i]!='\t';i++);
+			c[i]='\0';
+			return c;
 		}
 	}
 	
@@ -153,7 +185,10 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
-	(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";//TODO: change this. //_find_value_string(config_file, "main_dir");
+	//printf("%s\n", config_file);
+	//exit(0);
+	//(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
+	(*config).main_dir = _find_value_string_char(config_file, "main_dir");
 	return 1;
 }
 

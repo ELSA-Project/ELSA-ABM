@@ -48,7 +48,7 @@ int add_nvp(Aircraft_t *,int *,long double *);
 int set_boundary_flag_onFlight(Aircraft_t **,int *,CONF_t );
 
 /*Set base configuration for sector and trajectory*/
-int init_Sector(Aircraft_t **,int *,CONF_t	*,SHOCK_t *, char *);
+int init_Sector(Aircraft_t **,int *,CONF_t	*,SHOCK_t *, char *, char *);
 
 /*cheak if a point is on the bound*/
 int is_on_bound(long double *,long double **,int );

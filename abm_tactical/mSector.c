@@ -297,15 +297,8 @@ int _alloc_flight_pos(Aircraft_t **f,int N_f,CONF_t *conf){
 	return 1;
 }
 
-int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,char *input_ABM){
-	//get_boundary("CONF/bound_latlon.dat", config);	
-	//char *main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
-	char *main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
-	char* rep_tail2 = "/abm_tactical/config/config.cfg";
-	char * rep2 = malloc(snprintf(NULL, 0, "%s%s", main_dir, rep_tail2) + 1);
-	sprintf(rep2, "%s%s", main_dir, rep_tail2);
-
-	get_configuration(rep2, config);
+int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,char *input_ABM, char *config_file){
+	get_configuration(config_file, config);
 
 	char* rep_tail = "/abm_tactical/config/bound_latlon.dat";
 	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
@@ -313,7 +306,7 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	get_boundary(rep, config);	
 
 	free(rep);
-	free(rep2);
+	//free(config_file);
 
 	//printf("Generate Point\n");
 	generate_temporary_point(config);
