@@ -464,8 +464,15 @@ def do_standard((paras, G, i)):
     del sim
     return results
 
+def write_down_capacities(G, save_file=None):
+    with open(save_file, 'w') as f:
+        print >>f, "# Sectors\t Capacities"
+        for n in G.nodes():
+            print >>f, str(n) + '\t' + str(G.node[n]['capacity'])
+
+
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
-     coordinates=True, generate_altitudes=True, put_sectors=False, **paras_control):
+     coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -575,6 +582,9 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
         if save_file!=None:
             write_trajectories_for_tact(trajectories_coords, fil=save_file, starting_date = starting_date)
+
+        if save_file_capacities!=None:
+            write_down_capacities(G, save_file=save_file_capacities)
 
         return trajectories_coords
     else:

@@ -26,7 +26,7 @@ from os.path import join
 
 from libs.general_tools import counter, silence, build_triangular
 from libs.YenKSP.graph import DiGraph
-from libs.algorithms import ksp_yen, ksp_yen_old
+from libs.YenKSP.algorithms import ksp_yen, ksp_yen_old
 
 version='2.9.10'
 

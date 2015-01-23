@@ -103,7 +103,6 @@ def draw_network_and_patches(G, G_nav, polygons, draw_navpoints_edges=True, \
         #weights={n:{v:0. for v in H.neighbors(n)} for n in H.nodes()}
         weights={n:{} for n in H.nodes()}
         for path in trajectories:
-            print "path=",path
             try:
                 #path=f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p
                 for i in range(0,len(path)-1):
