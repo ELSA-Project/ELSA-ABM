@@ -472,7 +472,7 @@ def write_down_capacities(G, save_file=None):
     with open(save_file, 'w') as f:
         print >>f, "# Sectors\t Capacities"
         for n in G.nodes():
-            print >>f, str(n) + '\t' + str(G.node[n]['capacity'])
+            print >>f, str(n+10) + '\t' + str(G.node[n]['capacity'])
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
      coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, **paras_control):
@@ -573,7 +573,6 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
     if coordinates:
         trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors)
-        print trajectories_coords[:2]
         if generate_altitudes and paras['file_traffic']!=None: 
             print "Generating synthetic altitudes..."
             # Insert synthetic altitudes in trajectories based on a sampling of file_traffic
