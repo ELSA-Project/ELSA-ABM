@@ -526,12 +526,12 @@ class FlightPlan:
     Changed in 2.9.6: added shift_time method.
     """
     def __init__(self,path,time,cost,ac_id, path_nav):
-        self.p=path
-        self.p_nav=path_nav
-        self.t=time
-        self.cost=cost
-        self.ac_id=ac_id
-        self.accepted=True
+        self.p=path # path in sectors
+        self.p_nav=path_nav # path in navpoints
+        self.t=time # of departure
+        self.cost=cost # cost given the utilisty function
+        self.ac_id=ac_id # id of the air company
+        self.accepted=True # if the flighr plan has been accpeted by the NM.
         self.bottleneck=-1
 
     def shift_time(self, shift):

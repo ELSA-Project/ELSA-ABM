@@ -258,7 +258,7 @@ def date_abm_tactic(date):
     date_abm = pouet[0] + ' ' + pouet[1]
     return date_abm
 
-def compute_M1_trajectories(queue):
+def compute_M1_trajectories(queue, starting_date):
     """
     Returns some trajectories (navpoint names) based on the given queue. 
     All altitudes are set to 0.
@@ -269,23 +269,23 @@ def compute_M1_trajectories(queue):
         try:
             # Find the accepted flight plan, select the trajectory in navpoints.
             accepted_FP = f.FPs[[fpp.accepted for fpp in f.FPs].index(True)]
-            trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
+            trajectories_nav.append((accepted_FP.p_nav, date_st(accepted_FP.t*60., starting_date=starting_date))) 
         except ValueError:
             pass
 
     return trajectories_nav
 
-def convert_trajectories(G, trajectories, starting_date = [2010, 6, 5, 10, 0, 0], put_sectors=False):
+def convert_trajectories(G, trajectories, put_sectors=False):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
     """ 
     trajectories_coords = []
-    for i,trajectory in enumerate(trajectories):
+    for i, (trajectory, d_t) in enumerate(trajectories):
         traj_coords = []
-        for j,n in enumerate(trajectory):
+        for j, n in enumerate(trajectory):
             x = G.node[n]['coord'][0]
             y = G.node[n]['coord'][1]
-            t = 0 if j==0 else t + G[n][trajectory[j-1]]['weight']
+            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1]]['weight'])
             if not put_sectors:
                 traj_coords.append([x, y, 0., t])
             else:
@@ -320,7 +320,7 @@ def convert_distance_trajectories_coords(G_nav, flights, put_sectors=False):
 
     return trajectories
 
-def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat'):
     """
     Write a set of trajectories in the format for abm_tactical.
     Note: counts begin at 1 to comply with older trajectories.
@@ -333,10 +333,10 @@ def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.
             print >>f, str(i+1) + "\t" + str(len(trajectory)) + '\t',
             if len(trajectory[0])==4:
                 for x, y, z, t in trajectory:
-                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(date_st(t, starting_date = starting_date)) + '\t',
+                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + '\t',
             else:
                 for x, y, z, t, sec in trajectory:
-                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(date_st(t, starting_date = starting_date)) + ',' + str(sec) + '\t',
+                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + ',' + str(sec) + '\t',
             print >>f, ''
 
     print "Trajectories saved in", fil  

@@ -26,7 +26,7 @@ import copy
 from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
     compute_M1_trajectories, convert_trajectories, insert_altitudes, convert_distance_trajectories_coords
 from math import ceil
-from general_tools import draw_network_and_patches, header, delay, clock_time, silence
+from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
 from tools_airports import extract_flows_from_data
 #from utilitiesO import compare_networks
 
@@ -135,7 +135,7 @@ class Simulation:
         if make_dir:
             os.system('mkdir -p ' + self.rep)
         
-    def make_simu(self, clean=False, storymode=False, flows= {}):
+    def make_simu(self, clean=False, storymode=False):
         """
         Do the simulation, clean afterwards the network (useful for iterations).
         Changed in 2.9.6: added the shuffle_departure.
@@ -214,14 +214,18 @@ class Simulation:
         # if clean:  # Not sure if this is useful.
         #     self.Netman.initialize_load(self.G)
 
-    def build_ACs_from_flows(self, match_numbers=True, match_times=True):
+    def build_ACs_from_flows(self, match_numbers=True, match_times=True): 
         """
         New in 2.9.2: the list of ACs is built from the flows (given by times). 
         (Only the number of flights can be matched, or also the times, which
         are taken as desired times.) TODO
+        New in 2.9.5: record the day of simulation.
         """
         self.ACs={}
         k=0
+        all_times = [delay(time) for ((source, destination), times) in self.flows.items() for time in times]
+        min_time = date_st(min(all_times))
+        self.starting_date = [min_time[0], min_time[1], min_time[2], 0, 0, 0]
         for ((source, destination), times) in self.flows.items():
             idx_s = self.G.G_nav.idx_nodes[source]
             idx_d = self.G.G_nav.idx_nodes[destination]
@@ -229,14 +233,14 @@ class Simulation:
                 n_flights_tot = len(times)
                 n_flights_A = int(self.nA*n_flights_tot)
                 n_flights_B = n_flights_tot - int(self.nA*n_flights_tot)
-                AC= [n_flights_A, n_flights_B]
-                l=0
+                AC = [n_flights_A, n_flights_B]
+                l = 0
                 for i, par in enumerate(self.pars):
                     for j in range(AC[i]):
                         time = times[l]
                         self.ACs[k] = AirCompany(k, self.Nfp, self.na, self.G.G_nav.short.keys(), par)
-                        time = int(delay(time, starting_date = [time[0], time[1], time[2], 0., 0., 0.])/60.)
-                        self.ACs[k].fill_FPs([time], self.tau, self.G, pairs = [(idx_s, idx_d)])
+                        time = int(delay(time, starting_date=self.starting_date)/60.)
+                        self.ACs[k].fill_FPs([time], self.tau, self.G, pairs=[(idx_s, idx_d)])
                         k+=1
                         l+=1
             else:
@@ -470,7 +474,6 @@ def write_down_capacities(G, save_file=None):
         for n in G.nodes():
             print >>f, str(n) + '\t' + str(G.node[n]['capacity'])
 
-
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
      coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, **paras_control):
     """
@@ -558,19 +561,19 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
                 print "flights", i, "and", j, "point to the same object" 
                 raise
 
-    trajectories = compute_M1_trajectories(queue)
+    trajectories = compute_M1_trajectories(queue, sim.starting_date)
 
-    for i in range(len(trajectories)):
-        for j in range(i+1, len(trajectories)):
-            try:
-                assert not trajectories[i] is trajectories[j]
-            except:
-                print "trajectories", i, "and", j, "point to the same object" 
-                raise
+    # for i in range(len(trajectories)):
+    #     for j in range(i+1, len(trajectories)):
+    #         try:
+    #             assert not trajectories[i] is trajectories[j]
+    #         except:
+    #             print "trajectories", i, "and", j, "point to the same object" 
+    #             raise
 
     if coordinates:
         trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors)
-
+        print trajectories_coords[:2]
         if generate_altitudes and paras['file_traffic']!=None: 
             print "Generating synthetic altitudes..."
             # Insert synthetic altitudes in trajectories based on a sampling of file_traffic
@@ -581,7 +584,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
 
         if save_file!=None:
-            write_trajectories_for_tact(trajectories_coords, fil=save_file, starting_date = starting_date)
+            write_trajectories_for_tact(trajectories_coords, fil=save_file)
 
         if save_file_capacities!=None:
             write_down_capacities(G, save_file=save_file_capacities)

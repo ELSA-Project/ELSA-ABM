@@ -20,5 +20,5 @@ trajectories = generate_traffic(G, save_file=save_file, file_traffic=file_traffi
 	, put_sectors=True, save_file_capacities=save_file_capacities)
 
 #print trajectories
-draw_network_and_patches(None, G.G_nav, G.polygons, show=True, flip_axes=True,\
- trajectories=trajectories, save=False)
+#draw_network_and_patches(None, G.G_nav, G.polygons, show=True, flip_axes=True,\
+ #trajectories=trajectories, save=False)
