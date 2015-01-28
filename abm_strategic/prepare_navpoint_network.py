@@ -30,7 +30,7 @@ from simAirSpaceO import Net, NavpointNet
 from utilities import clean_network, find_entry_exit
 
 #Distance
-from libs.tools_airports import get_paras, extract_flows_from_data, expand#, get_flights
+from libs.tools_airports import get_paras, extract_flows_from_data, expand, dist_flat_kms
 #Modules
 from libs.general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval
 
@@ -598,15 +598,19 @@ def give_capacities_and_weights(G, paras_G):
         except:
             raise
 
-
     if paras_G['generate_weights_from_traffic']:
         weights = extract_weights_from_traffic(G.G_nav, paras_G['flights_selected'])
         G.G_nav.fix_weights(weights, typ='traffic')
         avg_weight = np.mean([G.G_nav[e[0]][e[1]]['weight'] for e in G.G_nav.edges() if G.G_nav[e[0]][e[1]].has_key('weight')])
+        avg_length = np.mean([dist_flat_kms(np.array(G.G_nav.node[e[0]]['coord'])*60., np.array(G.G_nav.node[e[1]]['coord'])*60.) for e in G.G_nav.edges() if G.G_nav[e[0]][e[1]].has_key('weight')])
         for e in G.G_nav.edges():
             if not G.G_nav[e[0]][e[1]].has_key('weight'):
-                print "This edge did not receive any weight:", e, ", I set it to the average(", avg_weight, ")"
-                G.G_nav[e[0]][e[1]]['weight'] = avg_weight
+                #print G.G_nav.node[e[0]]['coord']
+                #raise Exception()
+                length = dist_flat_kms(np.array(G.G_nav.node[e[0]]['coord'])*60., np.array(G.G_nav.node[e[1]]['coord'])*60.)
+                weight = avg_weight*length/avg_length
+                print "This edge did not receive any weight:", e, ", I set it to the average (", weight, "minutes)"
+                G.G_nav[e[0]][e[1]]['weight'] = weight
     else:
         if paras_G['weights']==None:
             G.G_nav.generate_weights(typ='coords', par=paras_G['par_weights'])
@@ -891,8 +895,6 @@ def write_down_network(G):
                 dic[k] = G.__dict__[k]
 
         pickle.dump(dic, f)
-
-
 
 class NoEdges(Exception):
     pass
