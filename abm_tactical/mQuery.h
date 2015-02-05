@@ -14,6 +14,8 @@
 /* BUFFER USED FOR fgets - be carful with that! */
 #define R_BUFF 50000
 
+#define DPOS 5
+
 /*************************** STRUCTURE ***********************************/
 
 /* STRUCTURE AIRCRAFT - have inside all the ABM need to control the aircraft*/
@@ -44,7 +46,7 @@ typedef struct {
 	int st_indx;
 	
 	/* Starting point for the new time_step */
-	long double st_point[4];
+	long double st_point[DPOS];
 	
 	/* Index of the nvp on the boundary */
 	int bound[2];
@@ -115,6 +117,14 @@ typedef struct {
 
 	/*Main directory*/
 	char *main_dir;
+	
+	/*safe distance for neightboors flight*/
+	long double d_neigh;
+	
+	/*Capcity vector of n_sect+1 elements; 0 element is an infinity capacity sector*/
+	int *capacy;
+	int n_sect;
+	
 } CONF_t ;
 
 /********************************** FUNCTION *************************************/
@@ -137,5 +147,9 @@ int get_configuration(char *,CONF_t *);
 int get_temp_shock(CONF_t *);
 
 int add_nsim_output(char *,char *,int);
+
+/*Get the capacity for each sector*/
+int get_capacity(char *,CONF_t *);
+
 
 #endif

@@ -17,6 +17,11 @@
 #define MU 0.0071942
 #define B_LP 0.034241
 
+
+/*Maximum distance for a temporary 
+ point from the starting point*/
+#define DTMP_P 100000
+
 #define DEBUG0
 
 //#define PLOT 
@@ -38,6 +43,13 @@ typedef struct {
 
 	long double *dV;
 	
+	/*Edgelist of neightboors flight*/
+	int **neigh;
+	int *n_neigh;
+	
+	/*Matrix of the workload for each sector*/
+	int **workload;
+	
 } TOOL_f ;
 
 /*Print the m1 input and set the M3*/
@@ -55,5 +67,15 @@ int ABM(Aircraft_t **,int , CONF_t, SHOCK_t );
 
 /*Save M3 file*/
 void save_m3(Aircraft_t *, int ,Aircraft_t *,char *);
+
+/*Deacllocate Position Matrix*/
+int del_flight_pos(Aircraft_t **,int , CONF_t  );
+
+/*Deallocate Config*/
+int del_conf(CONF_t *);
+
+/*Deallocate Config*/
+int del_shock(SHOCK_t *);
+
 
 #endif

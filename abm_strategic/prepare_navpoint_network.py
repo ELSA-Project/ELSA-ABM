@@ -30,7 +30,7 @@ from simAirSpaceO import Net, NavpointNet
 from utilities import clean_network, find_entry_exit
 
 #Distance
-from libs.tools_airports import get_paras, extract_flows_from_data, expand, dist_flat_kms
+from libs.tools_airports import get_paras, extract_flows_from_data, expand#, get_flights
 #Modules
 from libs.general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval
 
@@ -95,7 +95,7 @@ def attach_two_sectors(s1, s2, G):
     distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
     #print "Distances:", distances
     n1_selected, n2_selected = pairs[np.argmin(distances)]
-    G.G_nav.add_edge(n1_selected,n2_selected)#, weight=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord'])))
+    G.G_nav.add_edge(n1_selected,n2_selected, weight=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord'])))
     return G
 
 def automatic_name(G, paras_G):
@@ -153,7 +153,7 @@ def check_and_fix_empty_sectors(G, checked, repair=False):
                         pairs.append((nav, nav2))
                     distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
                     n1_selected, n2_selected = pairs[np.argmin(distances)]
-                    G.G_nav.add_edge(n1, n2)#, weight=np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])))
+                    G.G_nav.add_edge(n1, n2, weight=np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])))
         problem = True
     except:
         raise
@@ -210,9 +210,9 @@ def check_everybody_has_one_cc(G, repair=False):
                 pairs=[(n1, n2) for n1 in c1 for n2 in all_other_nodes]
                 distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
                 n1_selected, n2_selected = pairs[np.argmin(distances)]
-                #w=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord']))
-                G.G_nav.add_edge(n1_selected,n2_selected)#, weight=w)
-                H_nav_s.add_edge(n1_selected,n2_selected)#, weight=w)
+                w=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord']))
+                G.G_nav.add_edge(n1_selected,n2_selected, weight=w)
+                H_nav_s.add_edge(n1_selected,n2_selected, weight=w)
             cc = nx.connected_components(H_nav_s)
 
     return G, problem
@@ -598,19 +598,15 @@ def give_capacities_and_weights(G, paras_G):
         except:
             raise
 
+
     if paras_G['generate_weights_from_traffic']:
         weights = extract_weights_from_traffic(G.G_nav, paras_G['flights_selected'])
         G.G_nav.fix_weights(weights, typ='traffic')
         avg_weight = np.mean([G.G_nav[e[0]][e[1]]['weight'] for e in G.G_nav.edges() if G.G_nav[e[0]][e[1]].has_key('weight')])
-        avg_length = np.mean([dist_flat_kms(np.array(G.G_nav.node[e[0]]['coord'])*60., np.array(G.G_nav.node[e[1]]['coord'])*60.) for e in G.G_nav.edges() if G.G_nav[e[0]][e[1]].has_key('weight')])
         for e in G.G_nav.edges():
             if not G.G_nav[e[0]][e[1]].has_key('weight'):
-                #print G.G_nav.node[e[0]]['coord']
-                #raise Exception()
-                length = dist_flat_kms(np.array(G.G_nav.node[e[0]]['coord'])*60., np.array(G.G_nav.node[e[1]]['coord'])*60.)
-                weight = avg_weight*length/avg_length
-                print "This edge did not receive any weight:", e, ", I set it to the average (", weight, "minutes)"
-                G.G_nav[e[0]][e[1]]['weight'] = weight
+                print "This edge did not receive any weight:", e, ", I set it to the average(", avg_weight, ")"
+                G.G_nav[e[0]][e[1]]['weight'] = avg_weight
     else:
         if paras_G['weights']==None:
             G.G_nav.generate_weights(typ='coords', par=paras_G['par_weights'])
@@ -895,6 +891,8 @@ def write_down_network(G):
                 dic[k] = G.__dict__[k]
 
         pickle.dump(dic, f)
+
+
 
 class NoEdges(Exception):
     pass
@@ -1229,16 +1227,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
 
     #     # Give capacities and weights based on the new set of flights
     #     G = give_capacities_and_weights(G, paras_G)
-    #flights_selected = paras_G["flights_selected"][:]0
-
-    # Check distribution velocities
-    velocities = {(n1, n2):dist_flat_kms(np.array(G.G_nav.node[n1]['coord'])*60., np.array(G.G_nav.node[n2]['coord'])*60.)/(G.G_nav[n1][n2]['weight']/60.) for n1, n2 in G.G_nav.edges()}
-    for e, vel in velocities.items():
-        if vel>1200:
-            print "edge", e , "has velocity:", vel
-    #plt.hist(velocities.values(), bins = 100)
-    #plt.show()
-
+    #flights_selected = paras_G["flights_selected"][:]
     print 'Selected finally', len(flights_selected), "flights."
 
         #G.check_all_real_flights_are_legitimate(flights_selected) # no action taken here
