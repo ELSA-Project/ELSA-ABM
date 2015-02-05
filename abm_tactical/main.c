@@ -31,12 +31,20 @@ int simulation(char **args){
 		
 		copy_flight(Flight,Nflight,&flight);
 		printf("Sim %d\n",i+1);
+		
 		ABM(&flight,Nflight,config,shock);
+		
 		add_nsim_output(output_ABM_nsim,output_ABM,i);
 		save_m3(flight,Nflight,Flight,output_ABM_nsim);
 		
 		del_flight(&flight, Nflight, Flight);
 	}
+	
+	del_flight_pos(&Flight,Nflight,config);
+	del_flight(&Flight, Nflight, Flight);
+	del_conf(&config);
+	del_shock(&shock);
+	
 	return 0;
 }
 

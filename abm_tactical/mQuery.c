@@ -40,8 +40,11 @@ int _calculate_velocity(Aircraft_t *flight,int Nflight){
 	for(i=0;i<Nflight;i++){
 		for(j=0;j<(flight[i].n_nvp-1);j++) {
 			t=(flight[i].time[j+1]-flight[i].time[j]);
-			if(t>0.001) flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/t;
-			else  flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/1.;
+			//if(t>0.001) 
+			flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/t;
+			//else  flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/1.;
+			
+			//flight[i].vel[j]=200.;
 		}	
 	}
 	return 1;
@@ -55,10 +58,10 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 	if(rstream==NULL) BuG("M1 File doesn't exist\n");
 	
 	char c[R_BUFF];
-	fgets(c, R_BUFF, rstream);
+	if(!fgets(c, R_BUFF, rstream)) BuG("Impossible to read M1\n");
 	
 	int Nflight=atoi(c);
-	//Nflight=600;
+
 	int i,j,h;
 
 	(*flight)=( Aircraft_t* ) malloc(Nflight*sizeof(Aircraft_t));
@@ -73,7 +76,7 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 
 		if((*flight)[i].n_nvp==0) BuG("BUG in M1 File: flight has no navpoint\n");
 		
-		(*flight)[i].nvp=falloc_matrix((*flight)[i].n_nvp,4);
+		(*flight)[i].nvp=falloc_matrix((*flight)[i].n_nvp,DPOS);
 		(*flight)[i].time=falloc_vec((*flight)[i].n_nvp);
 		(*flight)[i].vel=falloc_vec((*flight)[i].n_nvp - 1);
 
@@ -95,21 +98,24 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 			for(++j;c[j]!=' '&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
 			(*flight)[i].time[h]=_convert_time(&c[++j]);
+			
+			#ifdef CAPACITY
+			for(++j;c[j]!=','&&c[j]!='\0';j++);
+			if(c[j]=='\0') BuG("BUG in M1 File -lx6\n");
+			(*flight)[i].nvp[h][4]=atof(&c[++j]); // TAKE OUTTTT
+			#endif
+			
+		
 		}
 	}
-		
-	_calculate_velocity((*flight),Nflight);
 	
-	/*for(i=0;i<Nflight;i++) if((*flight)[i].n_nvp<=3){
-		remove_aircraft(flight, &Nflight, i--);
-		Nflight--;
-	}*/
+	
+	_calculate_velocity((*flight),Nflight);
 	
 	return Nflight;
 }
 
 long double _find_value_string(char *config_file,char *label){
-
 
 	FILE *rstream=fopen(config_file, "r");
 	if(rstream==NULL) BuG("BUG - configuration file doesn't exist\n");
@@ -251,9 +257,7 @@ int get_temp_shock(CONF_t *conf){
 }
 
 int add_nsim_output(char *file_out,char *file_in, int n){
-	/*
-	
-	*/
+
 	int i;
 	for(i=0;file_in[i]!='\0';i++);
 	for(;file_in[i]!='.';i--);
@@ -270,4 +274,30 @@ int add_nsim_output(char *file_out,char *file_in, int n){
 	
 	return 1;
 	
+}
+
+
+int get_capacity(char *file_r,CONF_t *conf){
+	
+	FILE *rstream=fopen(file_r,"r");
+	if(rstream==NULL) BuG("Miss Capacity file\n");
+	
+	char c[R_BUFF];
+	for((*conf).n_sect=0;fgets(c, R_BUFF, rstream);((*conf).n_sect)++) if(c[0]=='#') ((*conf).n_sect)--;
+	fclose(rstream);
+	
+	(*conf).capacy = ialloc_vec((*conf).n_sect+1);
+	
+	rstream=fopen(file_r,"r");
+	int i,j;
+	for(i=1;fgets(c, R_BUFF, rstream);i++){
+		if(c[0]=='#'){
+			i--;
+			continue;
+		}
+		if(atoi(c)!=i) BuG("Not Regular Capacity file, miss index\n");
+		for(j=0;c[j]!='\t';j++);
+		(*conf).capacy[i]=atoi(&c[j+1])/3.;
+	}
+	return 1;	
 }
