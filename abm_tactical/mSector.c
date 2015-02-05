@@ -61,10 +61,10 @@ int generate_temporary_point(CONF_t *config){
 	(*config).tmp_nvp = falloc_matrix((*config).n_tmp_nvp, 2);
 	int n;
 //#ifdef TMP_FROM_FILE
-
-	char* rep_tail = "/abm_tactical/config/temp_nvp.dat";
-	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
-	sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
+	 char main_dir[] = "";
+	char* rep_tail = "config/temp_nvp.dat";
+	char * rep = malloc(snprintf(NULL, 0, "%s%s", main_dir, rep_tail) + 1);
+	sprintf(rep, "%s%s", main_dir, rep_tail);
 
 	if((*config).tmp_from_file){
 		printf("Attention! read temporary nvp from file\n");
@@ -146,61 +146,63 @@ int remove_aircraft(Aircraft_t **fligth, int *Nfligth, int sel){
 	return 1;
 }
 
-int add_nvp(Aircraft_t *f,int *st_indx,long double *p){
+int add_nvp_st_pt(Aircraft_t *f){
 	
-	long double **nvp=(long double**) malloc( ((*f).n_nvp+1)*sizeof(long double*) );
-	long double *vel=falloc_vec((*f).n_nvp);
-	//long double *time = falloc_vec((*f).n_nvp+1 );
+	long double **nvp=falloc_matrix( ((*f).n_nvp+1),DPOS );
+	long double *vel=falloc_vec( (*f).n_nvp );
+	long double *time = falloc_vec( (*f).n_nvp+1 );
 	
-	int i;
-	for(i=0;i<*st_indx;i++) {
-		if(i>((*f).n_nvp-2)) BuG("Excess\n");
-		nvp[i]=(*f).nvp[i];
+	int i,j;
+	for(i=0;i<(*f).st_indx;i++) {
+		for(j=0;j<DPOS;j++) nvp[i][j]=(*f).nvp[i][j];
 		vel[i]=(*f).vel[i];
-		//time[i]=(*f).time[i];
+		time[i]=(*f).time[i];
+		printf("%Lf\n",time[i]);
 	}
-	
-	if((i-1)>((*f).n_nvp-2)) BuG("Excess\n");
-	nvp[i]=p;
-	nvp[i][2]=nvp[i-1][2];
-	nvp[i][3]=nvp[i-1][3];
 
-	vel[i]=(*f).vel[i-1];
 	
-	//time[i]= haversine_distance( nvp[i-1], nvp[i] )/ vel[i];
+	for(j=0;j<DPOS;j++) nvp[i][j] = (*f).st_point[j];
+	vel[i] = (*f).vel[i-1];
+	time[i] = time[i-1] + haversine_distance( nvp[i-1], nvp[i] ) / vel[i];
 	
-	for(;i<((*f).n_nvp-1);i++){
-		if(i>((*f).n_nvp-2)) BuG("Excess\n");
-		nvp[i+1]=(*f).nvp[i];
-		vel[i+1]=(*f).vel[i];
-		//time[i+1]=(*f).time[i];
+	for(i++;i<((*f).n_nvp);i++){
+		for(j=0;j<DPOS;j++) nvp[i][j]=(*f).nvp[i-1][j];
+		vel[i]=(*f).vel[i-1];
+		time[i]=(*f).time[i-1];
 	}
-	if(i>((*f).n_nvp-1)) BuG("Excess\n");
-	nvp[i+1]=(*f).nvp[i];
-	//time[i+1]=(*f).time[i];
 	
-	free((*f).nvp);
-	free((*f).vel);
-	//free((*f).time);
+	for(j=0;j<DPOS;j++) nvp[i][j]=(*f).nvp[i-1][j];
+	time[i]=(*f).time[i-1];
 	
+	//ffree_2D( (*f).nvp, (*f).n_nvp);
+	for(i=0;i<(*f).n_nvp;i++) free((*f).nvp[i]);
+	free( (*f).nvp );
+	
+	free( (*f).vel );
+	free( (*f).time );
+		
 	(*f).nvp=nvp;
+	
 	(*f).vel=vel;
-	//(*f).time=time;
+	(*f).time=time;
 	
-	(*f).n_nvp = (*f).n_nvp+1;
-	(*st_indx)++;
-	
+	(*f).n_nvp = (*f).n_nvp +1;
+	(*f).st_indx = (*f).st_indx +1;
+	(*f).bound[1] = (*f).bound[1]  +1;
+		
 	return 1;
 }
 
+/*
 int _add_nvp_bound(Aircraft_t **f,int i,int j,long double **bound,int k){
 	int st_indx=j+1;
-	long double *p=falloc_vec(4);
+	long double *p=falloc_vec(DPOS);
 
 	find_intersection((*f)[i].nvp[j],(*f)[i].nvp[j+1],bound[k],bound[k+1],p);
 	add_nvp( &( (*f)[i] ),&st_indx,p);
 	return 1;
 }
+*/
 
 int _is_to_add(Aircraft_t f,int xp,long double **bound,int k){
 	
@@ -293,21 +295,31 @@ int _set_cross_timeM1(Aircraft_t **f, int N){
 
 int _alloc_flight_pos(Aircraft_t **f,int N_f,CONF_t *conf){
 	int i;
-	for(i=0;i<N_f;i++) (*f)[i].pos = falloc_matrix((*conf).t_w*2, 4);
+	for(i=0;i<N_f;i++) (*f)[i].pos = falloc_matrix((*conf).t_w*2, DPOS);
 	return 1;
 }
 
-int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,char *input_ABM, char *config_file){
-	get_configuration(config_file, config);
 
-	char* rep_tail = "/abm_tactical/config/bound_latlon.dat";
-	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
-	sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
+int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,char *input_ABM){
+	//get_boundary("CONF/bound_latlon.dat", config);	
+	//char *main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
+	char *main_dir = "";
+	char* rep_tail2 = "config/config.cfg";
+	char * rep2 = malloc(snprintf(NULL, 0, "%s%s", main_dir, rep_tail2) + 1);
+	sprintf(rep2, "%s%s", main_dir, rep_tail2);
+
+	get_configuration(rep2, config);
+
+	char* rep_tail = "config/bound_latlon.dat";
+	char * rep = malloc(snprintf(NULL, 0, "%s%s", main_dir, rep_tail) + 1);
+	sprintf(rep, "%s%s", main_dir, rep_tail);
+	printf("%s\n",rep);
 	get_boundary(rep, config);	
 
 	free(rep);
-	//free(config_file);
+	free(rep2);
 
+	
 	//printf("Generate Point\n");
 	generate_temporary_point(config);
 	
@@ -328,6 +340,9 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	_alloc_shock(*config,shock);
 	get_temp_shock(config);
 	
+	#ifdef CAPACITY
+	get_capacity("../sector_capacities.dat", config);
+	#endif
 	
 	return 1;
 }
