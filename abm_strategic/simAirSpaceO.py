@@ -3,6 +3,7 @@
 
 import sys
 sys.path.insert(1, '..')
+sys.path.insert(1, '../libs/YenKSP')
 
 import networkx as nx
 import sys
@@ -24,8 +25,8 @@ import copy
 from os.path import join
 
 from libs.general_tools import counter, silence, build_triangular
-from libs.graph import DiGraph
-from libs.algorithms import ksp_yen, ksp_yen_old
+from libs.YenKSP.graph import DiGraph
+from libs.YenKSP.algorithms import ksp_yen, ksp_yen_old
 
 version='2.9.10'
 
@@ -525,12 +526,12 @@ class FlightPlan:
     Changed in 2.9.6: added shift_time method.
     """
     def __init__(self,path,time,cost,ac_id, path_nav):
-        self.p=path
-        self.p_nav=path_nav
-        self.t=time
-        self.cost=cost
-        self.ac_id=ac_id
-        self.accepted=True
+        self.p=path # path in sectors
+        self.p_nav=path_nav # path in navpoints
+        self.t=time # of departure
+        self.cost=cost # cost given the utilisty function
+        self.ac_id=ac_id # id of the air company
+        self.accepted=True # if the flighr plan has been accpeted by the NM.
         self.bottleneck=-1
 
     def shift_time(self, shift):

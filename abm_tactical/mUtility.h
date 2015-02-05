@@ -26,9 +26,6 @@ long double **falloc_matrix(int , int );
 /*Alloc an array of long double*/
 long double *falloc_vec(int );
 
-/*Alloc an int matrix */
-int **ialloc_matrix(int , int );
-
 /*Alloc an array of int */
 int *ialloc_vec(int );
 
@@ -65,10 +62,6 @@ int find_intersection(long double *,long double *,long double *,long double *,lo
 /*Free bi-dimensional matrix*/
 void ffree_2D(long double **,int );
 
-/*Free bi-dimensional int matrix*/
-void ifree_2D(int **,int );
-
-
 /*Free Tri-dimensional matrix*/
 void ffree_3D(long double ***,int ,int );
 
@@ -99,8 +92,5 @@ long double mean(long double *,int );
 
 /*Transform time in seconds in a vector H,M,S,micrS*/
 int time_to_int(long double ,int *);
-
-/*Find the next index respect a point on a rote*/
-int find_p_indx(long double **,int ,long double *);
 
 #endif

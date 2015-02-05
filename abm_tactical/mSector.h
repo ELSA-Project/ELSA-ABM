@@ -41,14 +41,14 @@ int modify_traj_intersect_bound(Aircraft_t**,int*,CONF_t);
 
 /* Add a nvp before st_indx and increment st_indx, 
  add also an element to velocity */
-int add_nvp_st_pt(Aircraft_t *);
+int add_nvp(Aircraft_t *,int *,long double *);
 
 /*Set the flag bound[2] with the index of nvp on bound 
  and the fouth element of nvp with the flag 1 if the point is inside the polygon*/
 int set_boundary_flag_onFlight(Aircraft_t **,int *,CONF_t );
 
 /*Set base configuration for sector and trajectory*/
-int init_Sector(Aircraft_t **,int *,CONF_t	*,SHOCK_t *, char *);
+int init_Sector(Aircraft_t **,int *,CONF_t	*,SHOCK_t *, char *, char *);
 
 /*cheak if a point is on the bound*/
 int is_on_bound(long double *,long double **,int );

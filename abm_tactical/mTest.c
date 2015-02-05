@@ -29,11 +29,7 @@ void _print_bound( CONF_t c){
 void plot(Aircraft_t f,CONF_t c,char *fr){
 	FILE *wstream=fopen(fr,"w");
 	int i;
-	long double p[2];
-	for(i=0;i<f.n_nvp;i++) {
-		gall_peter(f.nvp[i], p);
-		fprintf(wstream, "%Lf\t%Lf\n",p[0],p[1]);
-	}
+	for(i=0;i<f.n_nvp;i++) fprintf(wstream, "%Lf\t%Lf\n",f.nvp[i][0],f.nvp[i][1]);
 	fclose(wstream);
 	
 	_print_bound(c);
@@ -75,10 +71,10 @@ void plot_pos(Aircraft_t f,CONF_t c){
 	plot(f,c,"/tmp/pp");
 	FILE *wstream=fopen("/tmp/pp","w");
 	int i;
-	for(i=0;i<(c.t_w*c.t_r-1);i++) fprintf(wstream,"%Lf\t%Lf\n",f.pos[i][0],f.pos[i][1]);
+	for(i=0;i<c.t_w;i++) fprintf(wstream,"%Lf\t%Lf\n",f.pos[i][0],f.pos[i][1]);
 	fclose(wstream);
 }
-void gall_peter(long double *a,long double *A){
+void _gall_peter(long double *a,long double *A){
 	A[0]=RH*PI*a[1]/(180.*sqrt(2));
 	A[1]=RH*sqrt(2)*sin(rad(a[0]));
 	return;
@@ -89,22 +85,22 @@ void plot_bound(CONF_t conf){
 	long double P[2];
 	FILE *wstream=fopen("DATA/bound_proj.dat", "w");
 	for(i=0;i<conf.Nbound;i++){
-		gall_peter(conf.bound[i],P);
+		_gall_peter(conf.bound[i],P);
 		fprintf(wstream, "%Lf\t%Lf\n",P[0],P[1]);
 	}
 	fclose(wstream);
 	return;
 }
 
-void plot_movie( Aircraft_t **f,int N_f,CONF_t conf,char *fw ){
-	FILE *postream=fopen(fw, "a");
+void plot_movie( Aircraft_t **f,int N_f,CONF_t conf){
+	FILE *postream=fopen("DATA/pos.dat", "a");
 
 	int i,j;
 	long double P[2];
-	for(j=0;j<(conf.t_w*conf.t_r-1);j++) {
+	for(j=0;j<(conf.t_r*conf.t_w -2);j++) {
 		for(i=0;i<N_f;i++) if((*f)[i].pos[j][3]==1. && (*f)[i].pos[j][0]!=SAFE)
 		{
-			gall_peter((*f)[i].pos[j],P);
+			_gall_peter((*f)[i].pos[j],P);
 			fprintf(postream,"%Lf\t%Lf\t%Lf\t",P[0],P[1],(*f)[i].pos[j][2]);
 			fprintf(postream,"%d\t",(*f)[i].ID);
 		}
@@ -117,14 +113,12 @@ void print_nvp(Aircraft_t f){
 	int i,h;
 	for(i=0;i<f.n_nvp;i++) {
 		printf("%d]\t",i);
-		for(h=0;h<DPOS;h++) printf("%Lf\t",f.nvp[i][h]);
+		for(h=0;h<4;h++) printf("%Lf\t",f.nvp[i][h]);
 		if(i==f.bound[0]||i==f.bound[1]) printf("1");
 		printf("\n");
 	}
 	return;
 }
-
-
 
 void cheak_inside_pos(Aircraft_t *f,int n_f,CONF_t conf){
 	int i,j;
@@ -133,15 +127,5 @@ void cheak_inside_pos(Aircraft_t *f,int n_f,CONF_t conf){
 	}
 	return;
 }
-
-
-int cheak_nan_pos(Aircraft_t *f,CONF_t conf){
-	int i;
-	for(i=0;i<conf.t_w;i++) if(isnan((*f).pos[i][0])) return 1;
-	return 0;
-	
-}
-
-
 
 

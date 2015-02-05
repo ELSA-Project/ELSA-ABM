@@ -26,19 +26,6 @@ long double **falloc_matrix(int n, int m){
 	return x;
 }
 
-int **ialloc_matrix(int n, int m){
-	int i;
-	int **x;
-	
-	x=(int **) malloc(n*sizeof(int*));
-	if(x==NULL){ printf("\nNo Memory");exit(0);}
-	for(i=0;i<n;i++){
-		*(x+i)=(int*) malloc(m*sizeof(int));
-		if(*(x+i)==NULL) { printf("\nNo Memory");exit(0);}
-	}
-	return x;
-}
-
 long double *falloc_vec(int i){
 	long double *x;
 	x=(long double*) malloc(i*sizeof(long double));
@@ -326,18 +313,6 @@ void freeTouch2(long double ***f){
 		*f = NULL;
 	}
 }
-void ifreeTouch(int **f){
-	if(*f != NULL){
-		free(*f);
-		*f = NULL;
-	}
-}
-void ifreeTouch2(int ***f){
-	if(*f != NULL){
-		free(*f);
-		*f = NULL;
-	}
-}
 
 
 void ffree_2D(long double **x,int N){
@@ -350,25 +325,6 @@ void ffree_2D(long double **x,int N){
 	freeTouch2(&x);
 	return;
 }
-
-void ifree_2D(int **x,int N){
-	int i;
-	for(i=0;i<N;i++) {
-		//printf("%d\t %Lf\n",i,x[i][0]);
-		ifreeTouch((x+i));
-	}
-	//printf("Qui\n");
-	ifreeTouch2(&x);
-	return;
-}
-
-/*
-void ifree_2D(int **x,int N){
-	int i;
-	for(i=0;i<N;i++) 
-		free((x[i]));
-	free(x);
-}*/
 void ffree_3D(long double ***x,int N,int M){
 	int i,j;
 	for(i=0;i<N;i++) for(j=0;j<M;j++) free(*(*(x+i)+j));
@@ -384,15 +340,7 @@ int find_st_indx(long double **nvp,int n_nvp,long double *st_point,int st_indx,l
 	}
 	
 	return -1;
-}
-
-int find_p_indx(long double **nvp,int n_nvp,long double *p){
-	int i;
-	for(i=0;i<(n_nvp-1);i++) if(isbetween(nvp[i],nvp[i+1],p)) return i+1;
 	
-	BuG("Impossible to find point\n");
-	
-	return 0;	
 }
 void mischia(int *carte,int N){
 	int i,comodo,x;

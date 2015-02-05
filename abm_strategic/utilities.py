@@ -258,7 +258,7 @@ def date_abm_tactic(date):
     date_abm = pouet[0] + ' ' + pouet[1]
     return date_abm
 
-def compute_M1_trajectories(queue):
+def compute_M1_trajectories(queue, starting_date):
     """
     Returns some trajectories (navpoint names) based on the given queue. 
     All altitudes are set to 0.
@@ -269,24 +269,27 @@ def compute_M1_trajectories(queue):
         try:
             # Find the accepted flight plan, select the trajectory in navpoints.
             accepted_FP = f.FPs[[fpp.accepted for fpp in f.FPs].index(True)]
-            trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
+            trajectories_nav.append((accepted_FP.p_nav, date_st(accepted_FP.t*60., starting_date=starting_date))) 
         except ValueError:
             pass
 
     return trajectories_nav
 
-def convert_trajectories(G, trajectories, starting_date = [2010, 6, 5, 10, 0, 0]):
+def convert_trajectories(G, trajectories, put_sectors=False):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
     """ 
     trajectories_coords = []
-    for i,trajectory in enumerate(trajectories):
+    for i, (trajectory, d_t) in enumerate(trajectories):
         traj_coords = []
-        for j,n in enumerate(trajectory):
+        for j, n in enumerate(trajectory):
             x = G.node[n]['coord'][0]
             y = G.node[n]['coord'][1]
-            t = 0 if j==0 else t + G[n][trajectory[j-1]]['weight']
-            traj_coords.append([x, y, 0., t])
+            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1]]['weight'])
+            if not put_sectors:
+                traj_coords.append([x, y, 0., t])
+            else:
+                traj_coords.append([x, y, 0., t, G.node[n]['sec']])
         trajectories_coords.append(traj_coords)
     return trajectories_coords
 
@@ -298,7 +301,7 @@ def convert_distance_trajectories(G_nav, flights):
 
     return [[G_nav.idx_nodes[nav] for nav, alt in flight['route_m1']] for flight in flights]
 
-def convert_distance_trajectories_coords(G_nav, flights):
+def convert_distance_trajectories_coords(G_nav, flights, put_sectors=False):
     """
     Convert trajectories from Distance library into trajectories based on coordinates. 
     Preserve the altitude and the times.
@@ -309,12 +312,15 @@ def convert_distance_trajectories_coords(G_nav, flights):
         for i, (nav, alt) in enumerate(flight['route_m1']):
             x, y = tuple(G_nav.node[G_nav.idx_nodes[nav]]['coord'])
             t = flight['route_m1t'][i][0] # TODO: Check this.
-            traj.append((x, y, alt, t))
+            if put_sectors:
+                traj.append((x, y, alt, t, G_nav.node[G_nav.idx_nodes[nav]]['sec']))
+            else:
+                traj.append((x, y, alt, t))
         trajectories.append(traj)
 
     return trajectories
 
-def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
+def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat'):
     """
     Write a set of trajectories in the format for abm_tactical.
     Note: counts begin at 1 to comply with older trajectories.
@@ -325,8 +331,12 @@ def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.
         print >>f, str(len(trajectories)) + "\tNflights"
         for i,trajectory in enumerate(trajectories):
             print >>f, str(i+1) + "\t" + str(len(trajectory)) + '\t',
-            for x, y, z, t in trajectory:
-                print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(date_st(t, starting_date = starting_date)) + '\t',
+            if len(trajectory[0])==4:
+                for x, y, z, t in trajectory:
+                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + '\t',
+            else:
+                for x, y, z, t, sec in trajectory:
+                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + ',' + str(sec) + '\t',
             print >>f, ''
 
     print "Trajectories saved in", fil  
@@ -560,22 +570,31 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
     Insert altitudes in trajectories based on distribution extracted from sample_trajectories.
     The vertical trajectories can be of three kinds: increasing, decreasing, or increasing then decreasing.
     """
-   
+    sectors = len(trajectories[0][0]) == 5
     # Angles of real flights with respect to horizontal (between -pi and +pi).
     entry_exit = [(t[0], t[-1]) for t in trajectories]
-    angles = [atan2(-(y1-y2),(x1-x2)) for (x1, y1, z1, t1), (x2, y2, z2, t2) in entry_exit]
     
+    if not sectors:
+        angles = [atan2(-(y1-y2),(x1-x2)) for (x1, y1, z1, t1), (x2, y2, z2, t2) in entry_exit]
+    else:
+        angles = [atan2(-(y1-y2),(x1-x2)) for (x1, y1, z1, t1, sec1), (x2, y2, z2, t2, sec2) in entry_exit]
+
     # Sample the heights
-    h = [(int(z)/10)*10. for a in sample_trajectories for x, y, z, t in a if z>=min_FL]
+    if not sectors:
+        h = [(int(z)/10)*10. for a in sample_trajectories for x, y, z, t in a if z>=min_FL]
+    else:
+        h = [(int(z)/10)*10. for a in sample_trajectories for x, y, z, t, sec in a if z>=min_FL]
     hp = [a for a in h if a%20==0] # This is for putting half flights on odd FL and the other half on even FLs.
     hd = [a for a in h if a%20!=0]
     h = [hp, hd]
     
     # Put new altitudes in trajectories
     for idx, traj in enumerate(trajectories):
-
         th = select_heigths([choice(h[angles[idx]<0]) for j in range(len(traj))])
-        trajectories[idx] = [(x, y, th[j], t) for i, (x, y, z, t) in enumerate(traj)]
+        if not sectors:
+            trajectories[idx] = [(x, y, th[j], t) for i, (x, y, z, t) in enumerate(traj)]
+        else:
+            trajectories[idx] = [(x, y, th[j], t, sec) for i, (x, y, z, t, sec) in enumerate(traj)]
         #print "Altitude picked:",th[j] 
     return trajectories
 
