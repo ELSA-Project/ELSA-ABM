@@ -16,3 +16,5 @@ results_strategic
 networks
 *sublime*
 abm_strategic/Model2.sublime-workspace
+.ipynb*
+results/*
