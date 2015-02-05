@@ -862,7 +862,7 @@ int _find_end_point(Aircraft_t *f,CONF_t conf){
 }
 
 int _change_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SHOCK_t sh){
-	int unsafe;
+	int unsafe = (*f).st_indx-1;
 	
 	int endp = _find_end_point(f,conf);
 	
