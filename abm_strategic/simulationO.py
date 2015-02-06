@@ -598,9 +598,15 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     else:
         ff = sys.stdout
 
+    stats = {}
+
     print ('Number of rejected flights:', len([f for f in sim.queue if not f.accepted]), '/', len(sim.queue), file=ff)
     print ('Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp, file=ff)
     print ('', file=ff)
+
+    stats['rejected_flights'] = len([f for f in sim.queue if not f.accepted])
+    stats['rejected_flight_plans'] = len([fp for f in sim.queue for fp in f.FPs if not fp.accepted])
+    stats['flights'] = len(sim.queue)
 
     print ('Global metrics for M1:', file=ff)
     agg_results = extract_aggregate_values_on_queue(queue, paras['par'])
@@ -647,9 +653,9 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         if save_file_capacities!=None:
             write_down_capacities(G, save_file=save_file_capacities)
 
-        return trajectories_coords
+        return trajectories_coords, stats
     else:
-        return trajectories
+        return trajectories, stats
 
 if __name__=='__main__': 
     """
