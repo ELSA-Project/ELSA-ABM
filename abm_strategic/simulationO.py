@@ -12,7 +12,9 @@ This is the main interface to the model. The main functions are
 ===========================================================================
 """
 
-from simAirSpaceO import AirCompany, Network_Manager
+from __future__ import print_function
+
+import sys
 import networkx as nx
 #from paras import paras
 #from random import getstate, setstate, 
@@ -26,8 +28,10 @@ import copy
 from datetime import datetime
 from math import ceil
 
+from simAirSpaceO import AirCompany, Network_Manager
 from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
     compute_M1_trajectories, convert_trajectories, insert_altitudes, convert_distance_trajectories_coords
+
 from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
 from tools_airports import extract_flows_from_data
 #from utilitiesO import compare_networks
@@ -38,7 +42,7 @@ main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
 if 0:
     #see = 7122008
     see = randrange(1,10000000)
-    print 'Caution! Seed:', see
+    print ('Caution! Seed:', see)
     seed(see)
 
 def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot', 'nA', 'departure_times','Nsp_nav', 'old_style_allocation', 'noise'], only_name = False):
@@ -131,7 +135,7 @@ class Simulation:
 
         if self.Nsp_nav!= self.G.Nsp_nav:
             if verbose:
-                print 'Updating shortest path due to a change of Nsp_nav...'
+                print ('Updating shortest path due to a change of Nsp_nav...')
             self.G.choose_short(self.Nsp_nav)
 
         if make_dir:
@@ -143,7 +147,7 @@ class Simulation:
         Changed in 2.9.6: added the shuffle_departure.
         """
         if self.verb:
-            print 'Doing simulation...'
+            print ('Doing simulation...')
         #self.make_times()#, times_data=paras['times'])
         Netman = Network_Manager(old_style = self.old_style_allocation)
         self.storymode = storymode
@@ -201,7 +205,7 @@ class Simulation:
         try:
             assert len(self.AC)==len(self.pars)
         except:
-            print 'n_AC should have the same length than the parameters, or be an integer'
+            print ('n_AC should have the same length than the parameters, or be an integer')
             raise
     
         self.ACs={}
@@ -247,9 +251,9 @@ class Simulation:
                         l+=1
             else:
                 if 1:#self.storymode:
-                    print "I do " + (not idx_s in self.G.G_nav.airports)*'not', "find", idx_s, ", I do " + (not idx_d in self.G.G_nav.airports)*'not', "find", idx_d,\
-                     'and the couple is ' + (not self.G.G_nav.short.has_key((idx_s, idx_d)))*'not', 'in pairs.'
-                    print 'I skip this flight.'
+                    print ("I do " + (not idx_s in self.G.G_nav.airports)*'not', "find", idx_s, ", I do " + (not idx_d in self.G.G_nav.airports)*'not', "find", idx_d,\
+                     'and the couple is ' + (not self.G.G_nav.short.has_key((idx_s, idx_d)))*'not', 'in pairs.')
+                    print ('I skip this flight.')
                 pass
         # if clean:   
         #     self.Netman.initialize_load(self.G)
@@ -298,11 +302,11 @@ class Simulation:
             f.close()
         else:
             if not split:
-                print 'Saving whole object in ', rep
+                print ('Saving whole object in ', rep)
                 with open(rep + '/sim.pic','w') as f:
                     pickle.dump(self,f)
             else:
-                print 'Saving split object in ', rep
+                print ('Saving split object in ', rep)
                 with open(rep + '_ACs.pic','w') as f:
                     pickle.dump(self.ACs,f)
                 
@@ -320,7 +324,7 @@ class Simulation:
         """            
         if rep=='':
             rep=build_path(self.paras)
-        print 'Loading split simu from ', rep
+        print ('Loading split simu from ', rep)
         f=open(rep + '_ACs.pic','r')
         self.ACs=pickle.load(f)
         f.close()
@@ -350,7 +354,7 @@ class Simulation:
                     for j in range(self.ACsperwave):
                         self.t0sp.append([uniform(i*(self.width_peak+self.Delta_t),i*(self.width_peak+self.Delta_t)+self.width_peak)])
             else:
-                print 'Not implemented yet...'
+                print ('Not implemented yet...')
                 raise
         # elif self.departure_times=='from_data':
         #     self.t0sp=[]
@@ -472,9 +476,10 @@ def do_standard((paras, G, i)):
 
 def write_down_capacities(G, save_file=None):
     with open(save_file, 'w') as f:
-        print >>f, "# Sectors\t Capacities"
+        #print >>f, "# Sectors\t Capacities"
+        print ("# Sectors\t Capacities", file=f)
         for n in G.nodes():
-            print >>f, str(n+1) + '\t' + str(G.node[n]['capacity'])
+            print (str(n+1) + '\t' + str(G.node[n]['capacity']), file=f)
 
 def add_first_last_points(trajs, secs=False):
     """
@@ -522,7 +527,8 @@ def add_first_last_points(trajs, secs=False):
     return trajs
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
-     coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, **paras_control):
+     coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, 
+     record_stats_file=None, remove_flights_after_midnight=False, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -544,7 +550,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     New in 2.9.4.
     Changed in 2.9.5: Added synthetic altitudes generation.
     """
-    print "Generating traffic on network..."
+    print ("Generating traffic on network...")
 
     paras = read_paras(paras_file=paras_file, post_process = False)
     if simple_setup:
@@ -566,13 +572,16 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         paras['parallel'] = True
         paras['old_style_allocation'] = False
         paras['force'] = True
+        paras['capacity_factor'] = True
 
     for p,v in paras_control.items():
         paras[p] = v
 
     paras = post_process_paras(paras)
 
-    print "Number of flights in traffic:", len(paras['traffic'])
+    G = paras['G']
+    print ("Average capactity:", np.mean([paras['G'].node[n]['capacity'] for n in paras['G'].nodes()]))
+    print ("Number of flights in traffic:", len(paras['traffic']))
     
     with clock_time():
         sim=Simulation(paras, G=G, make_dir=True, verbose=True)
@@ -581,51 +590,52 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         queue=post_process_queue(sim.queue)
         M0_queue=post_process_queue(sim.M0_queue)
 
+    
     print
-    print 'Global metrics for M1:'
+
+    if record_stats_file!=None:
+        ff = open(record_stats_file, 'w')
+    else:
+        ff = sys.stdout
+
+    print ('Number of rejected flights:', len([f for f in sim.queue if not f.accepted]), '/', len(sim.queue), file=ff)
+    print ('Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp, file=ff)
+    print ('', file=ff)
+
+    print ('Global metrics for M1:', file=ff)
     agg_results = extract_aggregate_values_on_queue(queue, paras['par'])
     for met, res in agg_results.items():
         for ac, met_res in res.items():
-            print '-', met, "for companies of type", ac, ":", met_res
-    print
+            print ('-', met, "for companies of type", ac, ":", met_res, file=ff)
+    print ('', file=ff)
 
     if paras['N_shocks']!=0:
         agg_results = extract_aggregate_values_on_queue(M0_queue, paras['par'])
         for met, res in agg_results.items():
             for ac, met_res in res.items():
-                print '-', met, "for companies of type", ac, ":", met_res
-    print
-    print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted]), '/', len(sim.queue)
-    print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
-    print
+                print ('-', met, "for companies of type", ac, ":", met_res, file=ff)
 
+    if record_stats_file!=None:
+        ff.close()
 
-    for i in range(len(queue)):
-        for j in range(i+1, len(queue)):
-            try:
-                assert not queue[i] is queue[j]
-            except:
-                print "flights", i, "and", j, "point to the same object" 
-                raise
+    # for i in range(len(queue)):
+    #     for j in range(i+1, len(queue)):
+    #         try:
+    #             assert not queue[i] is queue[j]
+    #         except:
+    #             print("flights", i, "and", j, "point to the same object") 
+    #             raise
 
     trajectories = compute_M1_trajectories(queue, sim.starting_date)
 
-    # for i in range(len(trajectories)):
-    #     for j in range(i+1, len(trajectories)):
-    #         try:
-    #             assert not trajectories[i] is trajectories[j]
-    #         except:
-    #             print "trajectories", i, "and", j, "point to the same object" 
-    #             raise
-
     if coordinates:
-        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors)
+        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, remove_flights_after_midnight=remove_flights_after_midnight)
         if generate_altitudes and paras['file_traffic']!=None: 
-            print "Generating synthetic altitudes..."
+            print ("Generating synthetic altitudes...")
             # Insert synthetic altitudes in trajectories based on a sampling of file_traffic
             with silence(True):
                 small_sample = G.check_all_real_flights_are_legitimate(paras['traffic'], repair=True)
-            print "Kept", len(small_sample), "flights for sampling altitudes."
+            print ("Kept", len(small_sample), "flights for sampling altitudes.")
             sample_trajectories = convert_distance_trajectories_coords(G.G_nav, small_sample, put_sectors=put_sectors)
             trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
 
@@ -648,7 +658,7 @@ if __name__=='__main__':
     GG = paras['G']#ABMvars.G
     paras = read_paras()
 
-    print header (paras,'SimulationO', version, paras_to_display=['ACtot'])
+    print (header (paras,'SimulationO', version, paras_to_display=['ACtot']))
 
     with clock_time():
         sim=Simulation(paras, G=GG, make_dir=True, verbose=True)
@@ -662,39 +672,41 @@ if __name__=='__main__':
 
     #print 'ACs:'
     #print sim.ACs
-    print
-    print
-    print 'Global metrics for M1:'
-    print extract_aggregate_values_on_queue(queue, paras['par'])
-    print 'Global metrics for M0:'
-    print extract_aggregate_values_on_queue(M0_queue, paras['par'])
-    print
-    print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted])
-    print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
-    #print "Satisfaction: "
-    #print [f.satisfaction for f in sim.queue]
-    print
+    #print 
+    #print
+    #print 'Global metrics for M1:'
+    #print extract_aggregate_values_on_queue(queue, paras['par'])
+    #print 'Global metrics for M0:'
+    #print extract_aggregate_values_on_queue(M0_queue, paras['par'])
+    #print
+    #print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted])
+    #print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
+    ##print "Satisfaction: "
+    ##print [f.satisfaction for f in sim.queue]
+    #print
     
     #coin=[797, 430, 911, 792, 343, 1161, 1162, 840, 522, 1031, 1013, 596, 452, 376, 441, 736, 561, 244, 459, 69, 209, 98, 635, 926, 315, 1124, 1109, 641, 250]
     # for f in sim.queue[:10]:
     #     for fp in f.FPs:
     #         #if np.array(fp.p_nav)=coin and np.array(fp.p_nav)!=reversed(coin):
-    #             #print np.array(fp.p_nav)==coin 
-    #             print fp.p_nav
-    #             print fp.p
+    #             ##print np.array(fp.p_nav)==coin 
+    #             #print fp.p_nav
+    #             #print fp.p
 
-    #             print fp.accepted
-    #             #print filter(lambda x: not x in fp.p_nav, coin)
+    #             #print fp.accepted
+    #             ##print filter(lambda x: not x in fp.p_nav, coin)
                 
-    #     print
-    #     print
+    #     #print
+    #     #print
     
     for n in sim.G.nodes():
-        print n, sim.G.node[n]['capacity'], sim.G.node[n]['load']
+        #print n, sim.G.node[n]['capacity'], sim.G.node[n]['load']
         if max(sim.G.node[n]['load']) == sim.G.node[n]['capacity']:
-            print "Capacity's reached for sector:", n
+            #print "Capacity's reached for sector:", n
+            pass
         if max(sim.G.node[n]['load']) > sim.G.node[n]['capacity']:
-            print "Capacity overreached for sector:", n, '!'
+            #print "Capacity overreached for sector:", n, '!'
+            pass
     #draw_network_map(sim.G.G_nav, title=sim.G.G_nav.name, load=False, generated=True,\
     #        airports=True, stack=True, nav=True, queue=sim.queue)
     
@@ -709,21 +721,21 @@ if __name__=='__main__':
 
     #  Real trajectories
     trajectories_real = []
-    print len(sim.G.flights_selected)
+    #print len(sim.G.flights_selected)
     for f in sim.G.flights_selected:
         navpoints = set([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
         if navpoints.issubset(set(sim.G.G_nav.nodes())) and (sim.G.G_nav.idx_nodes[f['route_m1'][0][0]], sim.G.G_nav.idx_nodes[f['route_m1'][-1][0]]) in sim.G.G_nav.short.keys():
             trajectories_real.append([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
     # real_flights = extract_flows_from_data(sim.G.paras_real, [sim.G.G_nav.node[n]['name'] for n in sim.G.G_nav.nodes()])[2]
 
-    print len(trajectories_real)
+    #print len(trajectories_real)
 
     # trajectories_real = []
     # for f in real_flights:
     #     navpoints = set([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
     #     #edges = set([(sim.G.G_nav.idx_nodes[f['route_m1'][i][0]], sim.G.G_nav.idx_nodes[f['route_m1'][i+1][0]]) for i in range(len(f['route_m1'])-1)])
         
-    # # print len(trajectories_real)
+    # # #print len(trajectories_real)
     
     draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_nav', flip_axes=True, trajectories=trajectories_nav, trajectories_type='navpoints', rep = sim.rep)
 
@@ -741,13 +753,15 @@ if __name__=='__main__':
         #all_possible_trajectories=sorted([path for paths in sim.G.short_nav[(p0,p1)].values() for path in paths], key= lambda p: sim.G.G_nav.weight_path(p))
         possible_trajectories=[p for p in sim.G.G_nav.short[(p0,p1)]]
         if 0:
-            print 'All possible trajectories:'
+            #print 'All possible trajectories:'
             for path in all_possible_trajectories:
-                print path
-            print
-            print 'Possible trajectories:'
+                pass
+                #print path
+            #print
+            #print 'Possible trajectories:'
             for path in possible_trajectories:
-                print path
+                pass
+                #print path
         
         #draw_network_and_patches(sim.G,sim.G.G_nav,sim.G.polygons, name='all_possible_trajectories', flip_axes=True, trajectories=all_possible_trajectories, trajectories_type='navpoints')
         draw_network_and_patches(sim.G,sim.G.G_nav,sim.G.polygons, name='possible_trajectories', flip_axes=False, trajectories=possible_trajectories, trajectories_type='navpoints', rep = sim.rep)
@@ -761,13 +775,13 @@ if __name__=='__main__':
     #     draw_network_map(sim.G.G_nav, title=sim.G.name, load=False, generated=True,\
     #             airports=True, trajectories=trajectories_nav, add_to_title='_nav_high_beta')
     # if 0:
-    #     print sim.queue[0].FPs[0].p_nav
+    #     #print sim.queue[0].FPs[0].p_nav
     #     for p in sim.queue[0].FPs[0].p_nav:
-    #         print sim.G.G_nav.node[p]['sec']
-    #     print
-    #     print sim.queue[0].FPs[1].p_nav
+    #         #print sim.G.G_nav.node[p]['sec']
+    #     #print
+    #     #print sim.queue[0].FPs[1].p_nav
     #     for p in sim.queue[0].FPs[2].p_nav:
-    #         print sim.G.G_nav.node[p]['sec']
+    #         #print sim.G.G_nav.node[p]['sec']
     #     sim.queue[0].FPs[1].p_nav
     #     draw_network_map(sim.G.G_nav, title=sim.G.name, load=False, generated=True,\
     #             airports=True, trajectories=[sim.queue[0].FPs[0].p_nav], add_to_title='_nav_high_beta', polygons=sim.G.polygons.values())
@@ -777,10 +791,10 @@ if __name__=='__main__':
         
     #sim.save()
     
-   # print
-   # print
+   # #print
+   # #print
    # for f in queue:
-   #     print f
+   #     #print f
    #     fp=f.FPs[0]
    #     i=0
    #     while not fp.accepted and i<len(f.FPs):
@@ -788,15 +802,15 @@ if __name__=='__main__':
    #         i+=1
        
    #     if i<len(f.FPs):
-   #         print fp.p
+   #         #print fp.p
    #plot_times_departure(sim.queue, rep=sim.rep)
    #  draw_network_map(sim.G, title=sim.G.name, queue=sim.queue, generated=True, rep=sim.rep)
     
-   # print sim.M0_queue
+   # #print sim.M0_queue
    
-   # print sim.queue
+   # #print sim.queue
 
-    print 'Done.'
+    #print 'Done.'
     
 
         
