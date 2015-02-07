@@ -22,7 +22,7 @@
  point from the starting point*/
 #define DTMP_P 100000
 
-#define DEBUG0
+//#define DEBUG0
 
 //#define PLOT 
 
