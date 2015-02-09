@@ -116,22 +116,14 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			(*flight)[i].nvp[h][4]=atof(&c[++j]); // TAKE OUTTTT
 #endif		
 #ifdef BOUND_CONTROL
-			if(inside==0) {
-				printf("Cheak %Lf\t%Lf\t",(*flight)[i].nvp[h][0],(*flight)[i].nvp[h][1]);
-				if(point_in_polygon((*flight)[i].nvp[h],(*conf).bound,(*conf).Nbound)) {
-					printf("1\n");
-					inside=1;
-				}
-				else printf("0\n");
-			}		
+			if(inside==0) if(point_in_polygon((*flight)[i].nvp[h],(*conf).bound,(*conf).Nbound))inside=1;
+
 #endif
 
 		}
 #ifdef BOUND_CONTROL
 			if(inside==0) {
-				for(m=0;m<(*conf).Nbound;m++) printf("%Lf\t%Lf\n",(*conf).bound[m][0],(*conf).bound[m][1]);
 				printf("Flight %d doesn't cross the boundary\n",(*flight)[i].ID);
-				plot_where( (*flight)[i],(*conf),"/tmp/nvp_f");
 				exit(0);
 			}
 #endif
