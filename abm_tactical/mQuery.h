@@ -135,7 +135,7 @@ typedef struct {
  * 2) the address of a pointer to an Aircraft type
  * 
  * Return the number of Flight*/
-int get_M1(char *,Aircraft_t**);
+int get_M1(char *,Aircraft_t**,CONF_t *);
 
 /* GetBoundary from boundary file */
 int get_boundary( char *, CONF_t * );
