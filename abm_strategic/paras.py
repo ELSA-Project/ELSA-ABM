@@ -26,6 +26,7 @@ unit = 20. # used to translate times (from instance tau) in minutes.
 # Use None if you want to generate a new network (based on paras_G file).
 
 file_net = None
+capacity_factor = 1. # expand all capacities by this factor.
 
 # ---------------- Companies ---------------- #
 

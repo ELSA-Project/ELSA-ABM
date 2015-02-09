@@ -16,9 +16,15 @@ G = network_whose_name_is('../networks/Real_LF_v5.8_Strong_EXTLFMM_LFMM_2010-5-6
 save_file = '../trajectories/M1/trajectories.dat'
 file_traffic = '../networks/Real_LF_v5.8_Strong_EXTLFMM_LFMM_2010-5-6+0_d2_cut240.0_directed_flights_selected.pic'
 save_file_capacities = '../networks/Real_LF_v5.8_Strong_EXTLFMM_LFMM_2010-5-6+0_d2_cut240.0_directed_flights_selected_capacities.dat'
-trajectories = generate_traffic(G, save_file=save_file, file_traffic=file_traffic, coordinates=True\
-	, put_sectors=True, save_file_capacities=save_file_capacities)
-
+trajectories = generate_traffic(G, 	save_file=save_file, 
+									file_traffic=file_traffic, 
+									coordinates=True,
+									put_sectors=True, 
+									save_file_capacities=save_file_capacities,
+									capacity_factor=0.7,
+									remove_flights_after_midnight=True,
+									#record_stats_file='../trajectories/M1/trajectories_stats.dat'
+									)
 #print trajectories
 #draw_network_and_patches(None, G.G_nav, G.polygons, show=True, flip_axes=True,\
  #trajectories=trajectories, save=False)
