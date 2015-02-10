@@ -526,7 +526,7 @@ def add_first_last_points(trajs, secs=False):
 
     return trajs
 
-def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 6, 5, 10, 0, 0],\
+def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 5, 6, 0, 0, 0],\
      coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, 
      record_stats_file=None, remove_flights_after_midnight=False, **paras_control):
     """
@@ -635,7 +635,9 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     trajectories = compute_M1_trajectories(queue, sim.starting_date)
 
     if coordinates:
-        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, remove_flights_after_midnight=remove_flights_after_midnight)
+        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, 
+                                                                          remove_flights_after_midnight=remove_flights_after_midnight,
+                                                                          starting_date=starting_date)
         if generate_altitudes and paras['file_traffic']!=None: 
             print ("Generating synthetic altitudes...")
             # Insert synthetic altitudes in trajectories based on a sampling of file_traffic

@@ -275,7 +275,9 @@ def compute_M1_trajectories(queue, starting_date):
 
     return trajectories_nav
 
-def convert_trajectories(G, trajectories, put_sectors=False, remove_flights_after_midnight=False):
+def convert_trajectories(G, trajectories, put_sectors=False, 
+                remove_flights_after_midnight=False,
+                starting_date=[2010, 5, 6, 0, 0, 0]):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
     """ 
@@ -286,14 +288,15 @@ def convert_trajectories(G, trajectories, put_sectors=False, remove_flights_afte
             x = G.node[n]['coord'][0]
             y = G.node[n]['coord'][1]
             t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1]]['weight'])
-            if remove_flights_after_midnight and list(t[:3])!=list(d_t[:3]):
+            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
                 break
             if not put_sectors:
                 traj_coords.append([x, y, 0., t])
             else:
                 traj_coords.append([x, y, 0., t, G.node[n]['sec']])
-        if not remove_flights_after_midnight or list(t[:3])==list(d_t[:3]):
+        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
             trajectories_coords.append(traj_coords)
+
     if remove_flights_after_midnight:
         print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
     return trajectories_coords
