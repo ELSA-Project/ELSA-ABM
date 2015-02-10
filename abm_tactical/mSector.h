@@ -16,8 +16,11 @@
 
 #define V_THR 500.
 
-/*If is defined read the temporary point from a file*/
+/*If is defined read the temporary point from a file*/ /*Deprecated*/
 //#define TMP_FROM_FILE
+
+/*If It's defined cheak for intersection between flight tmp_nvp and boundary (slow)*/
+#define BOUND_CONTROL
 
 /*Structure of shock*/
 typedef struct {

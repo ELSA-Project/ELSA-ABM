@@ -77,6 +77,10 @@ int generate_temporary_point(CONF_t *config){
 			(*config).tmp_nvp[n][0]=atof(c);
 			for(i=0;c[i]!='\t';i++);
 			(*config).tmp_nvp[n][1]=atof(&c[++i]);
+#ifdef BOUND__CONTROL
+			if( !point_in_polygon((*config).tmp_nvp[n],(*config).bound,(*config).Nbound))
+				BuG("Temporary Point outside boundary\n");
+#endif
 		}
 		fclose(rstream);
 		free(rep);
@@ -314,7 +318,7 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	//printf("Generate Point\n");
 	generate_temporary_point(config);
 	
-	*Nflight=get_M1(input_ABM,flight);
+	*Nflight=get_M1(input_ABM,flight,config);
 	
 	modify_traj_intersect_bound(flight, Nflight, *config);
 

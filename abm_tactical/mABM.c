@@ -388,8 +388,12 @@ int _set_st_point(Aircraft_t **f,int N_f,CONF_t conf){
 
 		
 		if((*f)[i].ready!=0&&(*f)[i].st_indx==-1){
+			int j;
+			for(j=0;j<((*f)[i].n_nvp-1);j++) printf("%Lf ",(*f)[i].vel[j]);
+			printf("\n");
 			plot_pos((*f)[i], conf);
 			plot((*f)[i],conf,"/tmp/tt");
+			plot_where((*f)[i],conf,"/tmp/nvp_f");
 			printf("BUBU %d ID\n",(*f)[i].ID);
 			(*f)[i].st_indx=old_st;
 			printf("%d\t%d\n",old_st,(*f)[i].n_nvp);
@@ -409,7 +413,25 @@ int _evaluate_neigh(Aircraft_t **f, int n_f,TOOL_f *tl,CONF_t conf){
 	
 	for(i=0;i<n_f;i++) (*tl).n_neigh[i] = 0;
 	
+	//~ for(i=0;i<n_f;i++){
+		//~ for(j=i+1;j<n_f;j++){
+			//~ //if(haversine_distance((*f)[i].st_point,(*f)[j].st_point)<conf.d_neigh){
+			//~ (*tl).neigh[j][(*tl).n_neigh[j]]=i;
+			//~ ((*tl).n_neigh[j])+=1;
+			//~ //}
+		//~ }
+	//~ }
+	
+	//~ for(i=0;i<n_f;i++) {
+		//~ printf("%d:\t",i);
+		//~ for(j=0;j<(*tl).n_neigh[i];j++) printf("%d\t",(*tl).neigh[i][j]);
+		//~ printf("\n");
+	//~ }
+		
+	
+
 	for(i=0;i<n_f;i++){
+		//printf("%Lf\t%Lf\n",(*f)[i].st_point[0],(*f)[i].st_point[1]);
 		for(j=i+1;j<n_f;j++){
 			if(haversine_distance((*f)[i].st_point,(*f)[j].st_point)<conf.d_neigh){
 				(*tl).neigh[j][(*tl).n_neigh[j]]=i;
@@ -425,18 +447,9 @@ int _evaluate_neigh(Aircraft_t **f, int n_f,TOOL_f *tl,CONF_t conf){
 int _calculate_st_point(Aircraft_t *f,CONF_t conf,long double t){
 	(*f).st_indx=1;
 
-	if(!_position(f, (*f).nvp[0], conf.t_w, conf.t_i, conf.t_r, 0.)) {
+	if(!_position(f, (*f).nvp[0], conf.t_w, conf.t_i, conf.t_r, 0.)){
 		(*f).ready=0;
-		return 0;
-	}
-	if( cheak_nan_pos(f,conf) ){
-		int i;
-		printf("Unann 1\n");
-		plot_pos((*f),conf);
-		plot_where((*f),conf,"/tmp/nvp_f");
-		printf("IDD %d\n",(*f).ID);
-		for(i=0;i<((*f).n_nvp-1);i++) printf("%Lf\n",(*f).vel[i]);
-		exit(0);
+		return (0);
 	}
 
 	
@@ -480,25 +493,13 @@ int _calculate_st_point(Aircraft_t *f,CONF_t conf,long double t){
 int _get_ready(Aircraft_t **f, int N_f,long double t,CONF_t conf){
 	int i;
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
-	
-	//printf("%d\n", N_f);
-	//printf("%Lf\n", t);
-	
-	//for(i=0;i<N_f;i++)  {
-	//	printf("%d: %Lf\n", i, (*f)[i].time[0]);
-		//(*f)[i].ready=1;
-		//if(!_calculate_st_point(&((*f)[i]),conf,t)) (*f)[i].ready=0;
-	//}
-	
 
-	for(i=0;i<N_f;i++) {
+	for(i=0;i<N_f;i++) if((*f)[i].ready==0) {
 		
 		if( (*f)[i].time[0]<=t&& (*f)[i].time[0]> (t-t_stp) )  {
 			//printf("%d: %Lf\n", i, (*f)[i].time[0]);
 			(*f)[i].ready=1;
-			if(!_calculate_st_point(&((*f)[i]),conf,t)) {
-				(*f)[i].ready=0;
-			}
+			_calculate_st_point(&((*f)[i]),conf,t);
 		}
 	}
 	
@@ -580,7 +581,6 @@ int _minimum_flight_distance(long double **pos,Aircraft_t **f,int N_f,int N,TOOL
 			
 			for(h=0;h<tl.n_neigh[N_f];h++){
 				j=tl.neigh[N_f][h];
-				if(j>N_f) continue;
 				
 				if( fabsl((int)pos[i][2]-((int)(*f)[j].pos[i][2]))<9.99&&(int) (*f)[j].pos[i][3]==1){
 					tl.dist[i]=haversine_distance(pos[i],(*f)[j].pos[i]);
@@ -624,7 +624,7 @@ int _get_d_neigh(CONF_t *conf,Aircraft_t **f,int N_f){
 	long double max_v=0;
 	for(i=0;i<N_f;i++) for(j=0;j<((*f)[i].n_nvp-1);j++) if((*f)[i].vel[j]>max_v) max_v = (*f)[i].vel[j];
 	
-	(*conf).d_neigh = 2.*(2.*((*conf).t_w*(*conf).t_i)*max_v*(*conf).sig_V) + (*conf).d_thr;
+	(*conf).d_neigh = 2.*(2.*((*conf).t_w*(*conf).t_i)*max_v*(1+(*conf).sig_V)) + (*conf).d_thr;
 	
 	return 1;
 	
@@ -967,7 +967,7 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 			
 			if(unsafe) 
 				unsafe=_change_flvl(&(*f)[i],f,i,conf,tl,sh);
-				
+	
 			if(unsafe) return i;
 			
 		}
@@ -1057,7 +1057,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 #endif
 
 #ifdef PLOT 
-	print_workload(tl, conf, "/tmp/work.dat");
+	//print_workload(tl, conf, "/tmp/work.dat");
 	plot_movie(f,n_f,conf,"/tmp/m1.dat");
 #endif
 	
@@ -1076,13 +1076,22 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 		}
 	}while(f_not_solv>=0);
 	
+	int i,r;
+	//printf("Nflight %d\n",n_f);
+	for(i=1;i<n_f;i++) {
+		_minimum_flight_distance( (*f)[i].pos,f,i-1,conf.t_w,tl);
+		//for(r=0;r<conf.t_w;r++) printf("%Lf\n",tl.dist[r]);
+		if(_check_risk(tl.dist,conf)) BuG("Not Solved Why??\n");
+		}
+
+#ifdef PLOT 
+	plot_movie(f,n_f,conf,"/tmp/m3.dat");
+#endif
+
 
 	_set_st_point(f, n_f, conf); /*nothing here to do*/
 
 	
-#ifdef PLOT 
-	plot_movie(f,n_f,conf,"/tmp/m3.dat");
-#endif
 	
 	return 1;
 }

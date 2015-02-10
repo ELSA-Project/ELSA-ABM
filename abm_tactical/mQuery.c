@@ -50,7 +50,7 @@ int _calculate_velocity(Aircraft_t *flight,int Nflight){
 	return 1;
 }
 
-int get_M1(char *m1_file,Aircraft_t **flight){
+int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 	
 	FILE *rstream;
 	
@@ -66,7 +66,17 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 
 	(*flight)=( Aircraft_t* ) malloc(Nflight*sizeof(Aircraft_t));
 	
+#ifdef BOUND_CONTROL
+	int inside,m;
+#endif
+	
 	for(i=0;i<Nflight;i++){
+
+#ifdef BOUND_CONTROL
+		inside=0;
+#endif
+	
+
 		if(!fgets(c, R_BUFF, rstream)) BuG("BUG in M1 File -lx0\n");
 		(*flight)[i].ready = 0;
 		(*flight)[i].ID=atoi(c);
@@ -89,6 +99,7 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 			if(c[j]=='\0') BuG("BUG in M1 File -lx2\n");
 			(*flight)[i].nvp[h][1]=atof(&c[++j]);
 			
+
 			for(++j;c[j]!=','&&c[j]!='\0'&&c[j]!='\n';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx3\n");
 			(*flight)[i].nvp[h][2]=atof(&c[++j]);
@@ -99,14 +110,25 @@ int get_M1(char *m1_file,Aircraft_t **flight){
 			if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
 			(*flight)[i].time[h]=_convert_time(&c[++j]);
 			
-			#ifdef CAPACITY
+#ifdef CAPACITY
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx6\n");
 			(*flight)[i].nvp[h][4]=atof(&c[++j]); // TAKE OUTTTT
-			#endif
-			
-		
+#endif		
+#ifdef BOUND_CONTROL
+			if(inside==0) if(point_in_polygon((*flight)[i].nvp[h],(*conf).bound,(*conf).Nbound))inside=1;
+
+#endif
+
 		}
+#ifdef BOUND_CONTROL
+			if(inside==0) {
+				printf("Flight %d doesn't cross the boundary\n",(*flight)[i].ID);
+				exit(0);
+			}
+#endif
+
+		
 	}
 	
 	
