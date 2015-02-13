@@ -41,7 +41,7 @@ def uniform_rectification():
 
 def partial_rectification(trajectories, eff_target, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
 	"""
-	High level functions for rectification. Fix completely N_per_sector points with 
+	High level function for rectification. Fix completely N_per_sector points with 
 	highest metric value per sector.
 	"""
 	# Make groups
@@ -54,7 +54,7 @@ def partial_rectification(trajectories, eff_target, G, metric='centrality', N_pe
 			groups["C"].append(n)
 		else:
 			groups["N"].append(n)
-	probabilities = {"C":0., "N":1.}
+	probabilities = {"C":0., "N":1.} # Fix nodes with best score (critical points).
 
 	
 	final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories, eff_target, G.G_nav, groups=groups, probabilities=probabilities,\

@@ -4,6 +4,7 @@
 
 import sys
 sys.path.insert(1, '..')
+sys.path.insert(1, '../abm_strategic')
 
 import os
 from string import split
@@ -54,7 +55,7 @@ def choose_paras(name_para, new_value):
 
 def do_efficiency():
 	# Choice of the network
-	sys.path.insert(1, '../abm_strategic')
+	
 	with open("../networks/D_N44_nairports22_cap_constant_C5_w_coords_Nfp2.pic", 'r') as f:
 		G = pickle.load(f)
 

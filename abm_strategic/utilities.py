@@ -32,7 +32,7 @@ _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRe
 
 #shuffle(_colors)
 
-def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=True, load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True):
+def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=True, load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True, colors='b'):
     print "Drawing network..."
     x_min=min([G.node[n]['coord'][0]/60. for n in G.nodes()])-0.5
     x_max=max([G.node[n]['coord'][0]/60. for n in G.nodes()])+0.5
@@ -69,7 +69,7 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
     coords={n:m(y[i],x[i]) for i,n in enumerate(G.nodes())}
     
     ax.set_title(title)
-    sca=ax.scatter([coords[n][0] for n in G.nodes()],[coords[n][1] for n in G.nodes()],marker='o',zorder=6,s=sze,c='b')#,s=snf,lw=0,c=[0.,0.45,0.,1])
+    sca=ax.scatter([coords[n][0] for n in G.nodes()],[coords[n][1] for n in G.nodes()],marker='o',zorder=6,s=sze,c=colors)#,s=snf,lw=0,c=[0.,0.45,0.,1])
     if airports:
         scairports=ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o',zorder=6,s=20,c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
 
