@@ -55,21 +55,23 @@ def choose_paras(name_para, new_value):
 
 def do_efficiency():
 	# Choice of the network
-	
 	with open("../networks/D_N44_nairports22_cap_constant_C5_w_coords_Nfp2.pic", 'r') as f:
 		G = pickle.load(f)
 
 	# Choice of the trajectories
-	trajectories = generate_traffic(G, paras_file='../abm_strategic/paras.py', save_file=None, simple_setup=True, 
+	trajectories, stats = generate_traffic(G, paras_file='../abm_strategic/paras.py', save_file=None, simple_setup=True, 
 		starting_date=[2010, 6, 5, 10, 0, 0], coordinates=False, ACtot=3)
 
-	draw_network_map(G.G_nav, title='Network map', trajectories=trajectories, rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=False)
-	for eff_target in np.arange(0.9, 1., 0.01):
-		#traj_eff = rectificate_trajectories_network(trajectories, eff, G, groups=groups, probabilities=probabilities, remove_nodes = True)
-		final_trajs, final_eff, final_G, final_groups = partial_rectification(trajectories, eff_target, G)
-		draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs, rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=False)
-	draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs, rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=True)
+	geometrical_trajectories = list(zip(*trajectories)[0]) # without times of departure
 
+	eff_targets = np.arange(0.9, 1., 0.01)
+	final_trajs_list, final_eff_list, final_G_list, final_groups_list = iter_partial_rectification(geometrical_trajectories, eff_targets, G)
+
+	for i, eff_target in enumerate(eff_targets):
+		#traj_eff = rectificate_trajectories_network(trajectories, eff, G, groups=groups, probabilities=probabilities, remove_nodes = True)
+		#final_trajs, final_eff, final_G, final_groups = partial_rectification(geometrical_trajectories, eff_target, G)
+		draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs_list[i], rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=False)
+	draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs_list[-1], rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=True)
 
 def do_ABM_tactical(input_file, output_file):
 	inpt = ["", input_file, output_file]
@@ -94,8 +96,8 @@ if __name__ == '__main__':
 	input_file = os.path.join(main_dir, "trajectories/M1/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
 	#output_file = os.path.join(main_dir, "results/output.dat")
 	output_file = os.path.join(main_dir, "trajectories/M3/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
-	do_ABM_tactical(input_file, output_file)
-	#do_efficiency()
+	#do_ABM_tactical(input_file, output_file)
+	do_efficiency()
 
 	#choose_paras('nsim', 10)
 

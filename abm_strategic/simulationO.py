@@ -119,7 +119,7 @@ class Simulation:
         
         for k in ['AC', 'Nfp', 'na', 'tau', 'departure_times', 'ACtot', 'N_shocks','Np',\
             'ACsperwave','Delta_t', 'width_peak', 'old_style_allocation', 'flows', 'nA', \
-            'day', 'noise', 'Nsp_nav', 'STS']:
+            'day', 'noise', 'Nsp_nav', 'STS', 'starting_date']:
             if k in paras.keys():
                 setattr(self, k, paras[k])
 
@@ -129,9 +129,9 @@ class Simulation:
         assert check_object(G)
         assert G.Nfp==paras['Nfp']
         
-        self.G=G.copy()
-        self.verb=verbose
-        self.rep=build_path(paras)
+        self.G = G.copy()
+        self.verb = verbose
+        self.rep = build_path(paras)
 
         if self.Nsp_nav!= self.G.Nsp_nav:
             if verbose:
@@ -581,7 +581,8 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
     G = paras['G']
     print ("Average capactity:", np.mean([paras['G'].node[n]['capacity'] for n in paras['G'].nodes()]))
-    print ("Number of flights in traffic:", len(paras['traffic']))
+    if 'traffic' in paras.keys():
+        print ("Number of flights in traffic:", len(paras['traffic']))
     
     with clock_time():
         sim=Simulation(paras, G=G, make_dir=True, verbose=True)
