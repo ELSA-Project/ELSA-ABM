@@ -48,9 +48,10 @@ def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality'
 	"""
 	Used to iterate a partial_rectification without recomputing the best nodes each time.
 	"""
+	trajectories_copy = deepcopy(trajectories)
 	# Make groups
 	#n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
-	n_best = select_interesting_navpoints_per_trajectory(trajectories, G, OD=OD(trajectories), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	n_best = select_interesting_navpoints_per_trajectory(trajectories_copy, G, OD=OD(trajectories_copy), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
 	n_best = [n for sec, points in n_best.items() for n in points]
 
 	groups = {"C":[], "N":[]} # C for "critical", N for "normal"
@@ -63,10 +64,10 @@ def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality'
 
 	final_trajs_list, final_eff_list, final_G_list, final_groups_list = [], [], [], []
 	for eff_target in eff_targets:
-		final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories, eff_target, G.G_nav, groups=groups, probabilities=probabilities,\
+		final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories_copy, eff_target, G.G_nav, groups=groups, probabilities=probabilities,\
 			remove_nodes=True, **kwargs_rectificate)
 		for new_el, listt in [(final_trajs, final_trajs_list), (final_eff, final_eff_list), (final_G, final_G_list), (final_groups, final_groups_list)]:
-			listt.append(new_el)
+			listt.append(deepcopy(new_el))
 		print 
 
 	return final_trajs_list, final_eff_list, final_G_list, final_groups_list
@@ -116,7 +117,7 @@ def find_group(element, groups):
 		#if el == element: break
 				return g
 
-def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, **kwargs_rectificate):
+def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
 	"""
 	Wrapper of rectificate_trajectories to use efficiently with a networkx object. 
 	Provide default functions to add nodes to network. Resample also the trajectories in the case
@@ -150,7 +151,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, *
 																remove_nodes=remove_nodes, 
 																**kwargs_rectificate)
 	#assert (trajs_rec==trajs)
-	if remove_nodes: # Resample trajectories.
+	if remove_nodes and resample_trajectories: # Resample trajectories.
 		for i in range(len(trajs_old)):
 			#print "trajs[i]:", trajs[i]
 			#print "trajs_rec[i]:", trajs_rec[i]
