@@ -51,8 +51,6 @@ def choose_paras(name_para, new_value):
 		for line in new_lines:
 			f.write(line)
 
-
-
 def do_efficiency():
 	# Choice of the network
 	with open("../networks/D_N44_nairports22_cap_constant_C5_w_coords_Nfp2.pic", 'r') as f:
@@ -64,14 +62,15 @@ def do_efficiency():
 
 	geometrical_trajectories = list(zip(*trajectories)[0]) # without times of departure
 
-	eff_targets = np.arange(0.9, 1., 0.01)
-	final_trajs_list, final_eff_list, final_G_list, final_groups_list = iter_partial_rectification(geometrical_trajectories, eff_targets, G)
+	eff_targets = np.arange(0.92, 1.02, 0.02)
+	final_trajs_list, final_eff_list, final_G_list, final_groups_list = iter_partial_rectification(geometrical_trajectories, eff_targets, G, hard_fixed=True)
 
-	for i, eff_target in enumerate(eff_targets):
-		#traj_eff = rectificate_trajectories_network(trajectories, eff, G, groups=groups, probabilities=probabilities, remove_nodes = True)
-		#final_trajs, final_eff, final_G, final_groups = partial_rectification(geometrical_trajectories, eff_target, G)
-		draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs_list[i], rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=False)
-	draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs_list[-1], rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=True)
+	if 0:
+		for i, eff_target in enumerate(eff_targets):
+			#traj_eff = rectificate_trajectories_network(trajectories, eff, G, groups=groups, probabilities=probabilities, remove_nodes = True)
+			#final_trajs, final_eff, final_G, final_groups = partial_rectification(geometrical_trajectories, eff_target, G)
+			draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs_list[i], rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=False)
+		draw_network_map(G.G_nav, title='Network map', trajectories=final_trajs_list[-1], rep='./', airports=False, load=False, generated=True, add_to_title='', polygons=G.polygons.values(), numbers=False, show=True)
 
 def do_ABM_tactical(input_file, output_file):
 	inpt = ["", input_file, output_file]

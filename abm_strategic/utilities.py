@@ -535,14 +535,54 @@ def select_interesting_navpoints(G, OD=None, N_per_sector=1, metric="centrality"
         raise Exception("Need an hybrid network (sectors+navpoints) in input.")
 
     if metric=="centrality":
-        print "Computing betweenness centrality (", len(OD), "pairs) ..."
+        print "Computing betweenness centrality (between", len(OD), "pairs) ..."
         bet = bet_OD(G.G_nav, OD=OD)
     else:
         raise Exception("Metric", metric, "is not implemented.")
 
-    # For each sector, sort the navpoints in increasing centrality and selected the N_per_sector last
-    n_best = {sec:np.argsort([bet[nav] for nav in G.node[sec]['navs']])[-N_per_sector:] for sec in G.nodes()}
+    # For each sector, sort the navpoints in increasing centrality and select the N_per_sector last
+    n_best = {sec:[G.node[sec]['navs'][idx] for idx in np.argsort([bet[nav] for nav in G.node[sec]['navs']])[-N_per_sector:]] for sec in G.nodes()}
     
+    return n_best
+
+def select_interesting_navpoints_per_trajectory(trajs, G, OD=None, N_per_sec_per_traj=1, metric="centrality"):
+    """
+    Select N_per_sec_per_traj interesting napvoint per trajectory.
+    """
+
+    try:
+        assert hasattr(G, "G_nav")
+    except AssertionError:
+        raise Exception("Need an hybrid network (sectors+navpoints) in input.")
+
+    if metric=="centrality":
+        print "Computing betweenness centrality (between", len(OD), "pairs) ..."
+        bet = bet_OD(G.G_nav, OD=OD)
+    else:
+        raise Exception("Metric", metric, "is not implemented.")
+
+    n_best = {}
+    all_secs = set() # Only for information
+    for traj in trajs:
+        # Compute the sectors in trajectory
+        secs = set([G.G_nav.node[n]['sec'] for n in traj])
+        all_secs.union(secs)
+        #print "secs", secs
+        # For each sector, select the N_per_sec_per_traj best navpoints.
+        for sec in secs:
+            navs = [nav for nav in traj if G.G_nav.node[nav]['sec']==sec]
+            # print "navs:", navs
+            # print "bets:", [bet[nav] for nav in navs]
+            # print "idx:", np.argsort([bet[nav] for nav in navs])
+            # print "best:", [navs[idx] for idx in np.argsort([bet[nav] for nav in navs])[-N_per_sec_per_traj:]]
+            #for n in np.argsort([bet[nav] for nav in traj if G.G_nav.node[nav]['sec']==sec])[-N_per_sec_per_traj:]
+        
+            n_best[sec] = n_best.get(sec, []) + [navs[idx] for idx in np.argsort([bet[nav] for nav in navs])[-N_per_sec_per_traj:]]
+        #print "n_best:", n_best
+        #print 
+    # Remove redundant navpoints
+    n_best = {sec:list(set(navs)) for sec, navs in n_best.items()}
+    print "In average, I selected", np.mean([len(navs) for navs in n_best.values()]), "navpoint per sector."
     return n_best
 
 def OD(trajectories):

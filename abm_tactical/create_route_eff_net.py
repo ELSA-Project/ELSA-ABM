@@ -8,15 +8,16 @@ from collections import Counter
 import pylab as pl
 import random as rd
 import numpy as np
-from numpy.random import choice
+from numpy.random import choice, seed
 import math as mt
 from shapely.geometry import LineString
+from copy import deepcopy
 
 from igraph import *
 
 from datetime import datetime,timedelta
 
-from abm_strategic.utilities import select_interesting_navpoints, OD
+from abm_strategic.utilities import select_interesting_navpoints, OD, select_interesting_navpoints_per_trajectory
 from libs.tools_airports import build_long_2d
 from libs.general_tools import insert_list_in_list
 
@@ -35,6 +36,10 @@ tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f'
 
 __version__ = "1.4"
 
+if 1:
+	see = 1
+	seed(see)
+	print "Seed", see
 
 def uniform_rectification():
 	pass
@@ -44,7 +49,8 @@ def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality'
 	Used to iterate a partial_rectification without recomputing the best nodes each time.
 	"""
 	# Make groups
-	n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	#n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	n_best = select_interesting_navpoints_per_trajectory(trajectories, G, OD=OD(trajectories), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
 	n_best = [n for sec, points in n_best.items() for n in points]
 
 	groups = {"C":[], "N":[]} # C for "critical", N for "normal"
@@ -61,6 +67,7 @@ def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality'
 			remove_nodes=True, **kwargs_rectificate)
 		for new_el, listt in [(final_trajs, final_trajs_list), (final_eff, final_eff_list), (final_G, final_G_list), (final_groups, final_groups_list)]:
 			listt.append(new_el)
+		print 
 
 	return final_trajs_list, final_eff_list, final_G_list, final_groups_list
 
@@ -70,7 +77,9 @@ def partial_rectification(trajectories, eff_target, G, metric='centrality', N_pe
 	highest metric value per sector.
 	"""
 	# Make groups
-	n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	#n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	n_best = select_interesting_navpoints_per_trajectory(trajectories, G, OD=OD(trajectories), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	
 	n_best = [n for sec, points in n_best.items() for n in points]
 
 	groups = {"C":[], "N":[]} # C for "critical", N for "normal"
@@ -81,8 +90,8 @@ def partial_rectification(trajectories, eff_target, G, metric='centrality', N_pe
 			groups["N"].append(n)
 	probabilities = {"C":0., "N":1.} # Fix nodes with best score (critical points).
 	
-	final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories, eff_target, G.G_nav, groups=groups, probabilities=probabilities,\
-		remove_nodes=True, **kwargs_rectificate)
+	final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories, eff_target, G.G_nav, remove_nodes=True, 
+																					groups=groups, probabilities=probabilities, **kwargs_rectificate)
 
 	return final_trajs, final_eff, final_G, final_groups
 
@@ -107,9 +116,11 @@ def find_group(element, groups):
 		#if el == element: break
 				return g
 
-def rectificate_trajectories_network(trajs, eff_target,	G, groups={}, probabilities={}, n_iter_max=1000000, remove_nodes=False, hard_fixed=True):
+def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, **kwargs_rectificate):
 	"""
-	Wrapper, to use with a network.
+	Wrapper of rectificate_trajectories to use efficiently with a networkx object. 
+	Provide default functions to add nodes to network. Resample also the trajectories in the case
+	where the 'remove_nodes' mode is chosen. Propagates the kwargs for the rectification.
 	"""
 
 	def get_coords(nvp):
@@ -129,41 +140,64 @@ def rectificate_trajectories_network(trajs, eff_target,	G, groups={}, probabilit
 		p2 = get_coords(n2)
 		return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
-	trajs_old = trajs[:]
-	trajs_rec, eff, G, groups_rec = rectificate_trajectories(trajs, eff_target, add_node_func=add_node, dist_func=d, coords_func=get_coords, \
-		n_iter_max=n_iter_max, G=G, groups=groups, probabilities=probabilities, remove_nodes=remove_nodes, hard_fixed=hard_fixed)
-
-	if remove_nodes: # Resample trajectories
+	trajs_old = deepcopy(trajs)
+	trajs_rec, eff, G, groups_rec = rectificate_trajectories(trajs, eff_target, 
+																add_node_func=add_node, 
+																dist_func=d, 
+																coords_func=get_coords,
+																G=G, 
+																inplace=True,
+																remove_nodes=remove_nodes, 
+																**kwargs_rectificate)
+	#assert (trajs_rec==trajs)
+	if remove_nodes: # Resample trajectories.
 		for i in range(len(trajs_old)):
+			#print "trajs[i]:", trajs[i]
+			#print "trajs_rec[i]:", trajs_rec[i]
 			n_old = len(trajs_old[i])
 			n_new = len(trajs_rec[i])
 			n_gen = n_old - n_new
 
-			long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in trajs_rec[i]]) # Compute linear distance after each point
+			# Compute linear distance after each point.
+			long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in trajs_rec[i]]) 
+			long_dis, long_dis_cul = np.array(long_dis), np.array(long_dis_cul)
 
-			long_dis_new_points = [(j+1.)*(long_dis_cul[-1]-long_dis_cul[0])/float(n_gen+1.) for j in range(n_gen)] # regularly spaced points along the trajectories.
+			#print "long_dis:", long_dis
+			#print "long_dis_cul:", long_dis_cul
 
+			# Regularly spaced points along the trajectories.
+			long_dis_new_points = [(j+1.)*(long_dis_cul[-1]-long_dis_cul[0])/float(n_gen+1.) for j in range(n_gen)] 
+
+			#print 'long_dis_new_points:', long_dis_new_points
+			
 			new_point_coords = []
 			new_point_indices = []
 			for d in long_dis_new_points:
-				point_before = long_dis_cul[d>long_dis_cul].index(True) # Index of point before future point
+				#print d>long_dis_cul
+				point_before = len(long_dis_cul[d>long_dis_cul])-1#.index(True) # Index of point before future point
+				#print "point_before:", point_before
 
-				dn = np.array(trajs_rec[point_before+1]) - np.array(trajs_rec[point_before]) # direction vector
-				dn = dn/np.norm(dn)
-				new_point_coords.append(np.array(trajs_rec[point_before]) + (d-long_dis_cul[point_before])*dn)
+				dn = np.array(get_coords(trajs_rec[i][point_before+1])) - np.array(get_coords(trajs_rec[i][point_before])) # direction vector
+				dn = dn/np.sqrt(sum(dn**2))#np.norm(dn)
+				new_point_coords.append(np.array(get_coords(trajs_rec[i][point_before])) + (d-long_dis_cul[point_before])*dn)
 				new_point_indices.append(point_before)
 
+			# Names (indices) of new navpoint in the network
+			names = [len(G.nodes()) + j for j in range(len(new_point_indices))]
+
 			# Change the trajectory
-			trajs_rec[i] = insert_list_in_list(trajs_rec[i], new_point_coords, new_point_indices)
+			trajs_rec[i] = insert_list_in_list(trajs_rec[i], names, new_point_indices)
 
 			# Add to network
-			for coords in new_point_coords:
-				G.add_node(len(G.nodes()), coord = coords)
+			for j, name in enumerate(names):
+			#for coords in new_point_coords:
+				G.add_node(name, coord = new_point_coords[j])
+				#G.add_edge(trajs_rec[i][point_before], name, '') #Weight?
 
 	return trajs_rec, eff, G, groups_rec
 
 def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func=None, dist_func=dist, coords_func=lambda x: x, \
-	n_iter_max=1000000, probabilities={}, remove_nodes=False, hard_fixed=False, stop_criteria=0.0001):
+	n_iter_max=1000000, probabilities={}, remove_nodes=False, hard_fixed=False, inplace=False):
 	"""
 	Given all trajectories and a value of efficiency, rectifiy the trajectories. The rectification can be 
 	done in two ways: either some intermediate navpoints are removed from the trajectories,	or they are 
@@ -190,8 +224,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 		remove_nodes: if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
 		hard_fixed: if False, groups having 0 probability of being chose with switch to non-zero probablity once every other 
 					groups are empty. Other wise, exit the function when all groups are empty or with zero probability.
-		stop_criteria: rectification stops when the relative change in efficiency between two rounds falls below this threshold.
-
+		inplace: if True, modifies trajs, G and groups. Otherwise return a copy of the objects.
  
 	Return:
 		trajs: modified trajectories.
@@ -203,59 +236,82 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 		Added kwarg dist_func.
 	Changed in 1.2: added dist_func, coords_func, n_iter_max, add_node_func, G.
 	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based tarjectories. Added groups, remove_nodes, hard_fixed.
-	Changed in 1.4: added stop_criteria.
+	#Changed in 1.4: added stop_criteria.
 	"""
 
-	def add_node_func_coords(trajs, G, coords, f, p):
-		trajs[f][p][0] = coords[0]
-		trajs[f][p][1] = coords[1]
+	if not inplace:
+		trajs_rec = deepcopy(trajs)
+	else:
+		trajs_rec = trajs
 
-		return coords, trajs, G
+	def add_node_func_coords(trajs, G, coords, f, p):
+		trajs_rec[f][p][0] = coords[0]
+		trajs_rec[f][p][1] = coords[1]
+
+		return coords, trajs_rec, G
 
 	if add_node_func==None: 
 		add_node_func = add_node_func_coords
 
 	print "Rectificating trajectories..."
-	eff, S = compute_efficiency(trajs, dist_func=dist_func)
+	eff, S = compute_efficiency(trajs_rec, dist_func=dist_func)
 	print "Initial efficiency/target efficiency:", eff, '/', eff_target
-	Nf = len(trajs)
+	Nf = len(trajs_rec)
 
 	# To each point, associate the list of flights going through.
 	dict_nodes_traj = {}
 	for f in range(Nf):
-		for p in trajs[f][1:-1]:
+		for p in trajs_rec[f][1:-1]:
 			dict_nodes_traj[p] = dict_nodes_traj.get(p, []) + [f] 
 
 	# If no groups are deinfed, every nodes have the same probability to be modified.
 	if groups=={}: 
-		groups['all'] = dict_nodes_traj.keys() 
+		groups_rec['all'] = dict_nodes_traj.keys() 
 		probabilities['all'] = 1.
+	elif groups!={}:
+	 	if not inplace:
+			groups_rec = deepcopy(groups)
+		else:
+			groups_rec = groups
 	
 	# Remove all points in groups which are not crossed by any flights.
-	for g, nodes in groups.items():
+	for g, nodes in groups_rec.items():
 		nodes_copy = nodes[:]
 		for n in nodes_copy:
-			if not n in dict_nodes_traj.keys(): groups[g].remove(n)
+			if not n in dict_nodes_traj.keys(): groups_rec[g].remove(n)
 
-	all_groups = groups.keys()
+	all_groups = groups_rec.keys()
+	print all_groups
 
-	# Frozen list of probabilities for each group.
-	probas_g = np.array([probabilities[gg] for gg in all_groups])
+	if sum(np.array([probabilities[gg] for gg in all_groups]))>0.:
+		# If there is at least one group wiht proba>0, renormalize probas
+		# Frozen list of probabilities for each group.
+		probas_g = np.array([probabilities[gg] for gg in all_groups])
+	else:
+		if not hard_fixed:
+			# Convert the remaining groups with 0 probabilities into groups with eaual probabilities.
+			probas_g = np.array([1./len(all_groups) for gg in all_groups]) # If the last groups have zero probability they are fixed a non-zero probability again.
+		else:
+			# Leave the nodes in groups with 0 probabilities untouched.
+			n_iter_max = 0
+
+	## Frozen list of probabilities for each group.
+	#probas_g = np.array([probabilities[gg] for gg in all_groups])
 
 	eff_prev = eff/2.
 
 	n_iter = 0
-	while eff < eff_target and n_iter<n_iter_max and abs(eff - eff_prev)/eff<stop_criteria:
+	while eff < eff_target and n_iter<n_iter_max:# and abs(eff - eff_prev)/eff>stop_criteria:
 		# Choose one group with given probabilites for groups.
 		g = choice(all_groups, p=probas_g)
 		#print "g=", g, "; len(groups[g]) = ", len(groups[g])
 		try:
 			# Choose a node in the group with eauql probabilities.
-			n = choice(groups[g])
+			n = choice(groups_rec[g])
 		except ValueError:
 			print "Group", g, "is empty, I remove it."
-			del groups[g]
-			all_groups = groups.keys()
+			del groups_rec[g]
+			all_groups = groups_rec.keys()
 			# Recompute probabilities for groups.
 			if sum(np.array([probabilities[gg] for gg in all_groups]))>0.:
 				# If there is at least one group wiht proba>0, renormalize probas
@@ -267,7 +323,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 				else:
 					# Leave the nodes in groups with 0 probabilities untouched.
 					break
-			if len(groups)==0: 
+			if len(groups_rec)==0: 
 				# No more increase in efficiency
 				break
 			else:
@@ -279,27 +335,27 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 		f = choice(dict_nodes_traj[n])
 
 		# Don't do anything if the trajectory in too short.
-		if len(trajs[f])<3:
+		if len(trajs_rec[f])<3:
 			continue
 
 		try:
 			# Find the position of the point n in the trajectory of the flight.
-			p = trajs[f].index(n)
+			p = trajs_rec[f].index(n)
 		except:
 			print "flight:", f
-			print "trajs[f]", trajs[f]
+			print "trajs_rec[f]", trajs_rec[f]
 			raise
 
 		# Coordinates of points before and after navpoint n.
-		cc_before, cc_after = coords_func(trajs[f][p-1]), coords_func(trajs[f][p+1])
+		cc_before, cc_after = coords_func(trajs_rec[f][p-1]), coords_func(trajs_rec[f][p+1])
 		# old length of trajectory between point before and point after.
- 		old = dist_func([trajs[f][p-1], trajs[f][p]]) + dist_func([trajs[f][p+1], trajs[f][p]])
+ 		old = dist_func([trajs_rec[f][p-1], trajs_rec[f][p]]) + dist_func([trajs_rec[f][p+1], trajs_rec[f][p]])
  		# New length (straight line).
- 		new = dist_func([trajs[f][p-1], trajs[f][p+1]])
+ 		new = dist_func([trajs_rec[f][p-1], trajs_rec[f][p+1]])
 
  		if new < old: # If the three points are not already aligned.
  			# There is room for optimization here...
- 			#n = trajs[f][p]
+ 			#n = trajs_rec[f][p]
 			#g = find_group(n, groups)
 			if len(dict_nodes_traj[n])>1:
 				# Reomve the flight from the flights which cross the old point n.
@@ -308,17 +364,17 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 				# If it was the last flight of the list, delete the list and remove node from 
 				# the group.
 				del dict_nodes_traj[n]
-				groups[g].remove(n)
+				groups_rec[g].remove(n)
  			
  			# Two features: either remove old point or add a new point between the points.
  			if remove_nodes:
- 				trajs[f].remove(n)
+ 				trajs_rec[f].remove(n)
  			else:
  				# Compute coordinates of midlle point 
  				coords = [pl.mean([cc_before[0], cc_after[0]]), pl.mean([cc_before[1], cc_after[1]])]
- 				new_node, trajs, G = add_node_func(trajs, G, coords, f, p)
+ 				new_node, trajs_rec, G = add_node_func(trajs_rec, G, coords, f, p)
  				dict_nodes_traj[new_node] = [f]
- 				groups[g].append(new_node)
+ 				groups_rec[g].append(new_node)
 			
 			# Change the efficiency based on the new length of the trajectory.
 			eff_prev = eff
@@ -329,7 +385,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 	if n_iter == n_iter_max:	
 		print "Hit maximum number of iterations"
 	print "New efficiency:", eff
-	return trajs, eff, G, groups
+	return trajs_rec, eff, G, groups_rec
 
 def select_heigths(th):
 	"""
