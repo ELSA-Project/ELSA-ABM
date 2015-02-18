@@ -199,5 +199,5 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 	return G
 
 if __name__=='__main__':
-	build_net_distance(zone='LFMM', show=True)
+	build_net_distance(zone='LF', show=True)
 

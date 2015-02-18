@@ -36,7 +36,7 @@ tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f'
 
 __version__ = "1.4"
 
-if 1:
+if 0:
 	see = 1
 	seed(see)
 	print "Seed", see
@@ -49,13 +49,15 @@ def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality'
 	Used to iterate a partial_rectification without recomputing the best nodes each time.
 	"""
 	trajectories_copy = deepcopy(trajectories)
+	G_copy = deepcopy(G)
 	# Make groups
 	#n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
-	n_best = select_interesting_navpoints_per_trajectory(trajectories_copy, G, OD=OD(trajectories_copy), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+	n_best = select_interesting_navpoints_per_trajectory(trajectories_copy, G_copy, OD=OD(trajectories_copy), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
 	n_best = [n for sec, points in n_best.items() for n in points]
+	print 'n_best', n_best
 
 	groups = {"C":[], "N":[]} # C for "critical", N for "normal"
-	for n in G.G_nav.nodes():
+	for n in G_copy.G_nav.nodes():
 		if n in n_best:
 			groups["C"].append(n)
 		else:
@@ -64,13 +66,16 @@ def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality'
 
 	final_trajs_list, final_eff_list, final_G_list, final_groups_list = [], [], [], []
 	for eff_target in eff_targets:
-		final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories_copy, eff_target, G.G_nav, groups=groups, probabilities=probabilities,\
+		# print "Trajectories:"
+		# for traj in trajectories_copy:
+		# 	print traj
+		final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories_copy, eff_target, G_copy.G_nav, groups=groups, probabilities=probabilities,\
 			remove_nodes=True, **kwargs_rectificate)
 		for new_el, listt in [(final_trajs, final_trajs_list), (final_eff, final_eff_list), (final_G, final_G_list), (final_groups, final_groups_list)]:
 			listt.append(deepcopy(new_el))
 		print 
 
-	return final_trajs_list, final_eff_list, final_G_list, final_groups_list
+	return final_trajs_list, final_eff_list, final_G_list, final_groups_list, n_best
 
 def partial_rectification(trajectories, eff_target, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
 	"""
@@ -128,7 +133,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 		return G.node[nvp]['coord']
 
 	def add_node(trajs, G, coords, f, p):
-		new_node = len(G.nodes())
+		new_node = max(G.nodes())+1
 		G.add_node(new_node, coord = coords)
 
 		#trajs[f].remove(n)
@@ -152,48 +157,67 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 																**kwargs_rectificate)
 	#assert (trajs_rec==trajs)
 	if remove_nodes and resample_trajectories: # Resample trajectories.
-		for i in range(len(trajs_old)):
+		for i, traj in enumerate(trajs_rec):
 			#print "trajs[i]:", trajs[i]
 			#print "trajs_rec[i]:", trajs_rec[i]
 			n_old = len(trajs_old[i])
-			n_new = len(trajs_rec[i])
+			n_new = len(traj)
 			n_gen = n_old - n_new
 
 			# Compute linear distance after each point.
-			long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in trajs_rec[i]]) 
+			long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in traj]) 
 			long_dis, long_dis_cul = np.array(long_dis), np.array(long_dis_cul)
 
-			#print "long_dis:", long_dis
-			#print "long_dis_cul:", long_dis_cul
+			# print "long_dis:", long_dis
+			# print "long_dis_cul:", long_dis_cul
 
 			# Regularly spaced points along the trajectories.
 			long_dis_new_points = [(j+1.)*(long_dis_cul[-1]-long_dis_cul[0])/float(n_gen+1.) for j in range(n_gen)] 
+			# print 'long_dis_new_points:', long_dis_new_points
 
-			#print 'long_dis_new_points:', long_dis_new_points
+			# print "Trajectory points:", traj
+			# print "Trajectory coordinates:", [get_coords(traj[j]) for j in range(len(traj))]
 			
 			new_point_coords = []
 			new_point_indices = []
 			for d in long_dis_new_points:
+				#print "d=", d
 				#print d>long_dis_cul
 				point_before = len(long_dis_cul[d>long_dis_cul])-1#.index(True) # Index of point before future point
-				#print "point_before:", point_before
+				#print "Index of point_before:", point_before
 
-				dn = np.array(get_coords(trajs_rec[i][point_before+1])) - np.array(get_coords(trajs_rec[i][point_before])) # direction vector
+				#print "point before and after:", get_coords(traj[point_before]), get_coords(traj[point_before+1])
+
+				dn = np.array(get_coords(traj[point_before+1])) - np.array(get_coords(traj[point_before])) # direction vector
+				#print "dn=", dn
+				#print "norm of dn:", np.sqrt(sum(dn**2))
 				dn = dn/np.sqrt(sum(dn**2))#np.norm(dn)
-				new_point_coords.append(np.array(get_coords(trajs_rec[i][point_before])) + (d-long_dis_cul[point_before])*dn)
+				new_point_coords.append(list(np.array(get_coords(traj[point_before])) + (d-long_dis_cul[point_before])*dn))
+				#print "new point:", np.array(get_coords(traj[point_before])) + (d-long_dis_cul[point_before])*dn
 				new_point_indices.append(point_before)
 
 			# Names (indices) of new navpoint in the network
-			names = [len(G.nodes()) + j for j in range(len(new_point_indices))]
+			names = [max(G.nodes()) + 1 + j for j in range(len(new_point_indices))]
+			#print "names=", names
 
-			# Change the trajectory
 			trajs_rec[i] = insert_list_in_list(trajs_rec[i], names, new_point_indices)
 
 			# Add to network
 			for j, name in enumerate(names):
 			#for coords in new_point_coords:
+				pt_bef = trajs_rec[i].index(name) -1
+				pt_aft = pt_bef + 2
 				G.add_node(name, coord = new_point_coords[j])
-				#G.add_edge(trajs_rec[i][point_before], name, '') #Weight?
+				G.add_edge(trajs_rec[i][pt_bef], name) #Weight?
+				G.add_edge(name, trajs_rec[i][pt_aft])
+
+			# Change the trajectory
+			
+
+
+			#print trajs_rec[i]
+			#print [get_coords(trajs_rec[i][j]) for j in range(len(trajs_rec[i]))]
+			#print
 
 	return trajs_rec, eff, G, groups_rec
 
@@ -282,7 +306,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 			if not n in dict_nodes_traj.keys(): groups_rec[g].remove(n)
 
 	all_groups = groups_rec.keys()
-	print all_groups
+	#print all_groups
 
 	if sum(np.array([probabilities[gg] for gg in all_groups]))>0.:
 		# If there is at least one group wiht proba>0, renormalize probas

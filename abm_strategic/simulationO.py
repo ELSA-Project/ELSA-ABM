@@ -40,8 +40,8 @@ version='2.9.5'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
 
 if 0:
-    #see = 7122008
-    see = randrange(1,10000000)
+    see = 7122008
+    #see = randrange(1,10000000)
     print ('Caution! Seed:', see)
     seed(see)
 
