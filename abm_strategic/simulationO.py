@@ -15,6 +15,7 @@ This is the main interface to the model. The main functions are
 from __future__ import print_function
 
 import sys
+sys.path.insert(1, '..')
 import networkx as nx
 #from paras import paras
 #from random import getstate, setstate, 
@@ -27,6 +28,7 @@ import numpy as np
 import copy
 from datetime import datetime
 from math import ceil
+from copy import deepcopy
 
 from simAirSpaceO import AirCompany, Network_Manager
 from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
@@ -34,7 +36,7 @@ from utilities import draw_network_map, read_paras, post_process_paras, write_tr
 
 from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
 from tools_airports import extract_flows_from_data
-#from utilitiesO import compare_networks
+from abm_tactical import rectificate_trajectories_network_with_time
 
 version='2.9.5'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
@@ -591,7 +593,6 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         queue=post_process_queue(sim.queue)
         M0_queue=post_process_queue(sim.M0_queue)
 
-    
     print
 
     if record_stats_file!=None:
@@ -638,8 +639,8 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     if rectificate!=None:
         eff_target = rectificate['eff_target']
         del rectificate['eff_target']
-        trajectories, eff, G, groups_rec = rectificate_trajectories_network_with_time(trajectories, eff_target, deepcopy(G), inplace=False, **rectificate)
-                
+        trajectories, eff, G.G_nav, groups_rec = rectificate_trajectories_network_with_time(trajectories, eff_target, deepcopy(G.G_nav), **rectificate)
+
     if save_file_capacities!=None:
         write_down_capacities(G, save_file=save_file_capacities)
     

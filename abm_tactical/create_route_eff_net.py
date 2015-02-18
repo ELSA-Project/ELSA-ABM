@@ -132,32 +132,13 @@ def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_
 
 	# Compute geometrical trajectories
 	geom_trajs, start_dates = zip(*trajs_w_t)
+	geom_trajs = list(geom_trajs)
 
 	# Rectificate geometrical trajectories
 	trajs_rec, eff, G, groups_rec = rectificate_trajectories_network(geom_trajs, eff_target, G, remove_nodes=remove_nodes, resample_trajectories=resample_trajectories, **kwargs_rectificate)
 
 	# Put back the starting date.
 	trajs_rec_w_t = list(zip(trajs_rec, start_dates))
-
-	#  Recompute crossing times
-	# for i in range(len(trajs_w_t)):
-	# 	start_date = trajs_w_t[i][0][1]
-	# 	tot_time = datetime(*trajs_w_t[i][-1][1]) - datetime(*start_date)
-	# 	tot_time = tot_time.seconds
-	# 	long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in traj]) 
-	# 	avg_speed = long_dis_cul[-1]/tot_time
-
-	# 	times = [start_date]
-	# 	for j in range(1, len(trajs_rec)):
-	# 		n_b, n_a = trajs_rec[j-1], trajs_rec[j]
-	# 		dd = np.sqrt((G.node[n_a]['coord'][0] - G.node[n_b]['coord'][0])**2 + (G.node[n_a]['coord'][1] - G.node[n_b]['coord'][1])**2)
-	# 		dt = timedelta(seconds=avg_speed/dd)
-	# 		time = datetime(*times[-1]) + dt
-	# 		times.append(list(time.timetuple())[:6])
-
-	# 	trajs_rec_w_t.append(zip(trajs_rec, times))
-	
-	print trajs_rec_w_t
 
 	return trajs_w_t, eff, G, groups_rec
 
@@ -169,6 +150,13 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 	"""
 
 	def get_coords(nvp):
+		try:
+			pouet = G.node[nvp]['coord']
+		except:
+			print
+			print nvp
+			print G.node[nvp]
+			raise
 		return G.node[nvp]['coord']
 		
 	def d((n1, n2)):
@@ -194,7 +182,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 																dist_func=d, 
 																coords_func=get_coords,
 																G=G, 
-																inplace=True,
+																#inplace=True,
 																remove_nodes=remove_nodes, 
 																**kwargs_rectificate)
 	#assert (trajs_rec==trajs)
@@ -447,11 +435,13 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 			eff_prev = eff
 			eff=S/(S/eff+ (new-old))
 
+	#		print "eff=", eff
+
 		n_iter += 1
 
 	if n_iter == n_iter_max:	
 		print "Hit maximum number of iterations"
-	print "New efficiency:", eff
+	#print "New efficiency:", eff
 	return trajs_rec, eff, G, groups_rec
 
 def select_heigths(th):
