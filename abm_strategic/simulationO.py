@@ -528,7 +528,7 @@ def add_first_last_points(trajs, secs=False):
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 5, 6, 0, 0, 0],\
      coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, 
-     record_stats_file=None, remove_flights_after_midnight=False, **paras_control):
+     record_stats_file=None, remove_flights_after_midnight=False, rectificate=None, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -635,6 +635,14 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
     trajectories = compute_M1_trajectories(queue, sim.starting_date)
 
+    if rectificate!=None:
+        eff_target = rectificate['eff_target']
+        del rectificate['eff_target']
+        trajectories, eff, G, groups_rec = rectificate_trajectories_network_with_time(trajectories, eff_target, deepcopy(G), inplace=False, **rectificate)
+                
+    if save_file_capacities!=None:
+        write_down_capacities(G, save_file=save_file_capacities)
+    
     if coordinates:
         trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, 
                                                                           remove_flights_after_midnight=remove_flights_after_midnight,
@@ -651,10 +659,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             trajectories_coords = add_first_last_points(trajectories_coords, secs=put_sectors)
 
         if save_file!=None:
-            write_trajectories_for_tact(trajectories_coords, fil=save_file)
-
-        if save_file_capacities!=None:
-            write_down_capacities(G, save_file=save_file_capacities)
+            write_trajectories_for_tact(trajectories_coords, fil=save_file) 
 
         return trajectories_coords, stats
     else:

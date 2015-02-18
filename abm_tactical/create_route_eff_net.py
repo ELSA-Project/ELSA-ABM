@@ -15,7 +15,7 @@ from copy import deepcopy
 
 from igraph import *
 
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 
 from abm_strategic.utilities import select_interesting_navpoints, OD, select_interesting_navpoints_per_trajectory
 from libs.tools_airports import build_long_2d
@@ -122,6 +122,45 @@ def find_group(element, groups):
 		#if el == element: break
 				return g
 
+def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
+	"""
+	Same than rectificate_trajectories_network, but recomputes times at cross point.
+
+	trajs_w_t is a list of trajectories for which each point is a tuple (navpoint, time). 
+	The time format is a tuple (year, month, day, hour, minute, second).
+	"""
+
+	# Compute geometrical trajectories
+	geom_trajs, start_dates = zip(*trajs_w_t)
+
+	# Rectificate geometrical trajectories
+	trajs_rec, eff, G, groups_rec = rectificate_trajectories_network(geom_trajs, eff_target, G, remove_nodes=remove_nodes, resample_trajectories=resample_trajectories, **kwargs_rectificate)
+
+	# Put back the starting date.
+	trajs_rec_w_t = list(zip(trajs_rec, start_dates))
+
+	#  Recompute crossing times
+	# for i in range(len(trajs_w_t)):
+	# 	start_date = trajs_w_t[i][0][1]
+	# 	tot_time = datetime(*trajs_w_t[i][-1][1]) - datetime(*start_date)
+	# 	tot_time = tot_time.seconds
+	# 	long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in traj]) 
+	# 	avg_speed = long_dis_cul[-1]/tot_time
+
+	# 	times = [start_date]
+	# 	for j in range(1, len(trajs_rec)):
+	# 		n_b, n_a = trajs_rec[j-1], trajs_rec[j]
+	# 		dd = np.sqrt((G.node[n_a]['coord'][0] - G.node[n_b]['coord'][0])**2 + (G.node[n_a]['coord'][1] - G.node[n_b]['coord'][1])**2)
+	# 		dt = timedelta(seconds=avg_speed/dd)
+	# 		time = datetime(*times[-1]) + dt
+	# 		times.append(list(time.timetuple())[:6])
+
+	# 	trajs_rec_w_t.append(zip(trajs_rec, times))
+	
+	print trajs_rec_w_t
+
+	return trajs_w_t, eff, G, groups_rec
+
 def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
 	"""
 	Wrapper of rectificate_trajectories to use efficiently with a networkx object. 
@@ -131,20 +170,23 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 
 	def get_coords(nvp):
 		return G.node[nvp]['coord']
-
-	def add_node(trajs, G, coords, f, p):
-		new_node = max(G.nodes())+1
-		G.add_node(new_node, coord = coords)
-
-		#trajs[f].remove(n)
-		trajs[f][p] = new_node
-
-		return new_node, trajs, G
 		
 	def d((n1, n2)):
 		p1 = get_coords(n1)
 		p2 = get_coords(n2)
 		return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+	def add_node(trajs, G, coords, f, p):
+		new_node = max(G.nodes())+1
+		G.add_node(new_node, coord = coords)
+
+		weight = G[trajs[f][p-1]][trajs[f][p]]['weight'] * d((trajs[f][p-1], new_node))/d((trajs[f][p-1], trajs[f][p]))
+		G.add_edge(trajs[f][p-1], new_node, weight=weight)
+		weight = G[trajs[f][p]][trajs[f][p+1]]['weight'] * d((trajs[f][p+1], new_node))/d((trajs[f][p], trajs[f][p+1]))
+		G.add_edge(new_node, trajs[f][p+1], weight=weight)
+		trajs[f][p] = new_node
+
+		return new_node, trajs, G
 
 	trajs_old = deepcopy(trajs)
 	trajs_rec, eff, G, groups_rec = rectificate_trajectories(trajs, eff_target, 
@@ -289,10 +331,10 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 		for p in trajs_rec[f][1:-1]:
 			dict_nodes_traj[p] = dict_nodes_traj.get(p, []) + [f] 
 
-	# If no groups are deinfed, every nodes have the same probability to be modified.
+	# If no groups are defined, every nodes have the same probability to be modified.
 	if groups=={}: 
-		groups_rec['all'] = dict_nodes_traj.keys() 
-		probabilities['all'] = 1.
+		groups_rec = {'all':dict_nodes_traj.keys()} 
+		probabilities = {'all':1.}
 	elif groups!={}:
 	 	if not inplace:
 			groups_rec = deepcopy(groups)
