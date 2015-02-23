@@ -218,7 +218,7 @@ int _nvp_to_close(long double *d,long double *t_c,long double *vel,long double d
 int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_step, long double t_r, long double dV){
 	int i,j;
 	long double l_nvp,d,t_c;
-	//printf("%d\n", (*f).st_indx-1);
+	
 	long double t0 = (*f).time[(*f).st_indx-1] + haversine_distance(st_point, (*f).nvp[(*f).st_indx-1])/(*f).vel[(*f).st_indx-1];
 	int n_nvp=(*f).n_nvp;
 	long double **pos=(*f).pos;
@@ -481,6 +481,7 @@ int _calculate_st_point(Aircraft_t *f,CONF_t conf,long double t){
 		int i;
 		for(i=0;i<conf.t_w;i++) printf("%Lf\t%Lf\n",(*f).pos[i][0],(*f).pos[i][1]);
 		plot_pos((*f), conf);
+		printf("ID: %d\n",(*f).ID);
 		BuG("Error on st_indx on Departures\n");
 	}
 #endif
@@ -524,13 +525,35 @@ int _mix_flight(Aircraft_t **x,int *list,int N){
 	return 1;
 }
 
-int _suffle_list(Aircraft_t **f, int n_f, TOOL_f *tool){
+int _suffle_list(Aircraft_t **f, int n, TOOL_f *tool){
+	int i,j;
+	Aircraft_t t;
+	
+	if (n > 1) {
+ 
+        for (i = 0; i < n - 1; i++) {
+          j = i + rand() / (RAND_MAX / (n - i) + 1);
+          t = (*f)[j];
+          (*f)[j] = (*f)[i];
+          (*f)[i] = t;
+        }
+    }
+	
+	return 1;
+}
+
+
+int _suffle_list_top(Aircraft_t **f, int n_f, TOOL_f *tool){
 	int i;
-	for(i=0;i<n_f;i++) (*tool).lista[i]=i;
+	Aircraft_t comodo;
+	//Aircraft_t xfli=(*f)[n_f];
 	
-	mischia((*tool).lista, n_f);
-	_mix_flight(f,(*tool).lista,n_f);
-	
+	for(i=n_f;i>1;i--){
+		comodo = (*f)[i];
+		(*f)[i] = (*f)[i-1];
+		(*f)[i-1]=comodo;
+		
+	}
 	
 	return 1;
 }
@@ -611,9 +634,9 @@ int _checkShockareaRoute(long double **pos,int N,SHOCK_t shock,long double *d){
 }
 
 //TODO: record indices.
-int _check_risk(long double *d,CONF_t conf){
+int _check_risk(long double *d,CONF_t conf,int t_w){
 	int i,risk;
-	for(i=1,risk=0;i<conf.t_w;i++) if(d[i]!=SAFE) if(d[i]<=conf.d_thr) risk=1;
+	for(i=1,risk=0;i<t_w;i++) if(d[i]!=SAFE) if(d[i]<=conf.d_thr) risk=1;
 	
 	return risk;
 }
@@ -809,7 +832,7 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 			_minimum_flight_distance((*f).pos,&flight,N_f,conf.t_w,tl);
 			
 			_checkShockareaRoute((*f).pos,conf.t_w, sh,tl.dist);
-			solved=_check_risk(tl.dist,conf);
+			solved=_check_risk(tl.dist,conf,conf.t_w);
 		
 			/*if solved*/
 			if(solved==0) {
@@ -843,7 +866,7 @@ int _try_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SH
 	/* you dont't need to recompute the positions because it has been done in reroute.*/
 	_minimum_flight_distance((*f).pos,flight,N_f,conf.t_w,tl);
 	_checkShockareaRoute((*f).pos,conf.t_w, sh,tl.dist);
-	safe=_check_risk(tl.dist,conf);
+	safe=_check_risk(tl.dist,conf,conf.t_w);
 	return safe;
 }
 
@@ -857,8 +880,12 @@ int _find_end_point(Aircraft_t *f,CONF_t conf){
 	
 	int i;
 	for(i=conf.t_w-1;i>0;i--) if((*f).pos[i][0]!=SAFE) break;
-
-	return find_p_indx((*f).nvp,(*f).n_nvp,(*f).pos[i]);	
+	int end = find_p_indx((*f).nvp,(*f).n_nvp,(*f).pos[i]);
+	if (end==0) {
+		return (*f).st_indx;
+		//return (*f).n_nvp;
+	}
+	else return end;	
 }
 
 int _change_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SHOCK_t sh){
@@ -898,13 +925,16 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 	long double diff[]={0,0};
 	int old_st_indx=(*f).st_indx;
 	int i=(*f).st_indx;
-
+	
+	int o;
+	
+	int j;
+			
 	long double t=haversine_distance( (*f).pos[0], (*f).nvp[(*f).st_indx+1] )/(*f).vel[i];
 	
 	diff[0]=_calculate_optimum_direct(f, 1);
 	if(diff[0]<1000.) return 0;
-	
-	
+		
 	int h;
 	for(i=((*f).st_indx+1),h=1;i<((*f).n_nvp-2)&&t<1200.;i++,h++) {
 		diff[1]=_calculate_optimum_direct(f, h+1);
@@ -919,32 +949,53 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 
 	}
 	int r;
-	(*f).st_indx=(*f).st_indx+h;
+	
+	//(*f).st_indx=(*f).st_indx+h;
+	int old_n_nvp = (*f).n_nvp;
+	long double **old_nvp = falloc_matrix((*f).n_nvp,DPOS);
+	long double *old_vel = falloc_vec((*f).n_nvp-1);
+	
+	/*COPY*/
+	for(o=0;o<(old_n_nvp-1);o++) {
+		for(j=0;j<DPOS;j++) old_nvp[o][j]=(*f).nvp[o][j];
+		old_vel[o]=(*f).vel[o];
+	}
+	for(j=0;j<DPOS;j++) old_nvp[o][j]=(*f).nvp[o][j];
+	
+	for(r=old_st_indx;r<((*f).n_nvp-h);r++) {
+		for(j=0;j<DPOS;j++) (*f).nvp[r][j]=(*f).nvp[r+h][j];
+		(*f).vel[r-1]=(*f).vel[r+h-1];
+	}
+
+	(*f).n_nvp=(*f).n_nvp-h;
+
 	_position(f, (*f).st_point, conf.t_w*2, conf.t_i, conf.t_r, 0.); //TODO: maybe we should change this.
 	
 	_minimum_flight_distance((*f).pos,&flight,N_f,2*conf.t_w,tl);
 	
 	_checkShockareaRoute((*f).pos,conf.t_w*2, sh,tl.dist);
-	if(_check_risk(tl.dist,conf)){
-		(*f).st_indx=old_st_indx;
+	if(_check_risk(tl.dist,conf,conf.t_w*2)){
+		for(o=0;o<(old_n_nvp-1);o++) {
+			for(j=0;j<DPOS;j++) (*f).nvp[o][j]=old_nvp[o][j];
+			(*f).vel[o]=old_vel[o];
+		}
+		for(j=0;j<DPOS;j++) (*f).nvp[o][j]=old_nvp[o][j];
+
 		_position(f, (*f).st_point, conf.t_w*2, conf.t_i, conf.t_r, 0.);
+		ffree_2D(old_nvp,old_n_nvp);
+		free(old_vel);
+
 		return 0;
 	}
 	else{
-		int j;
-		double newv=mean(&(*f).vel[old_st_indx], h+1);
-		for(r=old_st_indx;r<((*f).n_nvp-h);r++) {
-			for(j=0;j<DPOS;j++) (*f).nvp[r]=(*f).nvp[r+h];
-			(*f).vel[r-1]=(*f).vel[r+h-1];
-		}
-		(*f).st_indx=old_st_indx;
-		(*f).vel[old_st_indx]=newv;
-		(*f).n_nvp=(*f).n_nvp-h;
+		
 		_position(f, (*f).st_point, conf.t_w*2, conf.t_i, conf.t_r, 0.);
-	
+
 	}
 		
-
+	ffree_2D(old_nvp,old_n_nvp);
+	free(old_vel);
+	
 	return 1;
 }
 
@@ -958,7 +1009,7 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 		_minimum_flight_distance((*f)[i].pos,f,i,conf.t_w,tl);
 		
 		_checkShockareaRoute((*f)[i].pos,conf.t_w, sh,tl.dist);
-		unsafe=_check_risk(tl.dist,conf);
+		unsafe=_check_risk(tl.dist,conf,conf.t_w);
 		
 		if(unsafe) {
 			unsafe=_checkFlightsCollision(tl.dist, conf, &(*f)[i]); 
@@ -1070,9 +1121,12 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 		f_not_solv =_check_safe_events(f,n_f,sh,tl,conf); /*put the dv here*/
 		
 		if(f_not_solv>=0){
-			
-			if(++try>1000) BuG("Not Solved, too many trials\n");				 
-			_suffle_list(f,f_not_solv+1,&tl);	
+		
+			if(++try> 500) {
+				printf("Not Solved, too many trials\n");
+				return 0;
+			}				 
+			_suffle_list_top(f,f_not_solv,&tl);	
 		}
 	}while(f_not_solv>=0);
 	
@@ -1080,9 +1134,13 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 	//printf("Nflight %d\n",n_f);
 	for(i=1;i<n_f;i++) {
 		_minimum_flight_distance( (*f)[i].pos,f,i-1,conf.t_w,tl);
-		//for(r=0;r<conf.t_w;r++) printf("%Lf\n",tl.dist[r]);
-		if(_check_risk(tl.dist,conf)) BuG("Not Solved Why??\n");
-		}
+		
+		if(_check_risk(tl.dist,conf,conf.t_w)){
+			for(r=0;r<conf.t_w;r++) printf("%Lf\n",tl.dist[r]);
+			printf("Try%d\n",try);
+			 BuG("Not Solved Why??\n");
+		 }
+	}
 
 #ifdef PLOT 
 	plot_movie(f,n_f,conf,"/tmp/m3.dat");
@@ -1127,7 +1185,11 @@ int ABM(Aircraft_t **f, int N_f, CONF_t conf, SHOCK_t sh){
 	int t,step;
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
 
-	for(t=t_stp,step=0 ;t<DAY; t+=t_stp, step++ ) _evolution(f,N_f, conf,sh,tool,t); 
+	for(t=t_stp,step=0 ;t<DAY; t+=t_stp, step++ ) if(_evolution(f,N_f, conf,sh,tool,t) == 0) {		
+		_del_tool(&tool,N_f,conf);
+		return 0;
+	}
+	
 	//printf("Pouic7\n");
 	
 	_del_tool(&tool,N_f,conf);

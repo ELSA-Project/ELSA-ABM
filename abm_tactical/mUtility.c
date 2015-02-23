@@ -390,7 +390,7 @@ int find_p_indx(long double **nvp,int n_nvp,long double *p){
 	int i;
 	for(i=0;i<(n_nvp-1);i++) if(isbetween(nvp[i],nvp[i+1],p)) return i+1;
 	
-	BuG("Impossible to find point\n");
+	//BuG("Impossible to find point\n");
 	
 	return 0;	
 }
