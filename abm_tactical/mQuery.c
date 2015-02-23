@@ -10,6 +10,7 @@
 #include "mQuery.h"
 #include "mUtility.h"
 #include "mSector.h" 
+#include "mABM.h"
 
 #include<string.h>
 #include<stdio.h>
@@ -66,17 +67,25 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 
 	(*flight)=( Aircraft_t* ) malloc(Nflight*sizeof(Aircraft_t));
 	
-#ifdef BOUND_CONTROL
+	#ifdef BOUND_CONTROL
 	int inside,m;
-#endif
+	#endif
+	
+	#ifdef WORKAROUND_NIGHT
+	int over_night;
+	#endif
+	
 	
 	for(i=0;i<Nflight;i++){
-
-#ifdef BOUND_CONTROL
-		inside=0;
-#endif
+		
+		#ifdef WORKAROUND_NIGHT
+		over_night=0;
+		#endif
 	
-
+		#ifdef BOUND_CONTROL
+		inside=0;
+		#endif
+	
 		if(!fgets(c, R_BUFF, rstream)) BuG("BUG in M1 File -lx0\n");
 		(*flight)[i].ready = 0;
 		(*flight)[i].ID=atoi(c);
@@ -110,25 +119,31 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
 			(*flight)[i].time[h]=_convert_time(&c[++j]);
 			
-#ifdef CAPACITY
+			#ifdef WORKAROUND_NIGHT
+			if(h>0 && over_night==0){
+				if((*flight)[i].time[h]<(*flight)[i].time[h-1]) over_night = 1;
+			}
+			if(over_night!=0) ((*flight)[i].time[h])+=DAY;
+			#endif
+			
+			
+			#ifdef CAPACITY
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx6\n");
 			(*flight)[i].nvp[h][4]=atof(&c[++j]); // TAKE OUTTTT
-#endif		
-#ifdef BOUND_CONTROL
+			#endif		
+			
+			#ifdef BOUND_CONTROL
 			if(inside==0) if(point_in_polygon((*flight)[i].nvp[h],(*conf).bound,(*conf).Nbound))inside=1;
-
-#endif
+			#endif
 
 		}
-#ifdef BOUND_CONTROL
-			if(inside==0) {
-				printf("Flight %d doesn't cross the boundary\n",(*flight)[i].ID);
-				exit(0);
-			}
-#endif
-
-		
+		#ifdef BOUND_CONTROL
+		if(inside==0) {
+			printf("Flight %d doesn't cross the boundary\n",(*flight)[i].ID);
+			exit(0);
+		}
+		#endif
 	}
 	
 	

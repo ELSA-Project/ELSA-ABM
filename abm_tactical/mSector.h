@@ -20,7 +20,7 @@
 //#define TMP_FROM_FILE
 
 /*If It's defined cheak for intersection between flight tmp_nvp and boundary (slow)*/
-#define BOUND_CONTROL
+//#define BOUND_CONTROL
 
 /*Structure of shock*/
 typedef struct {

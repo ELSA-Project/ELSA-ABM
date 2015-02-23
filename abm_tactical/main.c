@@ -30,10 +30,14 @@ int simulation(char **args){
 	for(i=0;i<config.nsim;i++) {
 		
 		copy_flight(Flight,Nflight,&flight);
+		
+		
+		if( ABM(&flight,Nflight,config,shock) == 0){
+			del_flight(&flight, Nflight, Flight);
+			i--;
+			continue;
+		}
 		printf("Sim %d\n",i+1);
-		
-		ABM(&flight,Nflight,config,shock);
-		
 		add_nsim_output(output_ABM_nsim,output_ABM,i);
 		save_m3(flight,Nflight,Flight,output_ABM_nsim);
 		

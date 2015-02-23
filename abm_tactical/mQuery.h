@@ -16,6 +16,8 @@
 
 #define DPOS 5
 
+#define WORKAROUND_NIGHT
+
 /*************************** STRUCTURE ***********************************/
 
 /* STRUCTURE AIRCRAFT - have inside all the ABM need to control the aircraft*/
