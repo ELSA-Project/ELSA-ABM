@@ -8,4 +8,6 @@ sys.path.insert(1, os.path.join(main_dir, 'libs'))
 from simulationO import generate_traffic, do_standard
 from iter_simO import average_sim, iter_sim
 from prepare_navpoint_network import prepare_hybrid_network
+from create_route_eff_net import rectificate_trajectories_network_with_time, iter_partial_rectification
+from utilities import draw_network_map
 #import simAirSpaceO

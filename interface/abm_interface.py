@@ -13,7 +13,6 @@ import pickle
 
 from abm_tactical import *
 from abm_strategic import *
-from abm_strategic.utilities import draw_network_map
 
 
 if 0:

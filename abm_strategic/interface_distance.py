@@ -14,6 +14,7 @@ from string import split
 from libs.tools_airports import get_set, __version__ as distance_version, build_path, build_network_based_on_shapes
 from libs.general_tools import date_generation
 
+from utilities import convert_trajectories, write_trajectories_for_tact
 from prepare_navpoint_network import prepare_hybrid_network
 
 
@@ -122,7 +123,7 @@ def extract_airports_from_traffic(G_nav, flights):
 	return flights, airports_nav, entry_exit
 
 def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, show=True, **kwargs_distance):
-	from paras_G import paras_G
+	from paras_G import paras_G # TODO Change this, this is really bad.
 
 	# Get navpoint network
 	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
@@ -198,6 +199,37 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 
 	return G
 
+def produce_M1_trajs_from_data(zone='LF', data_version=None, put_sectors=False, save_file=None, **kwargs_distance):
+	# Get navpoint network
+	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
+	seth = get_set(paras_nav, force = False)
+	G_nav, flights_nav = seth.G, seth.flights
+
+	trajectories = []
+	for f in seth.flights.values():
+		#print f['route_m1']
+		#print zip(*f['route_m1'])
+		#raise Exception()
+		points, altitudes = zip(*f['route_m1'])
+		if not put_sectors:
+			traj = [(G_nav.node[points[i]]['coord'][0]/60., G_nav.node[points[i]]['coord'][1]/60., altitudes[i], f['route_m1t'][i][1]) for i in range(len(points))]
+		else:
+			raise Exception("I can't put sectors, not implemented yet.")
+			# The problem with the following is that G is not a network from the ABM but from distance.
+			traj = [(G_nav.node[points[i]]['coord'][0]/60., G_nav.node[points[i]]['coord'][1]/60., 
+					altitudes[i], f['route_m1t'][i][1], G_nav.node[points[i]]['sec']) for i in range(len(points))]
+		
+		trajectories.append(traj)
+
+		if save_file!=None:
+			write_trajectories_for_tact(trajectories, fil=save_file) 
+
+	return trajectories
+
 if __name__=='__main__':
-	build_net_distance(zone='LF', show=True)
+	#build_net_distance(zone='LF', show=True)
+	trajectories = produce_M1_trajs_from_data(zone='LF', put_sectors=False)
+	for traj in trajectories[:5]:
+		print traj
+		print
 

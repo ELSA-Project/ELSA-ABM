@@ -672,7 +672,7 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
             trajectories[idx] = [(x, y, th[j], t, sec) for i, (x, y, z, t, sec) in enumerate(traj)]
         #print "Altitude picked:",th[j] 
     return trajectories
-
+   
 
 ##################################################################################
 """

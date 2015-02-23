@@ -12,12 +12,12 @@ from numpy.random import choice, seed
 import math as mt
 from shapely.geometry import LineString
 from copy import deepcopy
+from datetime import datetime, timedelta
 
 from igraph import *
 
-from datetime import datetime, timedelta
+from utilities import select_interesting_navpoints, OD, select_interesting_navpoints_per_trajectory
 
-from abm_strategic.utilities import select_interesting_navpoints, OD, select_interesting_navpoints_per_trajectory
 from libs.tools_airports import build_long_2d
 from libs.general_tools import insert_list_in_list
 
