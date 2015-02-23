@@ -23,14 +23,15 @@ def get_p(file_r):
     
     return x
 
-def compute_temporary_points(N, bounds, save_file=main_dir + '/abm_tactical/config/bound_latlon.dat'):
+def compute_temporary_points(N, bounds, save_file=main_dir + '/abm_tactical/config/temp_nvp.dat'):
+    print "Generating temporary points..."
     pbound = Polygon(bounds)
-    gbound = Polygon(map(gall_pet, bound))
+    gbound = Polygon(map(gall_pet, bounds))
     xa, ya, xb, yb = pbound.bounds
     tmp = [[] for i in range(N)]
     i = 0
 
-    while i<N-1:
+    while i<=N-1:
         T = (rd.uniform(xa,xb), rd.uniform(ya,yb))
         gT = Point(gall_pet(T))
 

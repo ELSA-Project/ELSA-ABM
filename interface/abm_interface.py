@@ -14,6 +14,8 @@ import pickle
 from abm_tactical import *
 from abm_strategic import *
 
+from libs.general_tools import silence
+
 
 if 0:
     # Manual seed
@@ -181,18 +183,22 @@ def do_efficiency():
 											  colors=colors,
 											  sizes=sizes)
 
-def do_ABM_tactical(input_file, output_file):
-	inpt = ["", input_file, output_file]
+def do_ABM_tactical(input_file, output_file, config_file, verbose=2):
+	inpt = ["", input_file, output_file, config_file]
 
-	print "M1 source:", inpt[1]
-	print "Destination output:", inpt[2]
-	print
-	print "Running ABM Tactical model..."
+	if verbose==2:
+		print "M1 source:", inpt[1]
+		print "Destination output:", inpt[2]
+		print "Config file:", inpt[3]
+		print
+		print "Running ABM Tactical model..."
 
-	tactical_simulation(inpt)
+	with silence(verbose==0): # Does not work.
+		tactical_simulation(inpt)
 
-	print
-	print "Done."
+	if verbose==2:
+		print
+		print "Done."
 
 
 if __name__ == '__main__':

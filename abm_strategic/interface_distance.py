@@ -199,7 +199,7 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 
 	return G
 
-def produce_M1_trajs_from_data(zone='LF', data_version=None, put_sectors=False, save_file=None, **kwargs_distance):
+def produce_M1_trajs_from_data(zone='LF', data_version=None, put_fake_sectors=False, save_file=None, **kwargs_distance):
 	# Get navpoint network
 	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
 	seth = get_set(paras_nav, force = False)
@@ -211,18 +211,22 @@ def produce_M1_trajs_from_data(zone='LF', data_version=None, put_sectors=False, 
 		#print zip(*f['route_m1'])
 		#raise Exception()
 		points, altitudes = zip(*f['route_m1'])
-		if not put_sectors:
-			traj = [(G_nav.node[points[i]]['coord'][0]/60., G_nav.node[points[i]]['coord'][1]/60., altitudes[i], f['route_m1t'][i][1]) for i in range(len(points))]
+		if not put_fake_sectors:
+			traj = [(G_nav.node[points[i]]['coord'][0]/60., G_nav.node[points[i]]['coord'][1]/60., altitudes[i],\
+				 f['route_m1t'][i][1]) for i in range(len(points))]
 		else:
-			raise Exception("I can't put sectors, not implemented yet.")
-			# The problem with the following is that G is not a network from the ABM but from distance.
-			traj = [(G_nav.node[points[i]]['coord'][0]/60., G_nav.node[points[i]]['coord'][1]/60., 
-					altitudes[i], f['route_m1t'][i][1], G_nav.node[points[i]]['sec']) for i in range(len(points))]
+			traj = [(G_nav.node[points[i]]['coord'][0]/60., G_nav.node[points[i]]['coord'][1]/60., altitudes[i], \
+				 f['route_m1t'][i][1], 0) for i in range(len(points))]
+		# else:
+		# 	raise Exception("I can't put sectors, not implemented yet.")
+		# 	# The problem with the following is that G is not a network from the ABM but from distance.
+		# 	traj = [(G_nav.node[points[i]]['coord'][0]/60., G_nav.node[points[i]]['coord'][1]/60., 
+		# 			altitudes[i], f['route_m1t'][i][1], G_nav.node[points[i]]['sec']) for i in range(len(points))]
 		
 		trajectories.append(traj)
 
-		if save_file!=None:
-			write_trajectories_for_tact(trajectories, fil=save_file) 
+	if save_file!=None:
+		write_trajectories_for_tact(trajectories, fil=save_file) 
 
 	return trajectories
 
