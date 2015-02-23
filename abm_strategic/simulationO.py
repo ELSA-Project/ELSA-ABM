@@ -15,6 +15,7 @@ This is the main interface to the model. The main functions are
 from __future__ import print_function
 
 import sys
+sys.path.insert(1, '..')
 import networkx as nx
 #from paras import paras
 #from random import getstate, setstate, 
@@ -27,6 +28,7 @@ import numpy as np
 import copy
 from datetime import datetime
 from math import ceil
+from copy import deepcopy
 
 from simAirSpaceO import AirCompany, Network_Manager
 from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
@@ -34,14 +36,14 @@ from utilities import draw_network_map, read_paras, post_process_paras, write_tr
 
 from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
 from tools_airports import extract_flows_from_data
-#from utilitiesO import compare_networks
+from abm_tactical import rectificate_trajectories_network_with_time
 
 version='2.9.5'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
 
 if 0:
-    #see = 7122008
-    see = randrange(1,10000000)
+    see = 7122008
+    #see = randrange(1,10000000)
     print ('Caution! Seed:', see)
     seed(see)
 
@@ -119,7 +121,7 @@ class Simulation:
         
         for k in ['AC', 'Nfp', 'na', 'tau', 'departure_times', 'ACtot', 'N_shocks','Np',\
             'ACsperwave','Delta_t', 'width_peak', 'old_style_allocation', 'flows', 'nA', \
-            'day', 'noise', 'Nsp_nav', 'STS']:
+            'day', 'noise', 'Nsp_nav', 'STS', 'starting_date']:
             if k in paras.keys():
                 setattr(self, k, paras[k])
 
@@ -129,9 +131,9 @@ class Simulation:
         assert check_object(G)
         assert G.Nfp==paras['Nfp']
         
-        self.G=G.copy()
-        self.verb=verbose
-        self.rep=build_path(paras)
+        self.G = G.copy()
+        self.verb = verbose
+        self.rep = build_path(paras)
 
         if self.Nsp_nav!= self.G.Nsp_nav:
             if verbose:
@@ -528,7 +530,7 @@ def add_first_last_points(trajs, secs=False):
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 5, 6, 0, 0, 0],\
      coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, 
-     record_stats_file=None, remove_flights_after_midnight=False, **paras_control):
+     record_stats_file=None, remove_flights_after_midnight=False, rectificate=None, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -581,7 +583,8 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
     G = paras['G']
     print ("Average capactity:", np.mean([paras['G'].node[n]['capacity'] for n in paras['G'].nodes()]))
-    print ("Number of flights in traffic:", len(paras['traffic']))
+    if 'traffic' in paras.keys():
+        print ("Number of flights in traffic:", len(paras['traffic']))
     
     with clock_time():
         sim=Simulation(paras, G=G, make_dir=True, verbose=True)
@@ -590,7 +593,6 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         queue=post_process_queue(sim.queue)
         M0_queue=post_process_queue(sim.M0_queue)
 
-    
     print
 
     if record_stats_file!=None:
@@ -634,6 +636,14 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
     trajectories = compute_M1_trajectories(queue, sim.starting_date)
 
+    if rectificate!=None:
+        eff_target = rectificate['eff_target']
+        del rectificate['eff_target']
+        trajectories, eff, G.G_nav, groups_rec = rectificate_trajectories_network_with_time(trajectories, eff_target, deepcopy(G.G_nav), **rectificate)
+
+    if save_file_capacities!=None:
+        write_down_capacities(G, save_file=save_file_capacities)
+    
     if coordinates:
         trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, 
                                                                           remove_flights_after_midnight=remove_flights_after_midnight,
@@ -650,10 +660,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             trajectories_coords = add_first_last_points(trajectories_coords, secs=put_sectors)
 
         if save_file!=None:
-            write_trajectories_for_tact(trajectories_coords, fil=save_file)
-
-        if save_file_capacities!=None:
-            write_down_capacities(G, save_file=save_file_capacities)
+            write_trajectories_for_tact(trajectories_coords, fil=save_file) 
 
         return trajectories_coords, stats
     else:

@@ -57,10 +57,11 @@ if file_traffic==None:
 	if file_times == None:
 		if departure_times=='square_waves':
 			width_peak = unit 			# Duration of a wave
-			Delta_t=unit*1      		# Time between the end of a wave and the beginning of the next one.
-			ACsperwave=30				# Relevant for choosing a number of ACs per wave rather than a total number
+			Delta_t = unit*1      		# Time between the end of a wave and the beginning of the next one.
+			ACsperwave = 30				# Relevant for choosing a number of ACs per wave rather than a total number
 			control_ACsperwave = True	# True if you want to control ACsperwave instead of density/ACtot
 
+	starting_date = [2010, 5, 6, 0, 0, 0] # This is just used to create artificial dates.
 noise = 0. 								# noise on departures in minutes.
 
 # ------------------ Behavioral parameters ---------------- #
@@ -79,7 +80,7 @@ else:
 
 # --------------------System parameters -------------------- #
 parallel=False							# Parallel computation or not
-old_style_allocation = False			# Don't remember what that is. Computation of load?
+old_style_allocation = False			# Don't remember what this is. Computation of load?
 force = False							# force overwrite of already existing simulation (based on name of file).
 
 

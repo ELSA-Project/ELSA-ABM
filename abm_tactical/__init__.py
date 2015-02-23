@@ -5,4 +5,4 @@ sys.path.insert(1, os.path.join(main_dir, 'libs'))
 
 # Public interface
 from ABMtactic import simulation as tactical_simulation
-from create_route_eff_net import rectificate_trajectories, rectificate_trajectories_network, partial_rectification
+from create_route_eff_net import rectificate_trajectories, rectificate_trajectories_network, partial_rectification, iter_partial_rectification, rectificate_trajectories_network_with_time

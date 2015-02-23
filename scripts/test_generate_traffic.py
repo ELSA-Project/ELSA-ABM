@@ -24,6 +24,7 @@ trajectories = generate_traffic(G, 	save_file=save_file,
 									capacity_factor=0.7,
 									remove_flights_after_midnight=True,
 									#record_stats_file='../trajectories/M1/trajectories_stats.dat'
+									rectificate={'eff_target':0.99, 'inplace':False, 'hard_fixed':False, 'remove_nodes':True, 'resample_trajectories':True}
 									)
 #print trajectories
 #draw_network_and_patches(None, G.G_nav, G.polygons, show=True, flip_axes=True,\

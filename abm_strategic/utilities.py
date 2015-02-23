@@ -22,8 +22,9 @@ import pickle
 from os.path import join
 from string import split
 from random import choice
+from copy import deepcopy
 
-from libs.general_tools import  delay, date_human, date_st
+from libs.general_tools import  delay, date_human, date_st, flip_polygon
 from libs.tools_airports import bet_OD
 version='2.9.1'
 
@@ -32,8 +33,24 @@ _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRe
 
 #shuffle(_colors)
 
-def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=True, load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True):
+def draw_network_map(G_init, title='Network map', trajectories=[], rep='./',airports=True, 
+        load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
+        colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
     print "Drawing network..."
+    G = deepcopy(G_init)
+    polygons_copy = deepcopy(polygons)
+    if flip_axes:
+        for n in G.nodes():
+            G.node[n]['coord']=(G.node[n]['coord'][1], G.node[n]['coord'][0])
+        if polygons_copy!=[]:
+            polygons_copy=[flip_polygon(pol) for pol in polygons_copy]
+
+    nodes = G.nodes()[:]
+    if type(colors)!=type('n'):
+        colors = [colors[n] for n in nodes]
+    if type(sizes)!=type(20.):
+        sizes = [sizes[n] for n in nodes]
+
     x_min=min([G.node[n]['coord'][0]/60. for n in G.nodes()])-0.5
     x_max=max([G.node[n]['coord'][0]/60. for n in G.nodes()])+0.5
     y_min=min([G.node[n]['coord'][1]/60. for n in G.nodes()])-0.5
@@ -41,44 +58,46 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
     
 
     #(x_min,y_min,x_max,y_max),G,airports,max_wei,zone_geo = rest
-    fig=plt.figure(figsize=(9,6))#*(y_max-y_min)/(x_max-x_min)))#,dpi=600)
-    gs = gridspec.GridSpec(1, 2,width_ratios=[6.,1.])
+    fig=plt.figure(figsize=figsize)#*(y_max-y_min)/(x_max-x_min)))#,dpi=600)
+    #gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
+    gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
     ax = plt.subplot(gs[0])
-    ax.set_aspect(1./0.8)
+    #ax.set_aspect(1./0.8)
+    ax.set_aspect(figsize[0]/float(figsize[1]))
 
     
     if generated:
         def m(a,b):
             return a,b
-        y,x=[G.node[n]['coord'][0] for n in G.nodes()], [G.node[n]['coord'][1] for n in G.nodes()]
+        y,x=[G.node[n]['coord'][0] for n in nodes], [G.node[n]['coord'][1] for n in nodes]
     else:
         m=draw_zonemap(x_min,y_min,x_max,y_max,'i')
-        x,y=split_coords(G,G.nodes(),r=0.08)
+        x,y=split_coords(G, nodes, r=0.08)
     
-    for i,pol in enumerate(polygons):
+    for i,pol in enumerate(polygons_copy):
         patch = PolygonPatch(pol,alpha=0.5, zorder=2, color=_colors[i%len(_colors)])
         ax.add_patch(patch) 
 
     if load:
         sze=[(np.average([G.node[n]['load'][i][1] for i in range(len(G.node[n]['load'])-1)],\
         weights=[(G.node[n]['load'][i+1][0] - G.node[n]['load'][i][0]) for i in range(len(G.node[n]['load'])-1)])
-        /float(G.node[n]['capacity'])*800 + 5) for n in G.nodes()]
+        /float(G.node[n]['capacity'])*800 + 5) for n in nodes]
     else:
-        sze=10
+        sze=sizes
         
-    coords={n:m(y[i],x[i]) for i,n in enumerate(G.nodes())}
+    coords={n:m(y[i],x[i]) for i,n in enumerate(nodes)}
     
     ax.set_title(title)
-    sca=ax.scatter([coords[n][0] for n in G.nodes()],[coords[n][1] for n in G.nodes()],marker='o',zorder=6,s=sze,c='b')#,s=snf,lw=0,c=[0.,0.45,0.,1])
+    sca=ax.scatter([coords[n][0] for n in nodes],[coords[n][1] for n in nodes], marker='o', zorder=6, s=sze, c=colors)#,s=snf,lw=0,c=[0.,0.45,0.,1])
     if airports:
-        scairports=ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o',zorder=6,s=20,c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
+        scairports=ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o', zorder=6, s=20., c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
 
     if 1:
         for e in G.edges():
             plt.plot([coords[e[0]][0],coords[e[1]][0]],[coords[e[0]][1],coords[e[1]][1]],'k-',lw=0.5)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
           
     #weights={n:{v:0. for v in G.neighbors(n)} for n in G.nodes()}
-    weights={n:{} for n in G.nodes()}
+    weights={n:{} for n in nodes}
     for path in trajectories:
         try:
             #path=f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p
@@ -88,13 +107,16 @@ def draw_network_map(G, title='Network map', trajectories=[], rep='./',airports=
                 weights[path[i]][path[i+1]] = weights[path[i]].get(path[i+1], 0.) + 1.
         except ValueError: # Why?
             pass
+        except:
+            print "weights[path[i]]:", weights[path[i]]
+            raise
     
     max_w=np.max([w for vois in weights.values() for w in vois.values()])
      
     for n,vois in weights.items():
         for v,w in vois.items():
            # if G.node[n]['m1'] and G.node[v]['m1']:
-                plt.plot([coords[n][0],coords[v][0]],[coords[n][1],coords[v][1]],'r-',lw=w/max_w*4.)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
+                plt.plot([coords[n][0],coords[v][0]],[coords[n][1],coords[v][1]],'r-',lw=w/max_w*weight_scale)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
 
     if numbers:
         for n in G.nodes():
@@ -535,14 +557,54 @@ def select_interesting_navpoints(G, OD=None, N_per_sector=1, metric="centrality"
         raise Exception("Need an hybrid network (sectors+navpoints) in input.")
 
     if metric=="centrality":
-        print "Computing betweenness centrality (", len(OD), "pairs) ..."
+        print "Computing betweenness centrality (between", len(OD), "pairs) ..."
         bet = bet_OD(G.G_nav, OD=OD)
     else:
         raise Exception("Metric", metric, "is not implemented.")
 
-    # For each sector, sort the navpoints in increasing centrality and selected the N_per_sector last
-    n_best = {sec:np.argsort([bet[nav] for nav in G.node[sec]['navs']])[-N_per_sector:] for sec in G.nodes()}
+    # For each sector, sort the navpoints in increasing centrality and select the N_per_sector last
+    n_best = {sec:[G.node[sec]['navs'][idx] for idx in np.argsort([bet[nav] for nav in G.node[sec]['navs']])[-N_per_sector:]] for sec in G.nodes()}
     
+    return n_best
+
+def select_interesting_navpoints_per_trajectory(trajs, G, OD=None, N_per_sec_per_traj=1, metric="centrality"):
+    """
+    Select N_per_sec_per_traj interesting napvoint per trajectory.
+    """
+
+    try:
+        assert hasattr(G, "G_nav")
+    except AssertionError:
+        raise Exception("Need an hybrid network (sectors+navpoints) in input.")
+
+    if metric=="centrality":
+        print "Computing betweenness centrality (between", len(OD), "pairs) ..."
+        bet = bet_OD(G.G_nav, OD=OD)
+    else:
+        raise Exception("Metric", metric, "is not implemented.")
+
+    n_best = {}
+    all_secs = set() # Only for information
+    for traj in trajs:
+        # Compute the sectors in trajectory
+        secs = set([G.G_nav.node[n]['sec'] for n in traj])
+        all_secs.union(secs)
+        #print "secs", secs
+        # For each sector, select the N_per_sec_per_traj best navpoints.
+        for sec in secs:
+            navs = [nav for nav in traj if G.G_nav.node[nav]['sec']==sec]
+            # print "navs:", navs
+            # print "bets:", [bet[nav] for nav in navs]
+            # print "idx:", np.argsort([bet[nav] for nav in navs])
+            # print "best:", [navs[idx] for idx in np.argsort([bet[nav] for nav in navs])[-N_per_sec_per_traj:]]
+            #for n in np.argsort([bet[nav] for nav in traj if G.G_nav.node[nav]['sec']==sec])[-N_per_sec_per_traj:]
+        
+            n_best[sec] = n_best.get(sec, []) + [navs[idx] for idx in np.argsort([bet[nav] for nav in navs])[-N_per_sec_per_traj:]]
+        #print "n_best:", n_best
+        #print 
+    # Remove redundant navpoints
+    n_best = {sec:list(set(navs)) for sec, navs in n_best.items()}
+    print "In average, I selected", np.mean([len(navs) for navs in n_best.values()]), "navpoint per sector."
     return n_best
 
 def OD(trajectories):
