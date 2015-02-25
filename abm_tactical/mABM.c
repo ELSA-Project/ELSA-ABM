@@ -1129,7 +1129,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 			_suffle_list_top(f,f_not_solv,&tl);	
 		}
 	}while(f_not_solv>=0);
-	/*
+	
 	int i,r;
 	//printf("Nflight %d\n",n_f);
 	for(i=1;i<n_f;i++) {
@@ -1140,7 +1140,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 			printf("Try%d\n",try);
 			 BuG("Not Solved Why??\n");
 		 }
-	}*/
+	}
 
 #ifdef PLOT 
 	plot_movie(f,n_f,conf,"/tmp/m3.dat");
