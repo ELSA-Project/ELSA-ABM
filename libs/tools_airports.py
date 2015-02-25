@@ -121,7 +121,11 @@ def dist(a,b): # compute the distance in kilometers between a and b
         arc=6371*acos(pouet) # longueur de l'arc en kilometres
     return sqrt(arc**2+dz**2) #takes into account the altitude
 
-def dist_flat_kms(a,b): # compute the distance in kilometers between a and b
+def dist_flat_kms(a,b): # 
+    """
+    Compute the distance in kilometers between a and b.
+    Coordinates must be in minute decimal.
+    """
     a=np.array(a)
     b=np.array(b)
     lat1=c_lat(a[0])   # convert minute decimal in rad
@@ -136,6 +140,18 @@ def dist_flat_kms(a,b): # compute the distance in kilometers between a and b
     else:
         arc=6371*acos(pouet) # longueur de l'arc en kilometres
     return arc #sqrt(arc**2+dz**2) 
+
+def gall_peters_projection(lat, lon):
+    """
+    lat and lon must be in degree. Gall Peters projection conserve areas.
+    Return a projection in kilometers.
+    """
+    lat *= pi/180.
+    lon *= pi/180.
+    x = 6371.*lon 
+    y = 2*6371.*sin(lat)
+
+    return x, y
     
 def dist_flat(a,b):
     a=np.array(a)
@@ -431,7 +447,7 @@ def get_data_results(ff):
 
     return seth
 
-def get_results(paras, save=True, my_company='', redo_FxS=True, force=0, deviations=False, only_net=False, prefix='', from_version=None):
+def get_results(paras, save=True, redo_FxS=True, force=0, deviations=False, only_net=False, prefix='', from_version=None):
     """
     Used to fetch results, which can be a Set + deviations or a Set without deviations.
     """
@@ -454,11 +470,11 @@ def get_results(paras, save=True, my_company='', redo_FxS=True, force=0, deviati
     except (IOError, AssertionError):
         print 'fail.'
         print 'I try to load the set instead.'
-        seth = get_set(paras, save=save, my_company=my_company,redo_FxS=redo_FxS,force=force, devset=deviations, only_net=only_net, prefix=prefix, from_version=from_version)
+        seth = get_set(paras, save=save, redo_FxS=redo_FxS,force=force, devset=deviations, only_net=only_net, prefix=prefix, from_version=from_version)
 
     return seth
 
-def get_set(paras, save=True, my_company='', redo_FxS=True, force=0, devset=False, only_net=False, prefix='', from_version=None):
+def get_set(paras, save=True, redo_FxS=True, force=0, devset=False, only_net=False, prefix='', from_version=None):
     """
     This is to get a set without deviations results.
     """
@@ -502,7 +518,7 @@ def get_set(paras, save=True, my_company='', redo_FxS=True, force=0, devset=Fals
         except (IOError, AssertionError):
             print 'fail.'
             db=_mysql.connect(paras["address_db"],"root",paras['password_db'],"ElsaDB_A" + str(paras['airac']),conv=my_conv)
-            seth.build(db,my_company=my_company,redo_FxS=redo_FxS,force=force>1)
+            seth.build(db,redo_FxS=redo_FxS,force=force>1)
             db.close()
             if save:
                 seth.save_pieces()
@@ -640,9 +656,9 @@ class Set(object):
     def __init__(self,**paras):
         self.paras=paras
         keys=['airac', 'nodes', 'zone', 'ext_area', 'cut_alt', 'direct', 'type_zone',\
-            'timeStart', 'timeEnd', 'filtre', 'micromode', 'mode', 'verb', 'd', 'collapsed', 'gather_sectors', 'both']
+            'timeStart', 'timeEnd', 'filtre', 'micromode', 'mode', 'verb', 'd', 'collapsed', 'gather_sectors', 'both', 'only_company']
         for k in keys:
-            setattr(self, k, paras[k])
+            setattr(self, k, paras.get(k, None))
         self.version = __version__
         self.build_rep()
         self.zone_big=self.zone[:2]
@@ -651,7 +667,7 @@ class Set(object):
     def build_rep(self):
         self.rep = build_path(self.paras, self.version, full=False) 
 
-    def make_filter_sql(self,db,my_company=''):
+    def make_filter_sql(self,db):
         if self.type_zone=='EXT':
             type_sql=" "
         if self.type_zone=='SEMI':
@@ -668,8 +684,10 @@ class Set(object):
             #if len(self.time)==1:
                 time_sql= """and m1.datetimeStart>='""" + date_db(self.timeStart) + "' and m1.datetimeStart<'" + date_db(self.timeEnd) + "' and f.id=m1.flightTId "
         
-        if my_company!='':
-            my_company=" and fg.company='" + my_company + "' "
+        if self.only_company!=None:
+            my_company = " and fg.company='" + self.only_company + "' "
+        else:
+            my_company = ''
         db.query("""DROP TABLE IF EXISTS FlightR""")
         if self.filtre == 'Strong':
             #query="""CREATE TEMPORARY TABLE FlightR
@@ -1321,11 +1339,11 @@ class Set(object):
 
         return flights_not_returned
                     
-    def build(self,db,my_company='',redo_FxS=True, save_flights=True, force=False):#,save=True,save_net=False):
+    def build(self,db,redo_FxS=True, save_flights=True, force=False):#,save=True,save_net=False):
         start_time = time()
         if self.verb:
             print "Building " + self.mode + " set..."
-        self.make_filter_sql(db,my_company=my_company)
+        self.make_filter_sql(db)
         
         if self.mode=='airports':
             self.build_flights_airports(db)
@@ -1353,8 +1371,8 @@ class Set(object):
             paras_sec['cut_alt']=0.
             paras_sec['mode']='sectors'
 
-            seth_nav=get_set(paras_nav,save=True,my_company=my_company,redo_FxS=redo_FxS, force=force)
-            seth_sec=get_set(paras_sec,save=True,my_company=my_company,redo_FxS=redo_FxS, force=force)
+            seth_nav=get_set(paras_nav, save=True, redo_FxS=redo_FxS, force=force)
+            seth_sec=get_set(paras_sec, save=True, redo_FxS=redo_FxS, force=force)
                     
             self.flights_not_used=self.build_nav_sec_network_and_flights(seth_nav,seth_sec)
             
@@ -1849,13 +1867,18 @@ class DevSet(Set):
     def build_routes(self,flights):
         return [f['route_m1'] for f in flights.values()],[f['route_m3'] for f in flights.values()]
 
-    def save(self, verb, compress=True,my_company=''):  # To save basic and advanced results.
+    def save(self, verb, compress=True):  # To save basic and advanced results.
         if verb:
             print 'Saving Data...'
         self.rep_save = build_path(self.paras, __version__, full=False)
-        stri='data_results_' + self.nodes + '_' + self.type_of_deviation + my_company
+        stri='data_results_' + self.nodes + '_' + self.type_of_deviation
+        #if self.only_company!=None:
+        #    stri += self.only_company
         with open(self.rep_save + '/' + stri + '.pic','w') as res:
             pickle.dump(self,res)
+
+        #if verb:
+        #    print "Saved in", self.rep_save + '/' + stri + '.pic'
 
         if compress:
             os.system('cd ' + self.rep_save +\
@@ -2085,7 +2108,7 @@ def bet_OD(G, OD=None):
             bc[n] = sig/float(len(OD))
         return bc
 
-def build_path(paras,version,full=True, prefix=None):
+def build_path(paras,version,full=True, prefix=None, suffix=None):
     if prefix == None:
         prefix = paras['main_rep']
     mode=paras['mode']
@@ -2123,6 +2146,11 @@ def build_path(paras,version,full=True, prefix=None):
         
     if mode=='nav_sec':
         rep+='_nav_sec'
+
+    if 'only_company' in paras.keys() and paras['only_company']!=None:
+        rep += '_' + paras['only_company']
+    if suffix!=None:
+        rep+=suffix
         
     if full:
         return big_filtre, period, rep
@@ -2490,16 +2518,31 @@ def select_layer_sector(password_db, airac, zone, layer):
     return bounds
 
 def map_of_net(G, colors='r', num=0, limits=(0,0,0,0), title='', size_nodes=1., size_edges=2., nodes=[], zone_geo=[], edges=True, fmt='svg', dpi=100, \
-        save_file = None, show=True, figsize=(9,6), background_color='', key_word_weight='weight', z_order_nodes=6):
+        save_file = None, show=True, figsize=(9,6), background_color='white', key_word_weight='weight', z_order_nodes=6, diff_edges=False):
     """
     Draw a net. TODO: maximum width.
     """
+    restrict_nodes = True
+    if limits==(0,0,0,0):
+        limits = (min([G.node[n]['coord'][0]/60. for n in nodes]) - 0.2,
+                min([G.node[n]['coord'][1]/60. for n in nodes]) - 0.2,
+                max([G.node[n]['coord'][0]/60. for n in nodes]) + 0.2,
+                max([G.node[n]['coord'][1]/60. for n in nodes]) + 0.2)
+        restrict_nodes = False
+
     if nodes==[]:
-        nodes = G.nodes()
+        if restrict_nodes:
+            # Restrict nodes to geometrical extent of the zone.
+            nodes = [n for n in G.nodes() if limits[0]-0.2<=G.node[n]['coord'][0]/60.<=limits[2]+0.2 and limits[1]-0.2<=G.node[n]['coord'][1]/60.<=limits[3]+0.2]
+        else:
+            nodes = G.nodes()
+
     if type(colors)==type({}):
         colors = [colors[n] for n in nodes]
+
     if type(z_order_nodes)==type({}):
         z_order_nodes = [z_order_nodes[n] for n in nodes]
+
     if type(size_nodes)==type(1) or type(size_nodes)== type(1.):
         size_nodes = [size_nodes for n in nodes]
     elif size_nodes==[]:
@@ -2511,31 +2554,32 @@ def map_of_net(G, colors='r', num=0, limits=(0,0,0,0), title='', size_nodes=1., 
             size_nodes=[G.degree(n)*size_nodes[1] for n in nodes]
         else:
             Exception("The following size function is not implemented:" + size_nodes)
-
-    if limits==(0,0,0,0):
-        limits = (min([G.node[n]['coord'][0]/60. for n in nodes]) - 0.2,
-                min([G.node[n]['coord'][1]/60. for n in nodes]) - 0.2,
-                max([G.node[n]['coord'][0]/60. for n in nodes]) + 0.2,
-                max([G.node[n]['coord'][1]/60. for n in nodes]) + 0.2)
+    elif type(size_nodes)==type({}):
+        size_nodes=[size_nodes[n] for n in nodes]
 
     x_min,y_min,x_max,y_max = limits
     fig = plt.figure(num, figsize=figsize)
     gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
     ax = plt.subplot(gs[0])
-    ax.set_aspect(1./0.8)
+    #ax.set_aspect(1./0.8)
+    ax.set_aspect(figsize[0]/figsize[1])
     m = draw_zonemap(x_min,y_min,x_max,y_max,'i', sea_color=background_color, continents_color=background_color, lake_color=background_color)
     x,y = split_coords(G,nodes, r=0.1)
     x,y = m(y,x)
     ax.set_title(title)
     sca = ax.scatter(x, y, marker='o', zorder=z_order_nodes, s=size_nodes, lw=0, c=colors)#,cmap=my_cmap)
-    max_wei = max([G[e[0]][e[1]]['weight'] for e in G.edges() if e[0] in nodes and e[1] in nodes])
+    max_wei = max([abs(G[e[0]][e[1]][key_word_weight]) for e in G.edges() if e[0] in nodes and e[1] in nodes])
     if edges:
         for e in G.edges():
             if e[0] in nodes and e[1] in nodes:
                 #print e,width(G[e[0]][e[1]]['weight'])
+                if diff_edges:
+                    color = 'r' if G[e[0]][e[1]][key_word_weight]>0 else 'b'
+                else:
+                    color = 'k'
                 xe1,ye1 = m(G.node[e[0]]['coord'][1]/60.,G.node[e[0]]['coord'][0]/60.)
                 xe2,ye2 = m(G.node[e[1]]['coord'][1]/60.,G.node[e[1]]['coord'][0]/60.)
-                plt.plot([xe1,xe2],[ye1,ye2], 'k-', lw=width(G[e[0]][e[1]]['weight'], max_wei, scale=size_edges), zorder=4)
+                plt.plot([xe1,xe2],[ye1,ye2], '-', lw=width(G[e[0]][e[1]][key_word_weight], max_wei, scale=size_edges), color=color, zorder=4)
 
     if zone_geo!=[]:
         patch=PolygonPatch(adapt_shape_to_map(zone_geo,m), facecolor='grey', edgecolor='grey', alpha=0.08, zorder=3)#edgecolor='grey', alpha=0.08,zorder=3)

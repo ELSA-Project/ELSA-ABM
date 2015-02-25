@@ -47,7 +47,6 @@ def flip_polygon(pol):
     """
     return Polygon([(p[1], p[0]) for p in list(pol.exterior.coords)])
 
-
 def draw_network_and_patches(G, G_nav, polygons, draw_navpoints_edges=True, \
     draw_sectors_edges=False, rep='.', save=True, name='network', \
     show=True, flip_axes=False, trajectories=[], \
@@ -458,6 +457,38 @@ def write_on_file(name_file):
             sys.stdout = save_stdout
     else:
         yield
+
+@contextlib.contextmanager
+def stdout_redirected(to=os.devnull):
+    '''
+    found here:
+    http://stackoverflow.com/questions/5081657/how-do-i-prevent-a-c-shared-library-to-print-on-stdout-in-python
+    
+    import os
+
+    with stdout_redirected(to=filename):
+        print("from Python")
+        os.system("echo non-Python applications are also supported")
+    '''
+    fd = sys.stdout.fileno()
+
+    ##### assert that Python and C stdio write using the same file descriptor
+    ####assert libc.fileno(ctypes.c_void_p.in_dll(libc, "stdout")) == fd == 1
+
+    def _redirect_stdout(to):
+        sys.stdout.close() # + implicit flush()
+        os.dup2(to.fileno(), fd) # fd writes to 'to' file
+        sys.stdout = os.fdopen(fd, 'w') # Python writes to fd
+
+    with os.fdopen(os.dup(fd), 'w') as old_stdout:
+        with open(to, 'w') as file:
+            _redirect_stdout(to=file)
+        try:
+            yield # allow code to be run with the redirected stdout
+        finally:
+            _redirect_stdout(to=old_stdout) # restore stdout.
+                                            # buffering and flags such as
+                                            # CLOEXEC may be different
 
 #decorator
 def save_fig(plot):
