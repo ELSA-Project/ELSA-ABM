@@ -75,7 +75,7 @@ int del_flight_pos(Aircraft_t **,int , CONF_t  );
 int del_conf(CONF_t *);
 
 /*Deallocate Config*/
-int del_shock(SHOCK_t *);
+int del_shock(SHOCK_t *,CONF_t*);
 
 
 #endif
