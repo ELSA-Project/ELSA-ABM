@@ -36,7 +36,7 @@ from utilities import draw_network_map, read_paras, post_process_paras, write_tr
 
 from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
 from tools_airports import extract_flows_from_data
-from abm_tactical import rectificate_trajectories_network_with_time
+from create_route_eff_net import rectificate_trajectories_network_with_time
 
 version='2.9.5'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]

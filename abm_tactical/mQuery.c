@@ -155,7 +155,10 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 long double _find_value_string(char *config_file,char *label){
 
 	FILE *rstream=fopen(config_file, "r");
-	if(rstream==NULL) BuG("BUG - configuration file doesn't exist\n");
+	if(rstream==NULL){
+		printf("I was looking here %s for the config file\n", config_file);
+		BuG("BUG - configuration file doesn't exist\n");
+	}
 	
 	char c[R_BUFF];
 	int i,lsize;
@@ -182,7 +185,10 @@ char * _find_value_string_char(char *config_file,char *label){
 	Same function as previous for strings.
 	*/
 	FILE *rstream=fopen(config_file, "r");
-	if(rstream==NULL) BuG("BUG - configuration file doesn't exist\n");
+	if(rstream==NULL){
+		printf("I was looking here %s for the config file\n", config_file);
+		BuG("BUG - configuration file doesn't exist\n");
+	}
 	
 	char *c = (char*) malloc((R_BUFF+1)*sizeof(char));
 	if(c==NULL) BuG("Memory\n");
