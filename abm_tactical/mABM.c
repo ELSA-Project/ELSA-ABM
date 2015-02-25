@@ -91,12 +91,15 @@ int del_flight_pos(Aircraft_t **f,int N, CONF_t conf ){
 int del_conf(CONF_t *conf){
 	ffree_2D((*conf).bound,(*conf).Nbound);
 	ffree_2D((*conf).tmp_nvp,(*conf).n_tmp_nvp);
+	free((*conf).main_dir);
 	return 1;
 	
 }
-int del_shock(SHOCK_t *shock){
+int del_shock(SHOCK_t *shock,CONF_t *conf){
 	
 	ffree_2D((*shock).shock,(*shock).Nshock);
+	ffree_2D((*conf).point_shock,(*conf).n_point_shock);
+
 	return 1;
 }
 
@@ -840,7 +843,7 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 				//printf("dj=%d\t IDnew %d\tunsafe %d, Angl %Lf\n",dj,(*f).ID,unsafe,angle_direction((*f).nvp[(*f).st_indx], (*f).nvp[j], (*f).nvp[j+1]));
 				_position(f , (*f).st_point , conf.t_w*2, conf.t_i, conf.t_r, dV);
 				ffree_2D(old_nvp, olf);
-
+				free(old_vel);
 				return 0;
 			}
 		}
@@ -853,7 +856,7 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 	(*f).n_nvp=olf;
 	ffree_2D(old_nvp, olf);
 	_position(f , (*f).st_point , conf.t_w, conf.t_i, conf.t_r, dV);
-
+	free(old_vel);
 	return 1;
 }
 
@@ -899,8 +902,14 @@ int _change_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl
 	
 	long double f_lvl_on=(*f).nvp[  unsafe ][2];
 
-	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on+20.,unsafe,endp)) return 0;
-	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on-20.,unsafe,endp)) return 0;
+	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on+20.,unsafe,endp)){
+		free(h);
+		return 0;
+	 }
+	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on-20.,unsafe,endp)) {
+		free(h);
+		return 0;
+	}
 
 	for(i=(*f).st_indx-1,j=0;i<endp;i++,j++) (*f).nvp[i][2]=h[j];
 	free(h);

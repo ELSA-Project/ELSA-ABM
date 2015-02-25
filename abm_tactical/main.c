@@ -47,7 +47,7 @@ int simulation(char **args){
 	del_flight_pos(&Flight,Nflight,config);
 	del_flight(&Flight, Nflight, Flight);
 	del_conf(&config);
-	del_shock(&shock);
+	del_shock(&shock,&config);
 	
 	return 0;
 }
