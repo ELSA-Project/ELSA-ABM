@@ -71,8 +71,8 @@ int del_flight(Aircraft_t **f, int N,Aircraft_t *F){
 	int i,j;
 	for(i=0;i<N;i++){
 		for(j=0;j<N;j++) if((F)[j].ID==(*f)[i].ID) break;
-		//ffree_2D((*f)[i].nvp, (F)[j].n_nvp);
-		ffree_2D((*f)[i].nvp, (*f)[i].n_nvp);
+		ffree_2D((*f)[i].nvp, (F)[j].n_nvp);
+		//ffree_2D((*f)[i].nvp, (*f)[i].n_nvp);
 		free( (*f)[i].vel );
 		free( (*f)[i].time );
 	}
@@ -83,7 +83,7 @@ int del_flight(Aircraft_t **f, int N,Aircraft_t *F){
 
 int del_flight_pos(Aircraft_t **f,int N, CONF_t conf ){
 	int i;
-	for(i=0;i<N;i++) ffree_2D((*f)[i].pos,conf.t_w);
+	for(i=0;i<N;i++) ffree_2D((*f)[i].pos,2*conf.t_w);
 	
 	return 1;
 }
