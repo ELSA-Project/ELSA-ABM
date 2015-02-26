@@ -10,6 +10,7 @@ import pickle
 from interface.abm_interface import choose_paras, do_ABM_tactical
 from abm_strategic.interface_distance import produce_M1_trajs_from_data
 from abm_tactical.generate_temporary_points import compute_temporary_points
+from libs.general_tools import write_on_file, stdout_redirected, counter
 
 # def build_path():
 # 	pass
@@ -18,9 +19,10 @@ from abm_tactical.generate_temporary_points import compute_temporary_points
 # 	choose_paras(key_paras, new_value)
 # 	do_ABM_tactical(input_file, output_file)
 
-def sweep_paras(zone, n_iter=1, data_version=None):
+def sweep_paras(zone, n_iter=1, data_version=None, force=False):
 	#paras_iter = {'sig_V':[0., 0.1]}
 	#paras = Paras({'sig_V':0.})
+
 	main_dir = os.path.abspath(__file__)
 	main_dir = os.path.split(os.path.dirname(main_dir))[0]
 
@@ -46,8 +48,12 @@ def sweep_paras(zone, n_iter=1, data_version=None):
 
 	compute_temporary_points(50000, boundary)
 
-	sig_V_iter = [0., 0.01] #[0.] + [10**(-float(i)) for i in range(5, -1, -1)]
-	t_w_iter = [40, 80] #[40, 80, 120, 160, 240] # times 8 sec 
+	sig_V_iter = [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
+	#sig_V_iter = [10**(-float(i)) for i in range(4, -1, -1)]
+	#sig_V_iter = [0., 0.0001] # [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
+	t_w_iter = [40, 80, 120, 160, 240] # times 8 sec 
+	#t_w_iter = [40, 80] # [40, 80, 120, 160, 240] # times 8 sec 
+	print 
 	for sig_V in sig_V_iter:
 		print "sig_V=", sig_V
 		choose_paras('sig_V', sig_V)
@@ -56,12 +62,18 @@ def sweep_paras(zone, n_iter=1, data_version=None):
 			choose_paras('t_w', t_w)
 
 			for i in range(n_iter):
+				counter(i, n_iter, message="Doing iterations... ")
 				output_file = main_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '.dat'
-				do_ABM_tactical(input_file, output_file, config_file, verbose=1)
-
+				if not os.path.exists(output_file.split('.dat')[0] + '_0.dat') or force:
+					with stdout_redirected(to=main_dir + '/trajectories/M3/log_trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '.txt'):
+						do_ABM_tactical(input_file, output_file, config_file, verbose=1)
+		print
 
 if __name__=='__main__':
-	sweep_paras('LFMM')
+	#main_dir = os.path.abspath(__file__)
+	#main_dir = os.path.split(os.path.dirname(main_dir))[0]
+
+	sweep_paras('LIRR', n_iter=100)
 
 
 

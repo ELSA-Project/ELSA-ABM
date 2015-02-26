@@ -650,7 +650,7 @@ int _get_d_neigh(CONF_t *conf,Aircraft_t **f,int N_f){
 	long double max_v=0;
 	for(i=0;i<N_f;i++) for(j=0;j<((*f)[i].n_nvp-1);j++) if((*f)[i].vel[j]>max_v) max_v = (*f)[i].vel[j];
 	
-	(*conf).d_neigh = 2.*(2.*((*conf).t_w*(*conf).t_i)*max_v*(1+(*conf).sig_V)) + (*conf).d_thr;
+	(*conf).d_neigh = 2.*(2.*((*conf).t_w*(*conf).t_i)*max_v*(1+(*conf).sig_V)) + (*conf).d_thr ;
 	
 	return 1;
 	
@@ -1139,6 +1139,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 		}
 	}while(f_not_solv>=0);
 	
+	/*
 	int i,r;
 	//printf("Nflight %d\n",n_f);
 	for(i=1;i<n_f;i++) {
@@ -1149,8 +1150,10 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 			printf("Try%d\n",try);
 			 BuG("Not Solved Why??\n");
 		 }
+	
 	}
-
+	*/
+	
 #ifdef PLOT 
 	plot_movie(f,n_f,conf,"/tmp/m3.dat");
 #endif
