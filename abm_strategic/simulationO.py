@@ -36,7 +36,7 @@ from utilities import draw_network_map, read_paras, post_process_paras, write_tr
 
 from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
 from tools_airports import extract_flows_from_data
-from create_route_eff_net import rectificate_trajectories_network_with_time
+from create_route_eff_net import rectificate_trajectories_network_with_time, compute_efficiency
 
 version='2.9.5'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
@@ -655,6 +655,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
                 small_sample = G.check_all_real_flights_are_legitimate(paras['traffic'], repair=True)
             print ("Kept", len(small_sample), "flights for sampling altitudes.")
             sample_trajectories = convert_distance_trajectories_coords(G.G_nav, small_sample, put_sectors=put_sectors)
+            
             trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
 
             trajectories_coords = add_first_last_points(trajectories_coords, secs=put_sectors)

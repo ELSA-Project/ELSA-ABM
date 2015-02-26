@@ -110,6 +110,7 @@ def compute_efficiency(trajectories, dist_func = dist):
 	S = [dist_func([trajectories[f][0],trajectories[f][-1]]) for f in range(len(trajectories))]
 	#L=[g.shortest_paths(source=to_str2(a[0]), target=to_str2(a[1]), weights=g.es["weight"])[0][0] for a in Aps]
 	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
+
 	return sum(S)/sum(L), sum(S)
 
 def find_group(element, groups):
@@ -140,7 +141,7 @@ def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_
 	# Put back the starting date.
 	trajs_rec_w_t = list(zip(trajs_rec, start_dates))
 
-	return trajs_w_t, eff, G, groups_rec
+	return trajs_rec_w_t, eff, G, groups_rec
 
 def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
 	"""
@@ -166,7 +167,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 
 	def add_node(trajs, G, coords, f, p):
 		new_node = max(G.nodes())+1
-		G.add_node(new_node, coord = coords)
+		G.add_node(new_node, coord=coords, sec=G.node[trajs[f][p-1]]['sec'])
 
 		weight = G[trajs[f][p-1]][trajs[f][p]]['weight'] * d((trajs[f][p-1], new_node))/d((trajs[f][p-1], trajs[f][p]))
 		G.add_edge(trajs[f][p-1], new_node, weight=weight)
@@ -210,10 +211,10 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 			
 			new_point_coords = []
 			new_point_indices = []
-			for d in long_dis_new_points:
+			for dd in long_dis_new_points:
 				#print "d=", d
 				#print d>long_dis_cul
-				point_before = len(long_dis_cul[d>long_dis_cul])-1#.index(True) # Index of point before future point
+				point_before = len(long_dis_cul[dd>long_dis_cul])-1#.index(True) # Index of point before future point
 				#print "Index of point_before:", point_before
 
 				#print "point before and after:", get_coords(traj[point_before]), get_coords(traj[point_before+1])
@@ -222,7 +223,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 				#print "dn=", dn
 				#print "norm of dn:", np.sqrt(sum(dn**2))
 				dn = dn/np.sqrt(sum(dn**2))#np.norm(dn)
-				new_point_coords.append(list(np.array(get_coords(traj[point_before])) + (d-long_dis_cul[point_before])*dn))
+				new_point_coords.append(list(np.array(get_coords(traj[point_before])) + (dd-long_dis_cul[point_before])*dn))
 				#print "new point:", np.array(get_coords(traj[point_before])) + (d-long_dis_cul[point_before])*dn
 				new_point_indices.append(point_before)
 
@@ -230,24 +231,45 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 			names = [max(G.nodes()) + 1 + j for j in range(len(new_point_indices))]
 			#print "names=", names
 
+			traj_rec_without_new_points = deepcopy(trajs_rec[i])
 			trajs_rec[i] = insert_list_in_list(trajs_rec[i], names, new_point_indices)
 
-			# Add to network
+			# First add all new nodes to network
 			for j, name in enumerate(names):
-			#for coords in new_point_coords:
-				pt_bef = trajs_rec[i].index(name) -1
-				pt_aft = pt_bef + 2
-				G.add_node(name, coord = new_point_coords[j])
-				G.add_edge(trajs_rec[i][pt_bef], name) #Weight?
-				G.add_edge(name, trajs_rec[i][pt_aft])
+				# TODO: do this more carefully.
+				sec = G.node[traj_rec_without_new_points[new_point_indices[j]]]['sec']
+				G.add_node(name, coord=new_point_coords[j], sec=sec)
 
-			# Change the trajectory
-			
+			# Then add all edges
+			for j in range(len(trajs_rec[i])-1):
+				if not trajs_rec[i][j+1] in G.neighbors(trajs_rec[i][j]):
+			#for j, name in enumerate(names):
+					#ref_point_bef = old_traj[new_point_indices[j]]
+					#ref_point_aft = old_traj[new_point_indices[j]+1]
+					# TODO: improve this?
+					ref_point_bef = trajs_old[i][0]
+					ref_point_aft = trajs_old[i][1]
+					scale_weight = G[ref_point_bef][ref_point_aft]['weight']/d((ref_point_bef, ref_point_aft))
+
+					# pt_bef = trajs_rec[i].index(name) -1
+					# name_pt_bef = trajs_rec[i][pt_bef]
+					# pt_aft = pt_bef + 2
+					# name_pt_aft = trajs_rec[i][pt_aft]
+					name_pt_bef = trajs_rec[i][j]
 
 
-			#print trajs_rec[i]
-			#print [get_coords(trajs_rec[i][j]) for j in range(len(trajs_rec[i]))]
-			#print
+					weight = scale_weight * d((trajs_rec[i][j], trajs_rec[i][j+1]))
+					G.add_edge(trajs_rec[i][j], trajs_rec[i][j+1], weight=weight)
+					#weight = scale_weight * d((name, name_pt_aft))
+					#G.add_edge(name, name_pt_aft, weight=weight)
+
+			# Check that all consecutive points of the trajectory are neighbors in the network
+			for j in range(len(trajs_rec[i])-1):
+				try:
+					assert trajs_rec[i][j+1] in G.neighbors(trajs_rec[i][j])
+				except AssertionError:
+					print trajs_rec[i][j], trajs_rec[i][j+1]
+					raise
 
 	return trajs_rec, eff, G, groups_rec
 
@@ -441,7 +463,8 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 
 	if n_iter == n_iter_max:	
 		print "Hit maximum number of iterations"
-	#print "New efficiency:", eff
+	print "New efficiency (cumul):", eff
+	print "New efficiency:", compute_efficiency(trajs_rec, dist_func=dist_func)[0]
 	return trajs_rec, eff, G, groups_rec
 
 def select_heigths(th):
