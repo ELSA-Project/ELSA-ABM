@@ -25,7 +25,7 @@
 /*Structure of shock*/
 typedef struct {
 	int Nshock;
-	long double **shock;
+	long double **shock;	
 } SHOCK_t;
 
 

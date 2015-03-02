@@ -193,8 +193,8 @@ int _create_shock(SHOCK_t *sh,CONF_t conf){
 		(*sh).shock[i][0]=conf.point_shock[coin][0];
 		(*sh).shock[i][1]=conf.point_shock[coin][1];
 		(*sh).shock[i][2]=conf.radius;
-		(*sh).shock[i][3]= (long double) irand(niter);
-		(*sh).shock[i][4]= 1.;
+		(*sh).shock[i][3]= ((long double) irand(niter) )*(conf.t_r*conf.t_w*conf.t_i);
+		(*sh).shock[i][4]= 1+((long double) irand(conf.lifetime-1) );
 		(*sh).shock[i][5]= conf.f_lvl[0] + (irand(((conf.f_lvl[1]-conf.f_lvl[0])/10) ))*10.;		
 	}
 	return 1;
@@ -625,14 +625,17 @@ int _isInsideCircle(long double *p,long double *shock){
 	return haversine_distance(p,shock)<shock[2];
 }
 
-int _checkShockareaRoute(long double **pos,int N,SHOCK_t shock,long double *d){
+int _checkShockareaRoute(long double **pos,int N,SHOCK_t shock,long double *d,long double t){
 	int i,j;
 	
-	for(i=1;i<N;i++){
-		for(j=0;j<shock.Nshock;j++) {
-		    if(pos[i][2]==shock.shock[j][5]&&pos[i][3]==1.) if(_isInsideCircle(pos[i],shock.shock[j])){d[i]=0;}
+	for(j=0;j<shock.Nshock;j++) if( fabs(shock.shock[j][3]-t)<SGL ){
+			for(i=1;i<N;i++) if(pos[i][3]==1) if(pos[i][2]==shock.shock[j][5]){
+				 if(_isInsideCircle(pos[i],shock.shock[j])){
+					 d[i]=0;
+				}
 		}
 	}
+	
 	return 0;
 }
 
@@ -758,7 +761,7 @@ int _temp_new_nvp(Aircraft_t *f, int safe, Aircraft_t *new_f,CONF_t conf){
 }
 
 
-int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TOOL_f tl,int unsafe){
+int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TOOL_f tl,int unsafe,long double t){
 
 	long double dV = tl.dV[N_f]; // N_F because we test rerouting against all previous flights.
 
@@ -834,7 +837,7 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 			_position(f , (*f).st_point , conf.t_w, conf.t_i, conf.t_r, dV);
 			_minimum_flight_distance((*f).pos,&flight,N_f,conf.t_w,tl);
 			
-			_checkShockareaRoute((*f).pos,conf.t_w, sh,tl.dist);
+			_checkShockareaRoute((*f).pos,conf.t_w, sh,tl.dist,t);
 			solved=_check_risk(tl.dist,conf,conf.t_w);
 		
 			/*if solved*/
@@ -860,7 +863,7 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 	return 1;
 }
 
-int _try_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SHOCK_t sh, long double f_lvl_on,int safe,int end_p){
+int _try_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SHOCK_t sh, long double f_lvl_on,int safe,int end_p,long double t){
 	int i;
 	for(i=((*f).st_indx-1);i<end_p;i++) (*f).nvp[i][2]=f_lvl_on;
 	(*f).st_point[2]=f_lvl_on;
@@ -868,7 +871,7 @@ int _try_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SH
 	for(i=0;i<conf.t_w;i++) (*f).pos[i][2]=f_lvl_on;
 	/* you dont't need to recompute the positions because it has been done in reroute.*/
 	_minimum_flight_distance((*f).pos,flight,N_f,conf.t_w,tl);
-	_checkShockareaRoute((*f).pos,conf.t_w, sh,tl.dist);
+	_checkShockareaRoute((*f).pos,conf.t_w, sh,tl.dist,t);
 	safe=_check_risk(tl.dist,conf,conf.t_w);
 	return safe;
 }
@@ -891,7 +894,7 @@ int _find_end_point(Aircraft_t *f,CONF_t conf){
 	else return end;	
 }
 
-int _change_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SHOCK_t sh){
+int _change_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl,SHOCK_t sh,long double t){
 	int unsafe = (*f).st_indx-1;
 	
 	int endp = _find_end_point(f,conf);
@@ -902,11 +905,11 @@ int _change_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl
 	
 	long double f_lvl_on=(*f).nvp[  unsafe ][2];
 
-	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on+20.,unsafe,endp)){
+	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on+20.,unsafe,endp,t)){
 		free(h);
 		return 0;
 	 }
-	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on-20.,unsafe,endp)) {
+	if(!_try_flvl(f,flight,N_f,conf,tl,sh,f_lvl_on-20.,unsafe,endp,t)) {
 		free(h);
 		return 0;
 	}
@@ -929,7 +932,7 @@ double _calculate_optimum_direct(Aircraft_t *f,int on){
 	return d2-d1;							 
 }
 				
-int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOCK_t sh){
+int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOCK_t sh,long double tt){
 	/*If the new path is less than the original*/
 	long double diff[]={0,0};
 	int old_st_indx=(*f).st_indx;
@@ -982,7 +985,7 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 	
 	_minimum_flight_distance((*f).pos,&flight,N_f,2*conf.t_w,tl);
 	
-	_checkShockareaRoute((*f).pos,conf.t_w*2, sh,tl.dist);
+	_checkShockareaRoute((*f).pos,conf.t_w*2, sh,tl.dist,tt);
 	if(_check_risk(tl.dist,conf,conf.t_w*2)){
 		for(o=0;o<(old_n_nvp-1);o++) {
 			for(j=0;j<DPOS;j++) (*f).nvp[o][j]=old_nvp[o][j];
@@ -1008,7 +1011,7 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 	return 1;
 }
 
-int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t conf){
+int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t conf, long double t){
 	
 	int i,unsafe;
 	int j;
@@ -1017,26 +1020,27 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 		
 		_minimum_flight_distance((*f)[i].pos,f,i,conf.t_w,tl);
 		
-		_checkShockareaRoute((*f)[i].pos,conf.t_w, sh,tl.dist);
+		_checkShockareaRoute((*f)[i].pos,conf.t_w, sh,tl.dist,t);
 		unsafe=_check_risk(tl.dist,conf,conf.t_w);
 		
 		if(unsafe) {
 			unsafe=_checkFlightsCollision(tl.dist, conf, &(*f)[i]); 
 
-			unsafe=_reroute(&((*f)[i]),(*f),i,sh,conf,tl,unsafe);
+			unsafe=_reroute(&((*f)[i]),(*f),i,sh,conf,tl,unsafe,t);
 			
 			if(unsafe) 
-				unsafe=_change_flvl(&(*f)[i],f,i,conf,tl,sh);
+				unsafe=_change_flvl(&(*f)[i],f,i,conf,tl,sh,t);
 	
 			if(unsafe) return i;
 			
 		}
 		else if(frand(0,1)<conf.direct_thr) if((*f)[i].st_indx< ((*f)[i].n_nvp-2)&&(*f)[i].st_indx>1) {
 			//add_nvp_st_pt(&(*f)[i]);
-			_direct(&(*f)[i],(*f),i,conf,tl,sh);
+			_direct(&(*f)[i],(*f),i,conf,tl,sh,t);
 		}
 		 
 	}
+	
 	
 	return -1;
 }
@@ -1099,6 +1103,16 @@ void print_workload(TOOL_f tl, CONF_t conf, char *file_w){
 	
 }
 
+int _update_shock(SHOCK_t *sh,int t,CONF_t *conf){
+	int i;
+	for(i=0;i<(*sh).Nshock;i++) if( fabs((*sh).shock[i][3]-t)<SGL ) if((*sh).shock[i][4]>1){
+		((*sh).shock[i][4])--;
+		((*sh).shock[i][3])+= (*conf).t_w*(*conf).t_r*(*conf).t_i;
+	}
+	
+	return 1;
+}
+
 int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long double t ){
 		
 	//printf("%.3Lf\n",t/3600.); 	/*Print time*/
@@ -1127,7 +1141,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 	do{	
 		_evaluate_neigh(f,n_f,&tl,conf);
 		
-		f_not_solv =_check_safe_events(f,n_f,sh,tl,conf); /*put the dv here*/
+		f_not_solv =_check_safe_events(f,n_f,sh,tl,conf,t); /*put the dv here*/
 		
 		if(f_not_solv>=0){
 		
@@ -1157,7 +1171,8 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 #ifdef PLOT 
 	plot_movie(f,n_f,conf,"/tmp/m3.dat");
 #endif
-
+	
+	_update_shock(&sh,t,&conf);
 
 	_set_st_point(f, n_f, conf); /*nothing here to do*/
 
