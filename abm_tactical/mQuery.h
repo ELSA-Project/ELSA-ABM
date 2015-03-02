@@ -92,6 +92,7 @@ typedef struct {
 	int n_point_shock;
 	long double radius;
 	long double f_lvl[2];
+	int lifetime;
 	
 	//numer of increment in a time-step
 	int t_w;

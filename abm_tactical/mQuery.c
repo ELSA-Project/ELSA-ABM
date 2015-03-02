@@ -234,6 +234,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
+	(*config).lifetime = _find_value_string(config_file, "lifetime");
 	//printf("%s\n", config_file);
 	//exit(0);
 	//(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";

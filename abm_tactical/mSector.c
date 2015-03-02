@@ -10,6 +10,7 @@
 #include "mUtility.h"
 #include "mSector.h"
 #include "mTest.h"
+#include "mABM.h"
 
 #include<stdlib.h>
 #include<stdio.h>
@@ -286,7 +287,7 @@ int is_on_bound(long double *p,long double **bound,int N){
 }
 
 int _alloc_shock( CONF_t conf,SHOCK_t *shock ){
-	(*shock).Nshock = (int) (conf.nsim*((conf.f_lvl[1]-conf.f_lvl[0])/10)*conf.Nm_shock);
+	(*shock).Nshock = (int) (((conf.f_lvl[1]-conf.f_lvl[0])/10)*conf.Nm_shock*DAY/(conf.t_w*conf.t_r*conf.t_i));
 	(*shock).shock=falloc_matrix( (*shock).Nshock , 6);
 	return 1;
 }
