@@ -50,6 +50,7 @@ if __name__=='__main__':
 	mode='navpoints'
 	data_version=None
 	n_iter = 100
+	target_rejected_flights = 0.
 	
 	for country in ['LF', 'LE', 'EG', 'EB', 'LI']:
 		paras = paras_strategic(zone=country, airac=airac, starting_date=starting_date, n_days=n_days, cut_alt=cut_alt,\
@@ -85,17 +86,17 @@ if __name__=='__main__':
 					f.write(str(x) + '\t' + str(y) + '\n')
 
 			print "Finding best capacity factor..."
-			capacity_factor, rejected_flights, H = find_good_scaling_capacity(G, "../networks/" + name_G + '_flights_selected.pic')
+			capacity_factor, rejected_flights, H = find_good_scaling_capacity(G, "../networks/" + name_G + '_flights_selected.pic', target=target_rejected_flights)
 			print "Found best capacity factor:", capacity_factor, "(rejected fraction", rejected_flights, "of flights)"
 			
-			write_down_capacities(H, save_file='../trajectories/capacities/' + G.name + '_capacities.dat')
+			write_down_capacities(H, save_file='../trajectories/capacities/' + G.name + '_capacities_rej' + str(target_rejected_flights) + '.dat')
 
 			for i in range(n_iter):
 				counter(i, n_iter, message="Doing simulations...")
-				name_results = name_sim(name_G) + '_' + str(i) + '.dat'
+				name_results = name_sim(name_G) + '_rej' + str(target_rejected_flights) + '_' + str(i) + '.dat'
 				with silence(True):
 					trajs, stats = generate_traffic(deepcopy(G), save_file='../trajectories/M1/' + name_results,
-										record_stats_file='../trajectories/M1/' + name_sim(name_G) + '_' + str(i) + '_stats.dat',
+										record_stats_file='../trajectories/M1/' + name_results.split('.dat')[0] + '_stats.dat',
 										file_traffic="../networks/" + name_G + '_flights_selected.pic',
 										put_sectors=True,
 										remove_flights_after_midnight=True,

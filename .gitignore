@@ -18,3 +18,4 @@ networks
 abm_strategic/Model2.sublime-workspace
 .ipynb*
 results/*
+*.ipynb

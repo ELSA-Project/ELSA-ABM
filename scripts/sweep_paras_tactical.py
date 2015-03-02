@@ -6,6 +6,7 @@ sys.path.insert(1, '..')
 import os
 
 import pickle
+import numpy as np
 
 from interface.abm_interface import choose_paras, do_ABM_tactical
 from abm_strategic.interface_distance import produce_M1_trajs_from_data
@@ -48,10 +49,12 @@ def sweep_paras(zone, n_iter=1, data_version=None, force=False):
 
 	compute_temporary_points(50000, boundary)
 
-	sig_V_iter = [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
+	#sig_V_iter = [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
+	sig_V_iter = np.arange(0., 0.26, 0.02)
 	#sig_V_iter = [10**(-float(i)) for i in range(4, -1, -1)]
 	#sig_V_iter = [0., 0.0001] # [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
-	t_w_iter = [40, 80, 120, 160, 240] # times 8 sec 
+	#t_w_iter = [40, 80, 120, 160, 240] # times 8 sec 
+	t_w_iter = [40, 60, 80, 100, 120]#, 160, 240] # times 8 sec 
 	#t_w_iter = [40, 80] # [40, 80, 120, 160, 240] # times 8 sec 
 	print 
 	for sig_V in sig_V_iter:
@@ -73,7 +76,7 @@ if __name__=='__main__':
 	#main_dir = os.path.abspath(__file__)
 	#main_dir = os.path.split(os.path.dirname(main_dir))[0]
 
-	sweep_paras('LIRR', n_iter=100)
+	sweep_paras('LIRR', n_iter=100, force=False)
 
 
 
