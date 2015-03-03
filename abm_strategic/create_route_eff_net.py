@@ -276,7 +276,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func=None, dist_func=dist, coords_func=lambda x: x, \
 	n_iter_max=1000000, probabilities={}, remove_nodes=False, hard_fixed=False, inplace=False):
 	"""
-	Given all trajectories and a value of efficiency, rectifiy the trajectories. The rectification can be 
+	Given all trajectories and a value of efficiency, rectify the trajectories. The rectification can be 
 	done in two ways: either some intermediate navpoints are removed from the trajectories,	or they are 
 	moved to another position which straightens up the segment. The points are gathered in groups defined by the 
 	user with kwarg 'groups'. These groups have different probabilities of being chosen. Then a navpoint is 

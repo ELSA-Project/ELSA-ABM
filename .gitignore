@@ -10,6 +10,7 @@ abm_tactical/*.o
 abm_tactical/ABMtactic.py
 abm_tactical/ABMtactic_wrap.c
 abm_tactical/*sublime*
+abm_tactical/config/*.dat
 trajectories/*
 results_tactical
 results_strategic

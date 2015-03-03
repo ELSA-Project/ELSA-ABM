@@ -27,8 +27,8 @@ if 0:
     print "===================================="
     np.random.seed(see_)
 
-def choose_paras(name_para, new_value):
-	with open("../abm_tactical/config/config.cfg") as f:
+def choose_paras(name_para, new_value, fil="../abm_tactical/config/config.cfg"):
+	with open(fil) as f:
 		lines = f.readlines()
 
 	#print lines
@@ -48,7 +48,7 @@ def choose_paras(name_para, new_value):
 		#print line
 	#print new_lines
 
-	with open("../abm_tactical/config/config.cfg", 'w') as f:
+	with open(fil, 'w') as f:
 		for line in new_lines:
 			f.write(line)
 

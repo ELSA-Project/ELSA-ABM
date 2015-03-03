@@ -50,7 +50,7 @@ def sweep_paras(zone, n_iter=1, data_version=None, force=False):
 	compute_temporary_points(50000, boundary)
 
 	#sig_V_iter = [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
-	sig_V_iter = np.arange(0., 0.26, 0.02)
+	sig_V_iter = np.arange(0., 0.26, 0.04)
 	#sig_V_iter = [10**(-float(i)) for i in range(4, -1, -1)]
 	#sig_V_iter = [0., 0.0001] # [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
 	#t_w_iter = [40, 80, 120, 160, 240] # times 8 sec 
