@@ -26,6 +26,8 @@ from copy import deepcopy
 
 from libs.general_tools import  delay, date_human, date_st, flip_polygon
 from libs.tools_airports import bet_OD
+from libs.efficiency import rectificate_trajectories_network
+
 version='2.9.1'
 
 #seed(3)
@@ -673,6 +675,62 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
         #print "Altitude picked:",th[j] 
     return trajectories
    
+def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
+    """
+    Used to iterate a partial_rectification without recomputing the best nodes each time.
+    """
+    trajectories_copy = deepcopy(trajectories)
+    G_copy = deepcopy(G)
+    # Make groups
+    #n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    n_best = select_interesting_navpoints_per_trajectory(trajectories_copy, G_copy, OD=OD(trajectories_copy), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    n_best = [n for sec, points in n_best.items() for n in points]
+    print 'n_best', n_best
+
+    groups = {"C":[], "N":[]} # C for "critical", N for "normal"
+    for n in G_copy.G_nav.nodes():
+        if n in n_best:
+            groups["C"].append(n)
+        else:
+            groups["N"].append(n)
+    probabilities = {"C":0., "N":1.} # Fix nodes with best score (critical points).
+
+    final_trajs_list, final_eff_list, final_G_list, final_groups_list = [], [], [], []
+    for eff_target in eff_targets:
+        # print "Trajectories:"
+        # for traj in trajectories_copy:
+        #   print traj
+        final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories_copy, eff_target, G_copy.G_nav, groups=groups, probabilities=probabilities,\
+            remove_nodes=True, **kwargs_rectificate)
+        for new_el, listt in [(final_trajs, final_trajs_list), (final_eff, final_eff_list), (final_G, final_G_list), (final_groups, final_groups_list)]:
+            listt.append(deepcopy(new_el))
+        print 
+
+    return final_trajs_list, final_eff_list, final_G_list, final_groups_list, n_best
+
+def partial_rectification(trajectories, eff_target, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
+    """
+    High level function for rectification. Fix completely N_per_sector points with 
+    highest metric value per sector.
+    """
+    # Make groups
+    #n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    n_best = select_interesting_navpoints_per_trajectory(trajectories, G, OD=OD(trajectories), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    
+    n_best = [n for sec, points in n_best.items() for n in points]
+
+    groups = {"C":[], "N":[]} # C for "critical", N for "normal"
+    for n in G.G_nav.nodes():
+        if n in n_best:
+            groups["C"].append(n)
+        else:
+            groups["N"].append(n)
+    probabilities = {"C":0., "N":1.} # Fix nodes with best score (critical points).
+    
+    final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories, eff_target, G.G_nav, remove_nodes=True, 
+                                                                                    groups=groups, probabilities=probabilities, **kwargs_rectificate)
+
+    return final_trajs, final_eff, final_G, final_groups
 
 ##################################################################################
 """
