@@ -239,11 +239,14 @@ int get_configuration(char *config_file,CONF_t *config){
 	//exit(0);
 	//(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
 	(*config).main_dir = _find_value_string_char(config_file, "main_dir");
+	(*config).bound_file = _find_value_string_char(config_file, "bound_file");
+	(*config).temp_nvp = _find_value_string_char(config_file, "temp_nvp");
+	(*config).shock_tmp = _find_value_string_char(config_file, "shock_tmp");
 	return 1;
 }
 
-int get_boundary( char *bound_file, CONF_t *config ){
-	FILE *rstream=fopen(bound_file, "r");
+int get_boundary( CONF_t *config ){
+	FILE *rstream=fopen((*config).bound_file, "r");
 	
 	if(rstream==NULL) BuG("No Bound File found\n");
 	
@@ -255,7 +258,7 @@ int get_boundary( char *bound_file, CONF_t *config ){
 	fclose(rstream);
 	
 	//Actually reading the file
-	rstream=fopen(bound_file, "r");
+	rstream=fopen((*config).bound_file, "r");
 	(*config).bound = falloc_matrix(Nbound, 2);
 	for(i=0;fgets(c, R_BUFF, rstream)&&i<Nbound;i++){
 		(*config).bound[i][0]=atof(c);
@@ -271,12 +274,13 @@ int get_boundary( char *bound_file, CONF_t *config ){
 }
 
 int get_temp_shock(CONF_t *conf){
-
+	/*
 	char* rep_tail = "/abm_tactical/config/shock_tmp.dat";
 	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*conf).main_dir, rep_tail) + 1);
 	sprintf(rep, "%s%s", (*conf).main_dir, rep_tail);
-	
-	FILE *rstream=fopen(rep,"r");
+	*/
+
+	FILE *rstream=fopen((*conf).shock_tmp,"r");
 	if(rstream==NULL) BuG("Impossible to read shock_tmp.dat\n");
 	
 	int i,j,N;
@@ -287,7 +291,7 @@ int get_temp_shock(CONF_t *conf){
 	(*conf).n_point_shock = N;
 	(*conf).point_shock = falloc_matrix(N, 2);
 	
-	rstream=fopen(rep,"r");
+	rstream=fopen((*conf).shock_tmp,"r");
 	for(i=0;fgets(c,500,rstream)&&i<N;i++){
 		(*conf).point_shock[i][0]=atof(c);
 		for(j=0;c[j]!='\t'&&c[j]!=' '&&c[j]!='\0';j++);
@@ -295,7 +299,7 @@ int get_temp_shock(CONF_t *conf){
 		(*conf).point_shock[i][1]=atof(&c[++j]);
 	}
 	fclose(rstream);
-	free(rep);
+	//free(rep);
 	return 1;
 	
 }

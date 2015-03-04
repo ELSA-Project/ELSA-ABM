@@ -120,6 +120,15 @@ typedef struct {
 
 	/*Main directory*/
 	char *main_dir;
+
+	/*file for boundaries*/
+	char *bound_file;
+	
+	/*file for boundaries*/
+	char *temp_nvp;
+
+	/*file for boundaries*/
+	char *shock_tmp;
 	
 	/*safe distance for neightboors flight*/
 	long double d_neigh;
@@ -141,7 +150,7 @@ typedef struct {
 int get_M1(char *,Aircraft_t**,CONF_t *);
 
 /* GetBoundary from boundary file */
-int get_boundary( char *, CONF_t * );
+int get_boundary( CONF_t * );
 
 /* Get configuration from a text file and store that in CONF_t variable */
 int get_configuration(char *,CONF_t *);
