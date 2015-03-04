@@ -26,7 +26,7 @@ from os.path import join
 
 from libs.general_tools import counter, silence, build_triangular
 from libs.YenKSP.graph import DiGraph
-from libs.YenKSP.algorithms import ksp_yen, ksp_yen_old
+from libs.YenKSP.algorithms import ksp_yen
 
 version='2.9.10'
 
@@ -1412,7 +1412,8 @@ class Net(nx.Graph):
         if not old:
             spath = [a['path'] for a in  ksp_yen(self.H, i, j, k)]
         else:
-            spath = [a['path'] for a in  ksp_yen_old(self.H, i, j, k)]
+            raise Exception("You asked for old ksp_yen which is not avalaible anymore")
+            #spath = [a['path'] for a in  ksp_yen_old(self.H, i, j, k)]
         spath=sorted(spath, key=lambda a:self.weight_path(a))
         
         spath_new, ii = [], 0

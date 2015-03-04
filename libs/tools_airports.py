@@ -2627,6 +2627,26 @@ def split_coords(G,nodes, r=0.04):
             y.append(G.node[n]['coord'][1]/60. + r*sin(theta))
     return x,y
 
+def numberize_nodes(G):
+    G.mapping = {n:i for i, n in enumerate(G.nodes())}
+    nx.relabel_nodes(G, G.mapping, copy=False)
+
+def numberize_trajs(trajs, mapping, fmt='(n, z), t'):
+    if fmt=='(n, z), t':
+        geom_trajs, start_dates = zip(*trajs)
+        geom_trajs = list(geom_trajs)
+
+        for i, traj in enumerate(geom_trajs):
+            for j, pouet in enumerate(traj):
+                pouet = list(pouet)
+                pouet[0] = mapping[pouet[0]]
+                traj[j] = tuple(pouet)
+            geom_trajs[i] = traj 
+        #print trajs[:2]
+        trajs = list(zip(geom_trajs, start_dates))
+    else:
+        raise Exception("Format", fmt, "not implemented yet")
+
 
 def _test_build_network_based_on_shapes():
     G, shapes = build_network_based_on_shapes('4ksut79f', 334, 'LF', 350.)

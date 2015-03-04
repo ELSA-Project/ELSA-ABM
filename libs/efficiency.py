@@ -33,14 +33,7 @@ to_OD2 = lambda z: to_str([z[0]])+','+to_str([z[1]])
 to_OD_inv  = lambda z: to_str([invgall(z[0])])+','+to_str([invgall(z[-1])])
 tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
 
-
 __version__ = "1.4"
-
-if 0:
-	see = 1
-	seed(see)
-	print "Seed", see
-
 
 def compute_efficiency(trajectories, dist_func = dist):
 	"""
@@ -64,11 +57,66 @@ def find_group(element, groups):
 		#if el == element: break
 				return g
 
+def return_linear_interpolation_altitude_func(long_dis_cul, alt):
+	def f(x):
+		if x>0.:
+			coin = list(long_dis_cul<x) 
+			if False in coin:
+				idx_aft = coin.index(False)
+				idx_bef = idx_aft - 1
+				return int(alt[idx_bef] + (alt[idx_aft] - alt[idx_bef])*(x - long_dis_cul[idx_bef])/(long_dis_cul[idx_aft] - long_dis_cul[idx_bef]))
+			else:
+				return alt[-1]
+		else:
+			return alt[0]
+	return f
+
+def rectificate_trajectories_network_with_time_and_alt(trajs_w_t, eff_target, G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
+	"""
+	Same than rectificate_trajectories_network_with_time, but recomputes altitudes with linear interpolation.
+	Signature:
+	([(navpoint, alt), (navpoint, alt)...], starting_date)
+	"""
+
+	# Compute geometrical trajectories (with altitudes)
+	geom_trajs_alt, start_dates = zip(*trajs_w_t)
+	#geom_trajs_alt = list(geom_trajs)
+	geom_trajs, alts = [], []
+	for traj in geom_trajs_alt:
+		g_t, alt = zip(*traj)
+		geom_trajs.append(list(g_t))
+		alts.append(list(alt))
+
+	# Rectificate geometrical trajectories
+	G_old = deepcopy(G)
+	trajs_rec, eff, G, groups_rec = rectificate_trajectories_network(geom_trajs, eff_target, G, remove_nodes=remove_nodes, resample_trajectories=resample_trajectories, **kwargs_rectificate)
+
+	# Recompute altitudes
+	for i, traj_new in enumerate(trajs_rec):
+		traj_old = geom_trajs[i]
+		long_dis, long_dis_cul_old = build_long_2d([G_old.node[n]['coord'] for n in traj_old]) 
+		long_dis_cul_old = np.array(long_dis_cul_old)
+		alt = alts[i]
+
+		long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in traj_new]) 
+		long_dis_cul = np.array(long_dis_cul)
+		
+		f_inter = return_linear_interpolation_altitude_func(long_dis_cul_old, alt)
+
+		new_alt = [f_inter(d*long_dis_cul_old[-1]/long_dis_cul[-1]) for d in long_dis_cul]
+
+		trajs_rec[i] = list(zip(traj_new, new_alt))
+
+	# Put back the starting date.
+	trajs_rec_w_t = list(zip(trajs_rec, start_dates))
+
+	return trajs_rec_w_t, eff, G, groups_rec
+
 def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
 	"""
-	Same than rectificate_trajectories_network, but recomputes times at cross point.
-
-	trajs_w_t is a list of trajectories for which each point is a tuple (navpoint, time). 
+	Same than rectificate_trajectories_network for trajectories including a starting date.
+	Signature for one trajectory:
+	([napvoint, navpoint..., napvoint], starting_date)
 	The time format is a tuple (year, month, day, hour, minute, second).
 	"""
 
@@ -89,6 +137,8 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 	Wrapper of rectificate_trajectories to use efficiently with a networkx object. 
 	Provide default functions to add nodes to network. Resample also the trajectories in the case
 	where the 'remove_nodes' mode is chosen. Propagates the kwargs for the rectification.
+	Signature of each trajectory in trajs:
+	[navpoint, navpoint ...]
 	"""
 
 	def get_coords(nvp):
@@ -127,11 +177,9 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 																#inplace=True,
 																remove_nodes=remove_nodes, 
 																**kwargs_rectificate)
-	#assert (trajs_rec==trajs)
+
 	if remove_nodes and resample_trajectories: # Resample trajectories.
 		for i, traj in enumerate(trajs_rec):
-			#print "trajs[i]:", trajs[i]
-			#print "trajs_rec[i]:", trajs_rec[i]
 			n_old = len(trajs_old[i])
 			n_new = len(traj)
 			n_gen = n_old - n_new
@@ -140,37 +188,21 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 			long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in traj]) 
 			long_dis, long_dis_cul = np.array(long_dis), np.array(long_dis_cul)
 
-			# print "long_dis:", long_dis
-			# print "long_dis_cul:", long_dis_cul
-
-			# Regularly spaced points along the trajectories.
+			# Equally spaced points along the trajectory.
 			long_dis_new_points = [(j+1.)*(long_dis_cul[-1]-long_dis_cul[0])/float(n_gen+1.) for j in range(n_gen)] 
-			# print 'long_dis_new_points:', long_dis_new_points
-
-			# print "Trajectory points:", traj
-			# print "Trajectory coordinates:", [get_coords(traj[j]) for j in range(len(traj))]
 			
 			new_point_coords = []
 			new_point_indices = []
 			for dd in long_dis_new_points:
-				#print "d=", d
-				#print d>long_dis_cul
 				point_before = len(long_dis_cul[dd>long_dis_cul])-1#.index(True) # Index of point before future point
-				#print "Index of point_before:", point_before
-
-				#print "point before and after:", get_coords(traj[point_before]), get_coords(traj[point_before+1])
 
 				dn = np.array(get_coords(traj[point_before+1])) - np.array(get_coords(traj[point_before])) # direction vector
-				#print "dn=", dn
-				#print "norm of dn:", np.sqrt(sum(dn**2))
 				dn = dn/np.sqrt(sum(dn**2))#np.norm(dn)
 				new_point_coords.append(list(np.array(get_coords(traj[point_before])) + (dd-long_dis_cul[point_before])*dn))
-				#print "new point:", np.array(get_coords(traj[point_before])) + (d-long_dis_cul[point_before])*dn
 				new_point_indices.append(point_before)
 
 			# Names (indices) of new navpoint in the network
 			names = [max(G.nodes()) + 1 + j for j in range(len(new_point_indices))]
-			#print "names=", names
 
 			traj_rec_without_new_points = deepcopy(trajs_rec[i])
 			trajs_rec[i] = insert_list_in_list(trajs_rec[i], names, new_point_indices)
@@ -178,31 +210,25 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 			# First add all new nodes to network
 			for j, name in enumerate(names):
 				# TODO: do this more carefully.
-				sec = G.node[traj_rec_without_new_points[new_point_indices[j]]]['sec']
+				if 'sec' in G.node[traj_rec_without_new_points[new_point_indices[j]]].keys():
+					sec = G.node[traj_rec_without_new_points[new_point_indices[j]]]['sec']
+				else:
+					sec = 0	
 				G.add_node(name, coord=new_point_coords[j], sec=sec)
 
 			# Then add all edges
 			for j in range(len(trajs_rec[i])-1):
 				if not trajs_rec[i][j+1] in G.neighbors(trajs_rec[i][j]):
-			#for j, name in enumerate(names):
-					#ref_point_bef = old_traj[new_point_indices[j]]
-					#ref_point_aft = old_traj[new_point_indices[j]+1]
 					# TODO: improve this?
 					ref_point_bef = trajs_old[i][0]
 					ref_point_aft = trajs_old[i][1]
 					scale_weight = G[ref_point_bef][ref_point_aft]['weight']/d((ref_point_bef, ref_point_aft))
 
-					# pt_bef = trajs_rec[i].index(name) -1
-					# name_pt_bef = trajs_rec[i][pt_bef]
-					# pt_aft = pt_bef + 2
-					# name_pt_aft = trajs_rec[i][pt_aft]
 					name_pt_bef = trajs_rec[i][j]
 
 
 					weight = scale_weight * d((trajs_rec[i][j], trajs_rec[i][j+1]))
 					G.add_edge(trajs_rec[i][j], trajs_rec[i][j+1], weight=weight)
-					#weight = scale_weight * d((name, name_pt_aft))
-					#G.add_edge(name, name_pt_aft, weight=weight)
 
 			# Check that all consecutive points of the trajectory are neighbors in the network
 			for j in range(len(trajs_rec[i])-1):
@@ -225,7 +251,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 	target efficiency is met or or the stop criteria are met.
 
 	Args:
-		trajs: list of trajectories (list of points)
+		trajs: list of trajectories: list of nodes of network G if specified, or list of coordinates (x,y).
 		eff_target: target for efficiency
 
 	Kwargs:
@@ -253,7 +279,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 	Changed in 1.1: efficiency is computed internally. Stop criteria on efficiency is < instead of <=.
 		Added kwarg dist_func.
 	Changed in 1.2: added dist_func, coords_func, n_iter_max, add_node_func, G.
-	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based tarjectories. Added groups, remove_nodes, hard_fixed.
+	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based trajectories. Added groups, remove_nodes, hard_fixed.
 	#Changed in 1.4: added stop_criteria.
 	"""
 

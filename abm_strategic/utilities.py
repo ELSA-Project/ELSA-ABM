@@ -36,8 +36,8 @@ _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRe
 #shuffle(_colors)
 
 def draw_network_map(G_init, title='Network map', trajectories=[], rep='./',airports=True, 
-        load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
-        colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
+    load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
+    colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
     print "Drawing network..."
     G = deepcopy(G_init)
     polygons_copy = deepcopy(polygons)
@@ -299,11 +299,24 @@ def compute_M1_trajectories(queue, starting_date):
 
     return trajectories_nav
 
-def convert_trajectories(G, trajectories, put_sectors=False, 
-                remove_flights_after_midnight=False,
-                starting_date=[2010, 5, 6, 0, 0, 0]):
+def convert_trajectories(G, trajectories, fmt_in='(n), t', **kwargs):
+
+    if fmt_in=='(n), t':
+        return convert_trajectories_no_alt(G, trajectories, **kwargs)
+    elif fmt_in=='(n, z), t':
+        return convert_trajectories_alt(G, trajectories, **kwargs)
+    else:
+        raise Exception("format", fmt, "is not implemented")
+
+def convert_trajectories_no_alt(G, trajectories, put_sectors=False, 
+    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+
+    trajectories signature in input:
+    (n), t
+    trajectories signature in output:
+    (x, y, z, t) or (x, y, z, t, s)
     """ 
     trajectories_coords = []
     for i, (trajectory, d_t) in enumerate(trajectories):
@@ -318,6 +331,40 @@ def convert_trajectories(G, trajectories, put_sectors=False,
                 traj_coords.append([x, y, 0., t])
             else:
                 traj_coords.append([x, y, 0., t, G.node[n]['sec']])
+        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
+            trajectories_coords.append(traj_coords)
+
+    if remove_flights_after_midnight:
+        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
+    return trajectories_coords
+
+def convert_trajectories_alt(G, trajectories, put_sectors=False, 
+    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
+    """
+    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+    
+    trajectories signature in input:
+    (n, z), t
+    trajectories signature in output:
+    (x, y, z, t) or (x, y, z, t, s)
+    """ 
+    trajectories_coords = []
+    for i, (trajectory, d_t) in enumerate(trajectories):
+        traj_coords = []
+        for j, (n, z) in enumerate(trajectory):
+            x = G.node[n]['coord'][0]
+            y = G.node[n]['coord'][1]
+            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1][0]]['weight'])
+            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
+                break
+            if not put_sectors:
+                traj_coords.append([x, y, z, t])
+            else:
+                if 'sec' in G.node[n].keys():
+                    sec = G.node[n]['sec']
+                else:
+                    sec = 0
+                traj_coords.append([x, y, z, t, sec])
         if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
             trajectories_coords.append(traj_coords)
 
@@ -356,7 +403,8 @@ def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.
     """
     Write a set of trajectories in the format for abm_tactical.
     Note: counts begin at 1 to comply with older trajectories.
-    @G: navpoint network.
+    Signature trajectories:
+    (x, y, z, t) or (x, y, z, t, s)
     """ 
     os.system("mkdir -p " + os.path.dirname(fil))
     with open(fil, 'w') as f:

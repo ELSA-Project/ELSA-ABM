@@ -199,10 +199,35 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 
 	return G
 
+def trajectories_from_data(zone='LF', fmt='(n, z, t)', data_version=None, save_file=None, **kwargs_distance):
+	try:
+		assert fmt in ['(n, z, t)', '(n, z), t', '(n), t', '(n, t)']#, ('n', 'z', 'timeint'), (('n', 'z'), 'timeint')]
+	except:
+		Exception("Format", fmt, "is not implemented.")
+
+	# Get navpoints network
+	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
+	seth = get_set(paras_nav, force=False)
+	G_nav, flights_nav = seth.G, seth.flights
+
+	trajectories = []
+	for f in seth.flights.values():
+		points, altitudes = zip(*f['route_m1'])
+		if fmt == '(n, z, t)':
+			trajectories.append([(points[i], altitudes[i], f['route_m1t'][i][1]) for i in range(len(points))])
+		elif fmt == '(n, t)':
+			trajectories.append([(points[i], f['route_m1t'][i][1]) for i in range(len(points))])	
+		elif fmt == '(n, z), t':
+			trajectories.append(([(points[i], altitudes[i]) for i in range(len(points))], f['route_m1t'][0][1]))
+		elif fmt == '(n), t':
+			trajectories.append(([points[i] for i in range(len(points))], f['route_m1t'][0][1]))
+
+	return trajectories, G_nav
+
 def produce_M1_trajs_from_data(zone='LF', data_version=None, put_fake_sectors=False, save_file=None, **kwargs_distance):
 	# Get navpoint network
 	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
-	seth = get_set(paras_nav, force = False)
+	seth = get_set(paras_nav, force=False)
 	G_nav, flights_nav = seth.G, seth.flights
 
 	trajectories = []
