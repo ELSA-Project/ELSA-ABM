@@ -239,14 +239,14 @@ int get_configuration(char *config_file,CONF_t *config){
 	//exit(0);
 	//(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
 	(*config).main_dir = _find_value_string_char(config_file, "main_dir");
-	(*config).bound_file = _find_value_string_char(config_file, "bound_file");
+	(*config).bound_latlon = _find_value_string_char(config_file, "bound_latlon");
 	(*config).temp_nvp = _find_value_string_char(config_file, "temp_nvp");
 	(*config).shock_tmp = _find_value_string_char(config_file, "shock_tmp");
 	return 1;
 }
 
 int get_boundary( CONF_t *config ){
-	FILE *rstream=fopen((*config).bound_file, "r");
+	FILE *rstream=fopen((*config).bound_latlon, "r");
 	
 	if(rstream==NULL) BuG("No Bound File found\n");
 	
@@ -258,7 +258,7 @@ int get_boundary( CONF_t *config ){
 	fclose(rstream);
 	
 	//Actually reading the file
-	rstream=fopen((*config).bound_file, "r");
+	rstream=fopen((*config).bound_latlon, "r");
 	(*config).bound = falloc_matrix(Nbound, 2);
 	for(i=0;fgets(c, R_BUFF, rstream)&&i<Nbound;i++){
 		(*config).bound[i][0]=atof(c);

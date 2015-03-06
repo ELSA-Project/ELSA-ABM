@@ -14,7 +14,7 @@ from shapely.geometry import LineString
 from copy import deepcopy
 from datetime import datetime, timedelta
 
-from igraph import *
+#from igraph import *
 
 #from utilities import select_interesting_navpoints, OD, select_interesting_navpoints_per_trajectory
 

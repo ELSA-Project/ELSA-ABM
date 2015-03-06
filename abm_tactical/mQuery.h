@@ -122,7 +122,7 @@ typedef struct {
 	char *main_dir;
 
 	/*file for boundaries*/
-	char *bound_file;
+	char *bound_latlon;
 	
 	/*file for boundaries*/
 	char *temp_nvp;

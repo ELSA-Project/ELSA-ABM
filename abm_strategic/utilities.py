@@ -308,7 +308,7 @@ def convert_trajectories(G, trajectories, fmt_in='(n), t', **kwargs):
     else:
         raise Exception("format", fmt, "is not implemented")
 
-def convert_trajectories_no_alt(G, trajectories, put_sectors=False, 
+def convert_trajectories_no_alt(G, trajectories, put_sectors=False, input_minutes=False,
     remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
@@ -322,8 +322,12 @@ def convert_trajectories_no_alt(G, trajectories, put_sectors=False,
     for i, (trajectory, d_t) in enumerate(trajectories):
         traj_coords = []
         for j, n in enumerate(trajectory):
-            x = G.node[n]['coord'][0]
-            y = G.node[n]['coord'][1]
+            if not input_minutes:
+                x = G.node[n]['coord'][0]
+                y = G.node[n]['coord'][1]
+            else:
+                x = G.node[n]['coord'][0]/60.
+                y = G.node[n]['coord'][1]/60.
             t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1]]['weight'])
             if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
                 break
@@ -338,7 +342,7 @@ def convert_trajectories_no_alt(G, trajectories, put_sectors=False,
         print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
     return trajectories_coords
 
-def convert_trajectories_alt(G, trajectories, put_sectors=False, 
+def convert_trajectories_alt(G, trajectories, put_sectors=False, input_minutes=False,
     remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
@@ -352,8 +356,12 @@ def convert_trajectories_alt(G, trajectories, put_sectors=False,
     for i, (trajectory, d_t) in enumerate(trajectories):
         traj_coords = []
         for j, (n, z) in enumerate(trajectory):
-            x = G.node[n]['coord'][0]
-            y = G.node[n]['coord'][1]
+            if not input_minutes:
+                x = G.node[n]['coord'][0]
+                y = G.node[n]['coord'][1]
+            else:
+                x = G.node[n]['coord'][0]/60.
+                y = G.node[n]['coord'][1]/60.
             t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1][0]]['weight'])
             if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
                 break
@@ -447,7 +455,7 @@ def post_process_paras(paras):
     ################################# Post processing ################################
     ##################################################################################
     # This is useful in case of change of parameters (in particular using iter_sim) in
-    # the future, to record the dependencies between variables.
+    # order to record the dependencies between variables.
     update_priority=[]
     to_update={}
 
