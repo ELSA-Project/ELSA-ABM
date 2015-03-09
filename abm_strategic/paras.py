@@ -40,7 +40,9 @@ tau = 1.*unit							# Increment of time for shifting flight plans.
 day=24.*60. 							# Total duration of the simulation in minutes.
 
 # One can specify a file to extract flows (i.e. departure times, entry exit, densities, etc.)
-# Leave None for new generation of traffic.
+# Leave None for new generation of traffic. 
+# You cqn specify ACtot even if you give a file, in which case the code will extract the distribution of 
+# flows (entry/exit + times of departure)
 
 file_traffic = None     
 if file_traffic==None:
@@ -62,6 +64,15 @@ if file_traffic==None:
 			control_ACsperwave = True	# True if you want to control ACsperwave instead of density/ACtot
 
 	starting_date = [2010, 5, 6, 0, 0, 0] # This is just used to create artificial dates.
+else:
+	bootstrap_mode = False	# if False, times of departures and entry/exits are exactly matched 
+							# the data. Otherwise, they are generated from the distribution extracted 
+							# on the data.
+	if bootstrap_mode:
+		bootstrap_only_time = True 	# if True, keeps the same number of flights (scaled down or scaled down if ACtot is specified)
+									# for each entry/exit but extract new desired times from all times 
+		ACtot = 1000 # if commented, will be matched to the number of flights in the traffic file
+		
 noise = 0. 								# noise on departures in minutes.
 
 # ------------------ Behavioral parameters ---------------- #

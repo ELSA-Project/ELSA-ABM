@@ -12,6 +12,7 @@ import _mysql
 import pickle
 from os.path import join as jn
 
+from paths import result_dir 
 from interface.abm_interface import do_ABM_tactical, choose_paras
 from abm_strategic.interface_distance import name as name_net, paras_strategic
 from libs.tools_airports import my_conv
@@ -70,6 +71,6 @@ if __name__ == '__main__':
 					name_results = name_sim(name_G) + '_' + str(i)+ '.dat'
 					#for j in range(n_iter):
 					#print '../trajectories/M3/' + name_results + '_' + str(i)
-					input_name = jn(main_dir, 'trajectories/M1/' + name_results)
-					output_name = jn(main_dir, 'trajectories/M3/' + name_results)
+					input_name = jn(result_dir, 'trajectories/M1/' + name_results)
+					output_name = jn(result_dir, 'trajectories/M3/' + name_results)
 					do_ABM_tactical(input_name, output_name)# + '_' + str(j))

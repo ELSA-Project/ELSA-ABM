@@ -20,8 +20,10 @@ from libs.general_tools import silence
 """
 TODO: put Paras Tact here, modify choose_paras to change several paras at the same time.
 """
-main_dir = os.path.abspath(__file__)
-main_dir = os.path.split(os.path.dirname(main_dir))[0]
+# main_dir = os.path.abspath(__file__)
+# main_dir = os.path.split(os.path.dirname(main_dir))[0]
+
+# result_dir = os.path.join(os.path.dirname(main_dir), 'results')
 
 if 0:
     # Manual seed
@@ -258,9 +260,9 @@ if __name__ == '__main__':
 
 	choose_paras('tmp_from_file', 1)
 	#input_file = os.path.join(main_dir, "trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat")
-	input_file = os.path.join(main_dir, "trajectories/M1/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
+	input_file = os.path.join(result_dir, "trajectories/M1/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
 	#output_file = os.path.join(main_dir, "results/output.dat")
-	output_file = os.path.join(main_dir, "trajectories/M3/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
+	output_file = os.path.join(result_dir, "trajectories/M3/trajs_Real_LF_v5.8_Strong_EXTLFBB_LFBB_2010-5-6+0_d2_cut240.0_directed_1.dat")
 	#do_ABM_tactical(input_file, output_file)
 	do_efficiency2()
 

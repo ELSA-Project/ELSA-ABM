@@ -506,9 +506,16 @@ def post_process_paras(paras):
             #     raise
             paras['flows'][(_entry, _exit)] = paras['flows'].get((_entry, _exit),[]) + [f['route_m1t'][0][1]]
 
-        paras['departure_times'] = 'exterior'
-        paras['ACtot'] = sum([len(v) for v in paras['flows'].values()])
-        paras['control_density'] = False
+        if not paras['bootstrap_mode']:
+            #paras['departure_times'] = 'exterior'
+            paras['ACtot'] = sum([len(v) for v in paras['flows'].values()])
+            paras['control_density'] = False
+        else:
+            if not 'ACtot' in paras.keys():
+                paras['ACtot'] = sum([len(v) for v in paras['flows'].values()])
+           
+        print 'pouet' 
+        print paras['ACtot']
         density=_func_density_vs_ACtot_na_day(paras['ACtot'], paras['na'], paras['day'])
 
         # There is no update requisites here, because the traffic should not be changed

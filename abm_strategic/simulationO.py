@@ -38,7 +38,7 @@ from general_tools import draw_network_and_patches, header, delay, clock_time, s
 from tools_airports import extract_flows_from_data
 from efficiency import rectificate_trajectories_network_with_time, compute_efficiency
 
-version='2.9.5'
+version='2.9.6'
 main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
 
 if 0:
@@ -121,7 +121,7 @@ class Simulation:
         
         for k in ['AC', 'Nfp', 'na', 'tau', 'departure_times', 'ACtot', 'N_shocks','Np',\
             'ACsperwave','Delta_t', 'width_peak', 'old_style_allocation', 'flows', 'nA', \
-            'day', 'noise', 'Nsp_nav', 'STS', 'starting_date']:
+            'day', 'noise', 'Nsp_nav', 'STS', 'starting_date', 'bootstrap_mode', 'bootstrap_only_time']:
             if k in paras.keys():
                 setattr(self, k, paras[k])
 
@@ -222,19 +222,36 @@ class Simulation:
         # if clean:  # Not sure if this is useful.
         #     self.Netman.initialize_load(self.G)
 
-    def build_ACs_from_flows(self, match_numbers=True, match_times=True): 
+    def build_ACs_from_flows(self): 
         """
         New in 2.9.2: the list of ACs is built from the flows (given by times). 
-        (Only the number of flights can be matched, or also the times, which
-        are taken as desired times.) TODO
-        New in 2.9.5: record the day of simulation.
+        Changed in 2.9.5: record the day of simulation.
+        Changed in 2.9.6: added bootstrap_mode
         """
         self.ACs={}
-        k=0
-        all_times = [delay(time) for ((source, destination), times) in self.flows.items() for time in times]
+        all_times = [time for ((source, destination), times) in self.flows.items() for time in times]
+        
+        if not self.bootstrap_mode:
+            flows = self.flows
+        else:
+            # Rmq: at this stage, self.ACtot is already either the nu,ber of flights from data
+            # or some user defined number.
+            if self.bootstrap_only_time:
+                # resampling times keeping number of flights constant per each entry/exit
+                tot_AC = len(all_times)
+                flows = {(entry, exit):sample(all_times, int(len(times)*self.ACtot/float(tot_AC))) for (entry, exit), times in self.flows.items()}
+            else:
+                # resampling the pairs of entry/exit
+                new_pairs = np.array(sample(self.flows.keys(), self.ACtot))
+                flows = {}
+                for pair in new_pairs:
+                    flows[pair] = flows.get(pair, []) + [choice(all_times)]
+        
+        all_times = [delay(time) for time in all_times]
         min_time = date_st(min(all_times))
         self.starting_date = [min_time[0], min_time[1], min_time[2], 0, 0, 0]
-        for ((source, destination), times) in self.flows.items():
+        k=0
+        for ((source, destination), times) in flows.items():
             idx_s = self.G.G_nav.idx_nodes[source]
             idx_d = self.G.G_nav.idx_nodes[destination]
             if idx_s in self.G.G_nav.airports and idx_d in self.G.G_nav.airports and self.G.G_nav.short.has_key((idx_s, idx_d)):    
@@ -256,7 +273,7 @@ class Simulation:
                     print ("I do " + (not idx_s in self.G.G_nav.airports)*'not', "find", idx_s, ", I do " + (not idx_d in self.G.G_nav.airports)*'not', "find", idx_d,\
                      'and the couple is ' + (not self.G.G_nav.short.has_key((idx_s, idx_d)))*'not', 'in pairs.')
                     print ('I skip this flight.')
-                pass
+                pass     
         # if clean:   
         #     self.Netman.initialize_load(self.G)
 
@@ -363,8 +380,8 @@ class Simulation:
         #     if self.na==1:
         #         for i in range(self.ACtot):
         #             self.t0sp.append([choice(times_data)])
-        elif self.departure_times=='exterior':
-            self.t0sp=[]
+        #elif self.departure_times=='exterior':
+        #    self.t0sp=[]
 
     def shuffle_departure_times(self):
         if self.noise!=0:
@@ -575,7 +592,10 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         paras['old_style_allocation'] = False
         paras['force'] = True
         paras['capacity_factor'] = True
+        paras['bootstrap_mode'] = True
+        paras['bootstrap_only_time'] = True
 
+    print (paras_control)
     for p,v in paras_control.items():
         paras[p] = v
 

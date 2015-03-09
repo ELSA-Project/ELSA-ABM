@@ -8,6 +8,8 @@ import os
 import pickle
 import numpy as np
 
+import libs	
+
 from interface.abm_interface import choose_paras, do_ABM_tactical
 from abm_strategic.interface_distance import trajectories_from_data
 from abm_tactical.generate_temporary_points import compute_temporary_points
@@ -18,6 +20,8 @@ from libs.efficiency import rectificate_trajectories_network_with_time_and_alt
 
 main_dir = os.path.abspath(__file__)
 main_dir = os.path.split(os.path.dirname(main_dir))[0]
+
+result_dir = libs.paths.result_dir
 
 def points_in_sectors(zone, all_shapes, clean_double=True):
 	points = []
@@ -32,7 +36,7 @@ def points_in_sectors(zone, all_shapes, clean_double=True):
 
 def name_results_shocks(paras, **param):
 	m1_file_name = param['m1_file_name'].split('/')[-1].split('.dat')[0]
-	output_file = main_dir + '/trajectories/M3/' + m1_file_name + '_sigV' + str(paras['sig_V']) + '_t_w' + str(paras['t_w'])
+	output_file = result_dir + '/trajectories/M3/' + m1_file_name + '_sigV' + str(paras['sig_V']) + '_t_w' + str(paras['t_w'])
 	if paras['f_shocks']>0:
 		output_file += '_shocks' + str(paras['f_shocks'])
 	output_file += '_' + str(param['i']) + '.dat'
@@ -189,14 +193,14 @@ if __name__=='__main__':
 		files, logs = sweep_paras_shocks(*args, **all_paras)
 		print
 
-	log_tot = main_dir + '/trajectories/files/'+ sys.argv[1] + '_log.txt' 
+	log_tot = result_dir + '/trajectories/files/'+ sys.argv[1] + '_log.txt' 
 	for f in logs:
 		os.system('cat ' + f + ' >> ' + log_tot)
 		os.system('rm ' + f)
 
 	print "Log saved in", log_tot
 
-	list_files = main_dir + '/trajectories/files/' + sys.argv[1] + '_files.pic'
+	list_files = result_dir + '/trajectories/files/' + sys.argv[1] + '_files.pic'
 	with open(list_files, 'w') as f:
 		pickle.dump(files, f)
 

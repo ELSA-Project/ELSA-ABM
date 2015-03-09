@@ -5,6 +5,7 @@ import sys as _sys
 import os as _os
 _sys.path.insert(1, '..')
 
+import libs
 from interface.abm_interface import ParasTact
 import numpy as _np
 from sweep_paras_tactical_shocks import lifetime_func, Nm_shock_func
@@ -12,6 +13,8 @@ from abm_strategic.interface_distance import produce_M1_trajs_from_data as _prod
 
 main_dir = _os.path.abspath(__file__)
 main_dir = _os.path.split(_os.path.dirname(main_dir))[0]
+
+_result_dir = libs.paths.result_dir
 
 zone = 'LIRR'
 # Parameters directly controlled by tactical ABM
@@ -46,11 +49,12 @@ paras.analyse_dependance()
 paras.initialize_paras()
 
 #input_file=main_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
-_n_strat = 1
+_n_strat = 10
 input_files = []
 for _i in range(_n_strat):
-	input_files.append(main_dir + '/trajectories/M1/trajs_Real_' + zone[:2] + '_v5.8_Strong_EXT' + zone + '_' + zone + '_2010-5-6+0_d2_cut240.0_directed_' + str(_i) +'.dat')
-
+	#input_files.append(_os.path.join([_result_dir, 'trajectories', 'M1', 'trajs_Real_' + zone[:2] + '_v5.8_Strong_EXT' + zone + '_' + zone + '_2010-5-6+0_d2_cut240.0_directed_' + str(_i) +'.dat']))
+	input_files.append(_result_dir + '/trajectories/M1/trajs_Real_' + zone[:2] + '_v5.8_Strong_EXT' + zone + '_' + zone + '_2010-5-6+0_d2_cut240.0_directed_' + str(_i) +'.dat')
+	
 shock_file_zone = main_dir + '/abm_tactical/config/shock_tmp_' + zone + '.dat'
 bound_file_zone = main_dir + '/abm_tactical/config/bound_latlon_' + zone + '.dat'
 tmp_navpoints_file_zone = main_dir + '/abm_tactical/config/temp_nvp_' + zone + '.dat'

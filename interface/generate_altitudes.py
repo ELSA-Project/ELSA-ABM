@@ -6,6 +6,8 @@ Generation of altitudes for flights given a distribution of flight levels.
 """
 import sys
 sys.path.insert(1,'../abm_strategic')
+sys.path.insert(1,'..')
+import os
 
 from scipy import stats
 from string import split, strip
@@ -13,6 +15,7 @@ from string import split, strip
 from simAirSpaceO import FlightPlan
 from general_tools import getDistribution
 from utilities import write_trajectories_for_tact
+from paths import result_dir
 
 def load_from_trajectories(fil='../trajectories/trajectories.dat', starting_date = [2010, 6, 5, 10, 0, 0]):
 	"""    
@@ -82,7 +85,7 @@ if __name__ == '__main__':
 	trajectories = generate_traffic(G, #save_file = '../trajectories/trajectories.dat', ACtot = 10)
 					ACtot = 1000)
 
-	trajectories = generate_altitudes_for_traj(trajectories, save_file = '../trajectories/M1/trajectories_alt.dat')
+	trajectories = generate_altitudes_for_traj(trajectories, save_file = os.path.join(result_dir, 'trajectories/M1/trajectories_alt.dat'))
 
 
 	# print

@@ -14,6 +14,9 @@ import pickle
 
 from libs.general_tools import counter
 
+import abm_strategic
+result_dir = abm_strategic.result_dir
+
 # DIR='../trajectories/M1/'
 # DIR3='../trajectories/M3_nodir/'
 
@@ -118,22 +121,22 @@ def get_eff(sim):
 if __name__=='__main__':
 	p = Pool(2)
 
-	force = True
+	force = False
 
 	temp = __import__(sys.argv[1], globals(), locals(), ['all_paras'], -1)
 	
 	all_paras = temp.all_paras
 
-	with open(main_dir + '/trajectories/files/' + sys.argv[1] + '_files.pic', 'r') as f:
+	with open(result_dir + '/trajectories/files/' + sys.argv[1] + '_files.pic', 'r') as f:
 		files = pickle.load(f)
 
 	for idx, (inpt, outpt) in enumerate(files):
 		counter(idx, len(files), message="Computing differences between trajectories ... ")
 
-		LH_file = main_dir + '/trajectories/metrics/L_H_' + outpt.split('/')[-1]
+		LH_file = result_dir + '/trajectories/metrics/L_H_' + outpt.split('/')[-1]
 		if not os.path.exists(LH_file) or force:
-			#F3 = main_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '_0.dat'
-			#F1 = main_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
+			#F3 = result_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '_0.dat'
+			#F1 = result_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
 			#print inpt
 			#print outpt
 			m1, hm1 = get_M(inpt)

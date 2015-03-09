@@ -8,6 +8,7 @@ import os
 import pickle
 import numpy as np
 
+from paths import result_dir
 from interface.abm_interface import choose_paras, do_ABM_tactical
 from abm_strategic.interface_distance import produce_M1_trajs_from_data
 from abm_tactical.generate_temporary_points import compute_temporary_points
@@ -33,7 +34,7 @@ def sweep_paras(zone, n_iter=1, data_version=None, force=False):
 	config_file = main_dir + '/abm_tactical/config/config.cfg'
 	#loop(paras_iter, paras_iter.keys(), paras, thing_to_do=do, paras=paras, build_pat=build_pat)
 	
-	input_file = main_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
+	input_file = result_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
 	#input_file = main_dir + '/trajectories/M1/trajs_for_testing_10_sectors.dat'
 	
 	produce_M1_trajs_from_data(zone=zone, data_version=data_version, put_fake_sectors=True, save_file=input_file)
@@ -43,7 +44,7 @@ def sweep_paras(zone, n_iter=1, data_version=None, force=False):
 	boundary = list(all_shapes[zone]['boundary'][0].exterior.coords)
 	assert boundary[0]==boundary[-1]
 
-	with open('../abm_tactical/config/bound_latlon.dat', 'w') as f:
+	with open(result_dir + '/abm_tactical/config/bound_latlon.dat', 'w') as f:
 		for x, y in boundary:
 			f.write(str(x) + '\t' + str(y) + '\n')
 
@@ -66,9 +67,9 @@ def sweep_paras(zone, n_iter=1, data_version=None, force=False):
 
 			for i in range(n_iter):
 				counter(i, n_iter, message="Doing iterations... ")
-				output_file = main_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '.dat'
+				output_file = result_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '.dat'
 				if not os.path.exists(output_file.split('.dat')[0] + '_0.dat') or force:
-					with stdout_redirected(to=main_dir + '/trajectories/M3/log_trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '.txt'):
+					with stdout_redirected(to=result_dir + '/trajectories/M3/log_trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '.txt'):
 						do_ABM_tactical(input_file, output_file, config_file, verbose=1)
 		print
 

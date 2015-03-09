@@ -13,6 +13,7 @@ import pickle
 import numpy as np
 from copy import deepcopy
 
+from paths import result_dir as _result_dir
 from abm_strategic.simulationO import generate_traffic, write_down_capacities
 from abm_strategic.interface_distance import name as name_net, paras_strategic
 from abm_strategic.utilities import network_whose_name_is
@@ -88,26 +89,26 @@ if __name__=='__main__':
 			paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version) #TODO
 			name_G = name_net(paras_nav, data_version)
 			try:
-				G = network_whose_name_is('../networks/' + name_G)
+				G = network_whose_name_is(_result_dir + '/networks/' + name_G)
 			except IOError:
 				print "Could not load the network, I skip it."
 				print 
 				continue
 
-			with open('../libs/All_shapes_334.pic','r') as f:
+			with open('.libs/All_shapes_334.pic','r') as f:
 				all_shapes = pickle.load(f)
 			boundary = list(all_shapes[zone]['boundary'][0].exterior.coords)
 			assert boundary[0]==boundary[-1]
 
-			with open('../trajectories/bounds/' + G.name + '_bound_latlon.dat', 'w') as f:
+			with open(_result_dir + '/trajectories/bounds/' + G.name + '_bound_latlon.dat', 'w') as f:
 				for x, y in boundary:
 					f.write(str(x) + '\t' + str(y) + '\n')
 
 			print "Finding best capacity factor..."
-			capacity_factor, rejected_flights, H = find_good_scaling_capacity(G, "../networks/" + name_G + '_flights_selected.pic', target=target_rejected_flights)
+			capacity_factor, rejected_flights, H = find_good_scaling_capacity(G, _result_dir + "/networks/" + name_G + '_flights_selected.pic', target=target_rejected_flights)
 			print "Found best capacity factor:", capacity_factor, "(rejected fraction", rejected_flights, "of flights)"
 			
-			write_down_capacities(H, save_file='../trajectories/capacities/' + G.name + '_capacities_rej' + str(target_rejected_flights) + '.dat')
+			write_down_capacities(H, save_file=_result_dir + '/trajectories/capacities/' + G.name + '_capacities_rej' + str(target_rejected_flights) + '.dat')
 
 			if zone in targets_eff_per_ACC.keys():
 				for eff_target in targets_eff_per_ACC[zone]:
@@ -115,9 +116,9 @@ if __name__=='__main__':
 						counter(i, n_iter, message="Doing simulations...")
 						name_results = name_sim(name_G) + '_eff_' + str(eff_target) + '_rej' + str(target_rejected_flights) + '_' + str(i) + '.dat'
 						with silence(True):
-							trajs, stats = generate_traffic(deepcopy(G), save_file='../trajectories/M1/' + name_results,
-												record_stats_file='../trajectories/M1/' + name_results.split('.dat')[0] + '_stats.dat',
-												file_traffic="../networks/" + name_G + '_flights_selected.pic',
+							trajs, stats = generate_traffic(deepcopy(G), save_file=_result_dir + '/trajectories/M1/' + name_results,
+												record_stats_file=_result_dir + '/trajectories/M1/' + name_results.split('.dat')[0] + '_stats.dat',
+												file_traffic=_result_dir + "/networks/" + name_G + '_flights_selected.pic',
 												put_sectors=True,
 												remove_flights_after_midnight=True,
 												capacity_factor=capacity_factor,
