@@ -235,14 +235,10 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
 	(*config).lifetime = _find_value_string(config_file, "lifetime");
-	//printf("%s\n", config_file);
-	//exit(0);
-	//(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
 	(*config).main_dir = _find_value_string_char(config_file, "main_dir");
 	(*config).bound_latlon = _find_value_string_char(config_file, "bound_latlon");
 	(*config).temp_nvp = _find_value_string_char(config_file, "temp_nvp");
 	(*config).shock_tmp = _find_value_string_char(config_file, "shock_tmp");
-	printf("%d\n", (*config).Nm_shock);
 	return 1;
 }
 
