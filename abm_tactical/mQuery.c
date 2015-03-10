@@ -242,6 +242,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).bound_latlon = _find_value_string_char(config_file, "bound_latlon");
 	(*config).temp_nvp = _find_value_string_char(config_file, "temp_nvp");
 	(*config).shock_tmp = _find_value_string_char(config_file, "shock_tmp");
+	printf("%d\n", (*config).Nm_shock);
 	return 1;
 }
 

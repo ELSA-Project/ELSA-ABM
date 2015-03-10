@@ -489,7 +489,7 @@ def stdout_redirected(to=os.devnull):
             _redirect_stdout(to=old_stdout) # restore stdout.
                                             # buffering and flags such as
                                             # CLOEXEC may be different
-            print "log written in", to
+            #print "log written in", to
 
 #decorator
 def save_fig(plot):

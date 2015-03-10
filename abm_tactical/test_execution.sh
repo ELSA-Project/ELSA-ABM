@@ -1,4 +1,4 @@
 #/bin/bash
 #Execution for testing purposes...
 
-./ElsaABM /home/earendil/Documents/ELSA/ABM/ABM_FINAL/trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat /home/earendil/Documents/ELSA/ABM/ABM_FINAL/results_tactical/output.dat
+./ElsaABM.so /home/earendil/Documents/ELSA/ABM/results/trajectories/M1/trajs_Real_LI_v5.8_Strong_EXTLIRR_LIRR_2010-5-6+0_d2_cut240.0_directed_rej0.015_ACtot500_99.dat /home/earendil/Documents/ELSA/ABM/results/results_tactical/output_shocks.dat config/config.cfg 

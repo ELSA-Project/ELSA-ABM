@@ -631,6 +631,7 @@ int _checkShockareaRoute(long double **pos,int N,SHOCK_t shock,long double *d,lo
 	for(j=0;j<shock.Nshock;j++) if( fabs(shock.shock[j][3]-t)<SGL ){
 			for(i=1;i<N;i++) if(pos[i][3]==1) if(pos[i][2]==shock.shock[j][5]){
 				 if(_isInsideCircle(pos[i],shock.shock[j])){
+				 	printf("Shock\n");
 					 d[i]=0;
 				}
 		}

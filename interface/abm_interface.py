@@ -199,15 +199,15 @@ def do_ABM_tactical(input_file, output_file, config_file, verbose=2,
 	n = rd.randint(0, 1000000000)
 	
 	for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_latlon'), (temp_nvp, 'temp_nvp')]:
-		temp_file = fil + str(n)
-		os.system('cp ' + fil + ' ' + temp_file)
-		choose_paras(name, temp_file, fil=config_file)
+		# temp_file = fil + str(n)
+		# os.system('cp ' + fil + ' ' + temp_file)
+		choose_paras(name, fil, fil=config_file)
 
-	temp_config_file = config_file + str(n)
-	os.system('cp ' + config_file + ' ' + temp_config_file)
+	# temp_config_file = config_file + str(n)
+	# os.system('cp ' + config_file + ' ' + temp_config_file)
 
 	try:
-		inpt = ["", input_file, output_file, temp_config_file]
+		inpt = ["", input_file, output_file, config_file]
 
 		if verbose==2:
 			print "M1 source:", inpt[1]
@@ -220,12 +220,13 @@ def do_ABM_tactical(input_file, output_file, config_file, verbose=2,
 		with silence(verbose==0): # Does not work.
 			tactical_simulation(inpt)
 	finally:
-		for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_latlon'), (temp_nvp, 'temp_nvp')]:
-			temp_file = fil + str(n)
-			os.system('rm ' + temp_file)
-			choose_paras(name, fil, fil=config_file)
+		# for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_latlon'), (temp_nvp, 'temp_nvp')]:
+		# 	temp_file = fil + str(n)
+		# 	os.system('rm ' + temp_file)
+		# 	choose_paras(name, fil, fil=config_file)
 
-		os.system('rm ' + temp_config_file)
+		#os.system('rm ' + temp_config_file)
+		pass
 
 	if verbose==2:
 		print
@@ -237,7 +238,7 @@ class ParasTact(Paras):
 		for k in self.to_update.keys() + self['paras_to_loop']:
 			choose_paras(k, self[k], fil=config_file)
 
-	def initialize_paras(self):
+	def initialize_paras(self, config_file=None):
 		"""
 		This is here only because the update procedure does not
 		compute the paras derived from other paras (via to_update)
@@ -253,6 +254,9 @@ class ParasTact(Paras):
 		for key in keys:
 			f, args = self.to_update[key]
 			self[key] = f(*[self[arg] for arg in args])
+
+		for key in self.keys():
+			choose_paras(key, self[key], fil=config_file)
 
 if __name__ == '__main__':
 	main_dir = os.path.abspath(__file__)

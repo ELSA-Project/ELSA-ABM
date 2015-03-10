@@ -11,6 +11,7 @@ import pylab as pl
 from shapely.geometry import LineString,Point,Polygon
 import scipy.stats as st
 import pickle
+import os.path, time
 
 from libs.general_tools import counter
 
@@ -52,10 +53,10 @@ def save_dump(filename, varib = None ):
 	my_shelf.close()
 
 def readc(file_r):
-    fr=open(file_r,'r')
-    x=fr.read()
-    fr.close()
-    return x
+	fr=open(file_r,'r')
+	x=fr.read()
+	fr.close()
+	return x
 
 dist = lambda x,y: pl.sqrt((x[0]-y[0])**2+(x[1]-y[1])**2)
  
@@ -65,15 +66,15 @@ def hg((m1,m3,hm1,hm3)):
 leng = lambda x: LineString(map(gall_pet, x)).length
 
 def lleng((m1,m3)):
-    return leng(m1) - leng(m3)
+	return leng(m1) - leng(m3)
 
 def different((m1,hm1,m3,hm3)):
-    if len(m1)!=len(m3): return 1
-    if hm1!=hm3: return 1
-    m1=map(gall_pet,m1)
-    m3=map(gall_pet,m3)
-    if max((dist(m1[i],m3[i]) for i in xrange(len(m1)))) < 1: return 0
-    else: return 1
+	if len(m1)!=len(m3): return 1
+	if hm1!=hm3: return 1
+	m1=map(gall_pet,m1)
+	m3=map(gall_pet,m3)
+	if max((dist(m1[i],m3[i]) for i in xrange(len(m1)))) < 1: return 0
+	else: return 1
 
 def n_actions_rerouting((m1, m3), thre=10):
 	n_acts = 0
@@ -94,28 +95,28 @@ def n_actions_tot((m1, hm1, m3, hm3), thre=10):
 	return n_acts
 
 def get_M(file_r):
-    m1=readc(file_r)
-    m1={a.split('\t')[0]:map(lambda x:x.split(','),a.split('\t')[2:-1]) for a in m1.split('\n')[1:-1]}
-    Fl = m1.keys()
-    #t={f:[to_dat(a[3]) for a in m1[f]] for f in Fl}
-    hei = {f:[a[2] for a in m1[f]] for f in Fl}
-    m1={f:[tuple(map(float,a[:2])) for a in m1[f]] for f in Fl}
-    #nvp=list(set([a for f in Fl for a in m1[f]]))
-    
-    return m1,hei
+	m1=readc(file_r)
+	m1={a.split('\t')[0]:map(lambda x:x.split(','),a.split('\t')[2:-1]) for a in m1.split('\n')[1:-1]}
+	Fl = m1.keys()
+	#t={f:[to_dat(a[3]) for a in m1[f]] for f in Fl}
+	hei = {f:[a[2] for a in m1[f]] for f in Fl}
+	m1={f:[tuple(map(float,a[:2])) for a in m1[f]] for f in Fl}
+	#nvp=list(set([a for f in Fl for a in m1[f]]))
+
+	return m1,hei
 
 gall_pet = lambda x :  ( 6371000.*pl.pi*x[1]/ (180.*pl.sqrt(2)) , 6371000.*pl.sqrt(2)*pl.sin(pl.pi*(x[0]/180.)) )
   
 def to_P(m1):
-    return [LineString(map(gall_pet,m1[f])) for f in m1]
+	return [LineString(map(gall_pet,m1[f])) for f in m1]
 
 def best_p(x):
-    return Point(x.coords[0]).distance(Point(x.coords[-1]))  
+	return Point(x.coords[0]).distance(Point(x.coords[-1]))  
  
 def get_eff(sim):
-    m3=get_M(DIR+sim)[0]
-    m3=to_P(m3)   
-    return sum(map(best_p,m3))/float(sum(map(lambda x: x.length,m3)))
+	m3=get_M(DIR+sim)[0]
+	m3=to_P(m3)   
+	return sum(map(best_p,m3))/float(sum(map(lambda x: x.length,m3)))
 
 
 if __name__=='__main__':
@@ -131,20 +132,17 @@ if __name__=='__main__':
 		files = pickle.load(f)
 
 	for idx, (inpt, outpt) in enumerate(files):
-		counter(idx, len(files), message="Computing differences between trajectories ... ")
+		#counter(idx, len(files), message="Computing differences between trajectories ... ")
+
+		print "last modified: %s" % time.ctime(os.path.getmtime(outpt))
+		#print "created: %s" % time.ctime(os.path.getctime(outpt))
 
 		LH_file = result_dir + '/trajectories/metrics/L_H_' + outpt.split('/')[-1]
 		if not os.path.exists(LH_file) or force:
 			#F3 = result_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '_0.dat'
 			#F1 = result_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
-			#print inpt
-			#print outpt
 			m1, hm1 = get_M(inpt)
 			m3, hm3 = get_M(outpt)
-			# print len(m1.keys())
-			# print
-			# print len(m3.keys())
-			# raise Exception()
 			# have a look to the fact that m1 and m3 do not have the same number of flights.
 			L = p.map(lleng,[(m1[a], m3[a]) for a in m3 if a in m1.keys()])
 			H = sum( p.map(hg,[(m1[a], m3[a], hm1[a], hm3[a]) for a in m1 if a in m3.keys()]))
