@@ -3,13 +3,14 @@ abm_strategic/*sublime*
 abm_tactical/*.pyc
 scripts/*.pyc
 libs/*.pyc
-libs/general_tools.pyc
+libs/YenKSP/*.pyc
 interface/*.pyc
 abm_tactical/*.so
 abm_tactical/*.o
 abm_tactical/ABMtactic.py
 abm_tactical/ABMtactic_wrap.c
 abm_tactical/*sublime*
+abm_tactical/config/*.dat
 trajectories/*
 results_tactical
 results_strategic
@@ -18,3 +19,4 @@ networks
 abm_strategic/Model2.sublime-workspace
 .ipynb*
 results/*
+*.ipynb

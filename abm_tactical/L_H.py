@@ -69,6 +69,15 @@ def different((m1,hm1,m3,hm3)):
     if max((dist(m1[i],m3[i]) for i in xrange(len(m1)))) < 1: return 0
     else: return 1
 
+def n_actions((m1, m3), thre=10):
+	n_acts = 0
+	for i in range(min(len(m1), len(m3))):
+		x1, y1 = gall_pet(m1[i])
+		x3, y3 = gall_pet(m3[i])
+		if pl.sqrt((x1-x3)**2 + (y1-y3)**2)>thre:
+			n_acts += 1
+	return n_acts
+
 def get_M(file_r):
     m1=readc(file_r)
     m1={a.split('\t')[0]:map(lambda x:x.split(','),a.split('\t')[2:-1]) for a in m1.split('\n')[1:-1]}
@@ -97,7 +106,9 @@ def get_eff(sim):
 if __name__=='__main__':
 	p = Pool(1)
 
-	n_iter = 10
+	n_iter = 100
+
+	force = True
 
 	main_dir = os.path.abspath(__file__)
 	main_dir = os.path.split(os.path.dirname(main_dir))[0]
@@ -106,24 +117,28 @@ if __name__=='__main__':
 	os.system('mkdir -p ' +  main_dir + '/trajectories/metrics/')
 
 	#F, F3, idxs = [], [], []
-	print 'Computing differences between trajectories... '
+	#print 'Computing differences between trajectories... '
 	sig_V_iter = [0.] + [10**(-float(i)) for i in range(5, -1, -1)]
 	t_w_iter = [40, 80, 120, 160, 240]
 	for sig_V in sig_V_iter:
 		for t_w in t_w_iter:
 			for i in range(n_iter):
-				F3 = main_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '_0.dat'
-				F1 = main_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
-
-				m1, hm1 = get_M(F1)
-				m3, hm3 = get_M(F3)
-				
-				L = p.map(lleng,[(m1[a],m3[a]) for a in m3])
-				H = sum( p.map(hg,[(m1[a],m3[a],hm1[a],hm3[a])for a in m1]))
-
+				counter(i, n_iter, message="Computing differences between trajectories for sig_V=" + str(sig_V) + " and t_w=" + str(t_w) + " ... ")
 				rep = main_dir + '/trajectories/metrics/L_H_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '.dat'
-				with open(rep, 'w') as f:
-					pickle.dump({'L':L, 'H':H}, f)
+					
+				if not os.path.exists(rep) or force:
+					F3 = main_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '_0.dat'
+					F1 = main_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
+
+					m1, hm1 = get_M(F1)
+					m3, hm3 = get_M(F3)
+
+					L = p.map(lleng,[(m1[a],m3[a]) for a in m3])
+					H = sum( p.map(hg,[(m1[a],m3[a],hm1[a],hm3[a])for a in m1]))
+					NA = p.map(n_actions, [(m1[a],m3[a]) for a in m3])
+
+					with open(rep, 'w') as f:
+						pickle.dump({'L':L, 'H':H, 'NA':NA}, f)
 
 	# F=[a for a in os.listdir(DIR) if 'direct' in a and 'stats' not in a and 'eff' not in a]
 		

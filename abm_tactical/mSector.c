@@ -62,17 +62,18 @@ int generate_temporary_point(CONF_t *config){
 	(*config).tmp_nvp = falloc_matrix((*config).n_tmp_nvp, 2);
 	int n;
 //#ifdef TMP_FROM_FILE
-
+	/*
 	char* rep_tail = "/abm_tactical/config/temp_nvp.dat";
 	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
 	sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
+	*/
 
 	if((*config).tmp_from_file){
 		printf("Attention! read temporary nvp from file\n");
 		int i;
 		char c[500];
 
-		FILE *rstream=fopen(rep,"r");
+		FILE *rstream=fopen((*config).temp_nvp,"r");
 		if(rstream==NULL) BuG("Impossible to open temp_nvp.dat\n");
 		for(n=0;fgets(c,500,rstream);n++){
 			(*config).tmp_nvp[n][0]=atof(c);
@@ -84,7 +85,7 @@ int generate_temporary_point(CONF_t *config){
 #endif
 		}
 		fclose(rstream);
-		free(rep);
+		//free(rep);
 		return 1;
 	}
 //#endif
@@ -100,11 +101,11 @@ int generate_temporary_point(CONF_t *config){
 			(*config).tmp_nvp[n][1]=frand(my, My);
 		}while ( _check_tmp_point( (*config).tmp_nvp[n],(*config) ));
 	}
-	FILE *wstream=fopen(rep,"w");
+	FILE *wstream=fopen((*config).temp_nvp,"w");
 	for(n=0;n<(*config).n_tmp_nvp;n++) fprintf(wstream,"%Lf\t%Lf\n",(*config).tmp_nvp[n][0],(*config).tmp_nvp[n][1]);
 	fclose(wstream);
 
-	free(rep);
+	//free(rep);
 	
 	return 1;
 }
@@ -307,12 +308,12 @@ int _alloc_flight_pos(Aircraft_t **f,int N_f,CONF_t *conf){
 int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,char *input_ABM, char *config_file){
 	get_configuration(config_file, config);
 
-	char* rep_tail = "/abm_tactical/config/bound_latlon.dat";
-	char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
-	sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
-	get_boundary(rep, config);	
+	//char* rep_tail = "/abm_tactical/config/bound_latlon.dat";
+	//char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
+	//sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
+	get_boundary(config);	
 
-	free(rep);
+	//free(rep);
 	//free(config_file);
 
 	

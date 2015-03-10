@@ -16,6 +16,10 @@ from abm_strategic import *
 
 from libs.general_tools import silence
 
+"""
+TODO: put Paras Tact here, modify choose_paras to change several paras at the same time.
+"""
+
 
 if 0:
     # Manual seed
@@ -27,17 +31,18 @@ if 0:
     print "===================================="
     np.random.seed(see_)
 
-def choose_paras(name_para, new_value):
-	with open("../abm_tactical/config/config.cfg") as f:
+def choose_paras(name_para, new_value, fil="../abm_tactical/config/config.cfg"):
+	"""
+	Function to modify a config file for the tactical ABM. If the given parameters does not 
+	exist in the config file, the function does not modify anything and exit silently.
+	"""
+	with open(fil) as f:
 		lines = f.readlines()
 
-	#print lines
 	new_lines = []
 	for i, l in enumerate(lines):
-		#print i, l, len(l)
 		if l[0]!='#' and len(l)>1: # If not a comment and not a blank line
 			value, name = l.strip('\n').split('\t#')#split(l.strip(), '\t#')
-			#name = 
 			if name == name_para:
 				line = str(new_value) + "\t#" + name + '\n'*(line[-1]=='\n') # last bit because of shock_f_lvl_min
 			else:
@@ -45,10 +50,8 @@ def choose_paras(name_para, new_value):
 		else:
 			line = l[:]
 		new_lines.append(line)
-		#print line
-	#print new_lines
 
-	with open("../abm_tactical/config/config.cfg", 'w') as f:
+	with open(fil, 'w') as f:
 		for line in new_lines:
 			f.write(line)
 

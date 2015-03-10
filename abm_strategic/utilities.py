@@ -26,6 +26,8 @@ from copy import deepcopy
 
 from libs.general_tools import  delay, date_human, date_st, flip_polygon
 from libs.tools_airports import bet_OD
+from libs.efficiency import rectificate_trajectories_network
+
 version='2.9.1'
 
 #seed(3)
@@ -34,8 +36,8 @@ _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRe
 #shuffle(_colors)
 
 def draw_network_map(G_init, title='Network map', trajectories=[], rep='./',airports=True, 
-        load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
-        colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
+    load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
+    colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
     print "Drawing network..."
     G = deepcopy(G_init)
     polygons_copy = deepcopy(polygons)
@@ -297,11 +299,24 @@ def compute_M1_trajectories(queue, starting_date):
 
     return trajectories_nav
 
-def convert_trajectories(G, trajectories, put_sectors=False, 
-                remove_flights_after_midnight=False,
-                starting_date=[2010, 5, 6, 0, 0, 0]):
+def convert_trajectories(G, trajectories, fmt_in='(n), t', **kwargs):
+
+    if fmt_in=='(n), t':
+        return convert_trajectories_no_alt(G, trajectories, **kwargs)
+    elif fmt_in=='(n, z), t':
+        return convert_trajectories_alt(G, trajectories, **kwargs)
+    else:
+        raise Exception("format", fmt, "is not implemented")
+
+def convert_trajectories_no_alt(G, trajectories, put_sectors=False, 
+    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
     """
     Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+
+    trajectories signature in input:
+    (n), t
+    trajectories signature in output:
+    (x, y, z, t) or (x, y, z, t, s)
     """ 
     trajectories_coords = []
     for i, (trajectory, d_t) in enumerate(trajectories):
@@ -316,6 +331,40 @@ def convert_trajectories(G, trajectories, put_sectors=False,
                 traj_coords.append([x, y, 0., t])
             else:
                 traj_coords.append([x, y, 0., t, G.node[n]['sec']])
+        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
+            trajectories_coords.append(traj_coords)
+
+    if remove_flights_after_midnight:
+        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
+    return trajectories_coords
+
+def convert_trajectories_alt(G, trajectories, put_sectors=False, 
+    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
+    """
+    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+    
+    trajectories signature in input:
+    (n, z), t
+    trajectories signature in output:
+    (x, y, z, t) or (x, y, z, t, s)
+    """ 
+    trajectories_coords = []
+    for i, (trajectory, d_t) in enumerate(trajectories):
+        traj_coords = []
+        for j, (n, z) in enumerate(trajectory):
+            x = G.node[n]['coord'][0]
+            y = G.node[n]['coord'][1]
+            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1][0]]['weight'])
+            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
+                break
+            if not put_sectors:
+                traj_coords.append([x, y, z, t])
+            else:
+                if 'sec' in G.node[n].keys():
+                    sec = G.node[n]['sec']
+                else:
+                    sec = 0
+                traj_coords.append([x, y, z, t, sec])
         if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
             trajectories_coords.append(traj_coords)
 
@@ -354,7 +403,8 @@ def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.
     """
     Write a set of trajectories in the format for abm_tactical.
     Note: counts begin at 1 to comply with older trajectories.
-    @G: navpoint network.
+    Signature trajectories:
+    (x, y, z, t) or (x, y, z, t, s)
     """ 
     os.system("mkdir -p " + os.path.dirname(fil))
     with open(fil, 'w') as f:
@@ -673,6 +723,62 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
         #print "Altitude picked:",th[j] 
     return trajectories
    
+def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
+    """
+    Used to iterate a partial_rectification without recomputing the best nodes each time.
+    """
+    trajectories_copy = deepcopy(trajectories)
+    G_copy = deepcopy(G)
+    # Make groups
+    #n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    n_best = select_interesting_navpoints_per_trajectory(trajectories_copy, G_copy, OD=OD(trajectories_copy), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    n_best = [n for sec, points in n_best.items() for n in points]
+    print 'n_best', n_best
+
+    groups = {"C":[], "N":[]} # C for "critical", N for "normal"
+    for n in G_copy.G_nav.nodes():
+        if n in n_best:
+            groups["C"].append(n)
+        else:
+            groups["N"].append(n)
+    probabilities = {"C":0., "N":1.} # Fix nodes with best score (critical points).
+
+    final_trajs_list, final_eff_list, final_G_list, final_groups_list = [], [], [], []
+    for eff_target in eff_targets:
+        # print "Trajectories:"
+        # for traj in trajectories_copy:
+        #   print traj
+        final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories_copy, eff_target, G_copy.G_nav, groups=groups, probabilities=probabilities,\
+            remove_nodes=True, **kwargs_rectificate)
+        for new_el, listt in [(final_trajs, final_trajs_list), (final_eff, final_eff_list), (final_G, final_G_list), (final_groups, final_groups_list)]:
+            listt.append(deepcopy(new_el))
+        print 
+
+    return final_trajs_list, final_eff_list, final_G_list, final_groups_list, n_best
+
+def partial_rectification(trajectories, eff_target, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
+    """
+    High level function for rectification. Fix completely N_per_sector points with 
+    highest metric value per sector.
+    """
+    # Make groups
+    #n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    n_best = select_interesting_navpoints_per_trajectory(trajectories, G, OD=OD(trajectories), N_per_sec_per_traj=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
+    
+    n_best = [n for sec, points in n_best.items() for n in points]
+
+    groups = {"C":[], "N":[]} # C for "critical", N for "normal"
+    for n in G.G_nav.nodes():
+        if n in n_best:
+            groups["C"].append(n)
+        else:
+            groups["N"].append(n)
+    probabilities = {"C":0., "N":1.} # Fix nodes with best score (critical points).
+    
+    final_trajs, final_eff, final_G, final_groups = rectificate_trajectories_network(trajectories, eff_target, G.G_nav, remove_nodes=True, 
+                                                                                    groups=groups, probabilities=probabilities, **kwargs_rectificate)
+
+    return final_trajs, final_eff, final_G, final_groups
 
 ##################################################################################
 """

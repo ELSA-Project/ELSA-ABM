@@ -51,6 +51,24 @@ if __name__=='__main__':
 	data_version=None
 	n_iter = 100
 	target_rejected_flights = 0.
+
+	targets_eff_per_ACC = {'EGTT':{0.954, 0.98, 0.999}, 
+						   'LIMM':[0.954, 0.98, 0.999],
+						   'LIRR':[0.98, 0.999],
+						   'LFRR':[0.98, 0.999],
+						   'LFFF':[0.98, 0.999],
+						   'EGPX':[0.98, 0.999],
+						   'LECP':[0.98, 0.999],
+						   'LECM':[0.999],
+						   'LECS':[0.999],
+						   'LECB':[0.999],
+						   'LFMM':[0.999],
+						   'LFEE':[0.999],
+						   'EGCC':[0.999],
+						   'LIBB':[0.999],
+						   'LIPP':[0.999],
+						   'LFBB':[0.999]}
+
 	
 	for country in ['LF', 'LE', 'EG', 'EB', 'LI']:
 		paras = paras_strategic(zone=country, airac=airac, starting_date=starting_date, n_days=n_days, cut_alt=cut_alt,\
@@ -91,17 +109,23 @@ if __name__=='__main__':
 			
 			write_down_capacities(H, save_file='../trajectories/capacities/' + G.name + '_capacities_rej' + str(target_rejected_flights) + '.dat')
 
-			for i in range(n_iter):
-				counter(i, n_iter, message="Doing simulations...")
-				name_results = name_sim(name_G) + '_rej' + str(target_rejected_flights) + '_' + str(i) + '.dat'
-				with silence(True):
-					trajs, stats = generate_traffic(deepcopy(G), save_file='../trajectories/M1/' + name_results,
-										record_stats_file='../trajectories/M1/' + name_results.split('.dat')[0] + '_stats.dat',
-										file_traffic="../networks/" + name_G + '_flights_selected.pic',
-										put_sectors=True,
-										remove_flights_after_midnight=True,
-										capacity_factor=capacity_factor)
-				#print "Ratio rejected:", stats['rejected_flights']/float(stats['flights'])
+			if zone in targets_eff_per_ACC.keys():
+				for eff_target in targets_eff_per_ACC[zone]:
+					for i in range(n_iter):
+						counter(i, n_iter, message="Doing simulations...")
+						name_results = name_sim(name_G) + '_eff_' + str(eff_target) + '_rej' + str(target_rejected_flights) + '_' + str(i) + '.dat'
+						with silence(True):
+							trajs, stats = generate_traffic(deepcopy(G), save_file='../trajectories/M1/' + name_results,
+												record_stats_file='../trajectories/M1/' + name_results.split('.dat')[0] + '_stats.dat',
+												file_traffic="../networks/" + name_G + '_flights_selected.pic',
+												put_sectors=True,
+												remove_flights_after_midnight=True,
+												capacity_factor=capacity_factor,
+												rectificate={'eff_target':eff_target, 'inplace':False, 'hard_fixed':False, 'remove_nodes':True, 'resample_trajectories':True}
+												)
+
+							#trajs_rec, eff, G, groups_rec = rectificate_trajectories_network(trajs, eff_target,	deepcopy(G), inplace=False)
+					#print "Ratio rejected:", stats['rejected_flights']/float(stats['flights'])
 		
 			print 
 			print 
