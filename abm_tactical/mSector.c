@@ -288,7 +288,7 @@ int is_on_bound(long double *p,long double **bound,int N){
 }
 
 int _alloc_shock( CONF_t conf,SHOCK_t *shock ){
-	(*shock).Nshock = (int) (((conf.f_lvl[1]-conf.f_lvl[0])/10)*conf.Nm_shock*DAY/(conf.t_w*conf.t_r*conf.t_i));
+	(*shock).Nshock = (int) (((conf.f_lvl[1]-conf.f_lvl[0])/10.)*conf.Nm_shock*DAY/(conf.t_w*conf.t_r*conf.t_i));
 	(*shock).shock=falloc_matrix( (*shock).Nshock , 6);
 	return 1;
 }

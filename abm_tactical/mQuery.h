@@ -87,7 +87,7 @@ typedef struct {
 	int laplacian_vel;
 	
 	//Numeber of shock used for the simulation
-	int Nm_shock;
+	long double Nm_shock;
 	long double **point_shock;
 	int n_point_shock;
 	long double radius;
