@@ -22,6 +22,7 @@ int simulation(char **args){
 	char *input_ABM=args[1];
 	char *output_ABM=args[2];
 	char *config_file=args[3];
+	//long double mult = atof(args[4]);
 	char output_ABM_nsim[400]; //TODO: change this!
 	
 	init_Sector(&Flight,&Nflight,&config,&shock,input_ABM, config_file);

@@ -18,6 +18,7 @@
 #include<malloc.h>
 
 /*Take string as HH:MM:SS and return the number of seconds*/
+
 long double _convert_time(char *c ){
 	long double time;
 	int H,m,s, i,f;
@@ -222,7 +223,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).xdelay = _find_value_string(config_file,"xdelay");
 	(*config).pdelay = _find_value_string(config_file,"pdelay");
 	(*config).laplacian_vel = (int) _find_value_string(config_file,"laplacian_vel");
-	(*config).Nm_shock =  _find_value_string(config_file,"Nm_shock");
+	(*config).Nm_shock = (int) _find_value_string(config_file,"Nm_shock");
 	(*config).radius = _find_value_string(config_file,"radius");
 	(*config).t_w = (int) _find_value_string(config_file,"t_w");
 	(*config).t_i = _find_value_string(config_file,"t_i");
@@ -235,15 +236,20 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
 	(*config).lifetime = _find_value_string(config_file, "lifetime");
+	//printf("%s\n", config_file);
+	//exit(0);
+	//(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
 	(*config).main_dir = _find_value_string_char(config_file, "main_dir");
-	(*config).bound_latlon = _find_value_string_char(config_file, "bound_latlon");
 	(*config).temp_nvp = _find_value_string_char(config_file, "temp_nvp");
 	(*config).shock_tmp = _find_value_string_char(config_file, "shock_tmp");
+	(*config).bound_file = _find_value_string_char(config_file, "bound_file");
+	(*config).capacity_file = _find_value_string_char(config_file, "capacity_file");
+
 	return 1;
 }
 
 int get_boundary( CONF_t *config ){
-	FILE *rstream=fopen((*config).bound_latlon, "r");
+	FILE *rstream=fopen((*config).bound_file, "r");
 	
 	if(rstream==NULL) BuG("No Bound File found\n");
 	
@@ -255,7 +261,7 @@ int get_boundary( CONF_t *config ){
 	fclose(rstream);
 	
 	//Actually reading the file
-	rstream=fopen((*config).bound_latlon, "r");
+	rstream=fopen((*config).bound_file, "r");
 	(*config).bound = falloc_matrix(Nbound, 2);
 	for(i=0;fgets(c, R_BUFF, rstream)&&i<Nbound;i++){
 		(*config).bound[i][0]=atof(c);
@@ -331,7 +337,8 @@ int get_capacity(char *file_r,CONF_t *conf){
 	for((*conf).n_sect=0;fgets(c, R_BUFF, rstream);((*conf).n_sect)++) if(c[0]=='#') ((*conf).n_sect)--;
 	fclose(rstream);
 	
-	(*conf).capacy = ialloc_vec((*conf).n_sect+1);
+	((*conf).n_sect)++;
+	(*conf).capacy = ialloc_vec((*conf).n_sect);
 	
 	rstream=fopen(file_r,"r");
 	int i,j;
@@ -342,7 +349,11 @@ int get_capacity(char *file_r,CONF_t *conf){
 		}
 		if(atoi(c)!=i) BuG("Not Regular Capacity file, miss index\n");
 		for(j=0;c[j]!='\t';j++);
-		(*conf).capacy[i]=atoi(&c[j+1])/3.;
+		(*conf).capacy[i]=atoi(&c[j+1]);
+		
+
 	}
+	(*conf).capacy[0]=SAFE;
+	
 	return 1;	
 }

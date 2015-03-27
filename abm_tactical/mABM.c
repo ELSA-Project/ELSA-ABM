@@ -162,8 +162,7 @@ int _init_tool(TOOL_f *t,int N, CONF_t conf){
 	(*t).n_neigh = ialloc_vec(N);
 	
 	#ifdef CAPACITY
-	(*t).workload = ialloc_matrix(conf.t_w*2, conf.n_sect+1);
-	for(i=0;i<(2*conf.t_w);i++) for(j=0;j<(conf.n_sect+1);j++) (*t).workload[i][j]=0;
+	(*t).workload = ialloc_vec(conf.n_sect+1);
 	#endif
 	
 	return 1;
@@ -179,7 +178,7 @@ int _del_tool(TOOL_f *t,int N,CONF_t conf){
 	free((*t).n_neigh);
 	
 	#ifdef CAPACITY
-	ifree_2D((*t).workload, conf.t_w*2);
+	free((*t).workload);
 	#endif
 	
 	return 1;
@@ -229,18 +228,35 @@ int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_
 	long double *vel=(*f).vel;
 	long double **nvp=(*f).nvp;
 	
-	pos[0][0]=st_point[0];
-	pos[0][1]=st_point[1];
-	pos[0][2]=st_point[2];
-	pos[0][3]=st_point[3];
-	pos[0][4]=st_point[4];
+	if((*f).tp==0){
+		pos[0][0]=st_point[0];
+		pos[0][1]=st_point[1];
+		pos[0][2]=st_point[2];
+		pos[0][3]=st_point[3];
+		pos[0][4]=st_point[4];
+	}
+	else{
+		pos[0][0]=SAFE;
+		pos[0][1]=SAFE;
+		pos[0][2]=SAFE;
+		pos[0][3]=0;
+		pos[0][4]=0;
+		for(j=0;j<DPOS;j++) pos[(*f).tp][j]=(*f).st_point[j];		
+	}
 	
 	l_nvp=haversine_distance(st_point,nvp[st_indx]);
-	
+
 	// if t is smaller than t_wind*t_r ,the forecast on position is perfect
 	// because otherwise there could be some actual conflicts.
+	for(i=0;i<((*f).tp-1);i++) {
+		for(j=0;j<DPOS;j++) pos[i+1][j]=SAFE;
+		pos[i+1][3]=0;
+		pos[i+1][4]=0;
+	}
+	
 	int i_perf_fore = (int)(t_wind*t_r-1);
-	for(i=0,j=(st_indx-1),d=0 ; i<i_perf_fore ; i++){
+	for(i=(*f).tp,j=(st_indx-1),d=0 ; i<i_perf_fore ; i++){
+		
 		d+=vel[j]*time_step;
 		if(d>l_nvp){
 			d=d-l_nvp;
@@ -384,6 +400,7 @@ int _set_st_point(Aircraft_t **f,int N_f,CONF_t conf){
 		(*f)[i].st_point[1]=(*f)[i].pos[t_x-1][1];
 		(*f)[i].st_point[2]=(*f)[i].pos[t_x-1][2];
 		(*f)[i].st_point[3]=(*f)[i].pos[t_x-1][3];
+		(*f)[i].st_point[4]=(*f)[i].pos[t_x-1][3];
 		
 		old_st=(*f)[i].st_indx;
 		if((*f)[i].st_point[0]==SAFE) (*f)[i].st_indx=(*f)[i].n_nvp;
@@ -495,16 +512,19 @@ int _calculate_st_point(Aircraft_t *f,CONF_t conf,long double t){
 /* Put to one ready flag for plane on departures and sort in the first position them 
  and calculate starting point */
 int _get_ready(Aircraft_t **f, int N_f,long double t,CONF_t conf){
-	int i;
+	int i,j;
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
 
-	for(i=0;i<N_f;i++) if((*f)[i].ready==0) {
-		
-		if( (*f)[i].time[0]<=t&& (*f)[i].time[0]> (t-t_stp) )  {
-			//printf("%d: %Lf\n", i, (*f)[i].time[0]);
-			(*f)[i].ready=1;
-			_calculate_st_point(&((*f)[i]),conf,t);
+	for(i=0;i<N_f;i++) {
+		if((*f)[i].ready==0) {
+			if( (*f)[i].time[0]>=t&& (*f)[i].time[0]< (t+t_stp) )  {
+				(*f)[i].ready=1;
+				(*f)[i].tp = ((*f)[i].time[0]-t)/conf.t_i;
+				(*f)[i].st_indx = 1;
+				for(j=0;j<DPOS;j++) (*f)[i].st_point[j] = (*f)[i].nvp[0][j];
+			}
 		}
+		else (*f)[i].tp = 0;
 	}
 	
 	int n_f=0;
@@ -631,7 +651,6 @@ int _checkShockareaRoute(long double **pos,int N,SHOCK_t shock,long double *d,lo
 	for(j=0;j<shock.Nshock;j++) if( fabs(shock.shock[j][3]-t)<SGL ){
 			for(i=1;i<N;i++) if(pos[i][3]==1) if(pos[i][2]==shock.shock[j][5]){
 				 if(_isInsideCircle(pos[i],shock.shock[j])){
-				 	printf("Shock\n");
 					 d[i]=0;
 				}
 		}
@@ -803,7 +822,8 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 	long double temp_rout;
 
 	/*For every comeback point after collision*/
-	for(dj=0,j=((*f).st_indx+1);j<((*f).n_nvp-1);j++,dj++){
+	int longest_rer =  _calculate_longest_direct(f,tl,conf,1);
+	for(dj=0,j=((*f).st_indx+1);j<longest_rer;j++,dj++){
 		
 		
 		//if(dj>0) newv=((*f).vel[(*f).st_indx]*njump+(*f).vel[(*f).st_indx+1])/(++njump);
@@ -932,7 +952,31 @@ double _calculate_optimum_direct(Aircraft_t *f,int on){
 
 	return d2-d1;							 
 }
-				
+
+int  _calculate_longest_direct(Aircraft_t *f,TOOL_f tl,CONF_t conf,int rer){
+	int i;
+	int plus;
+	if(rer==1)  plus = 1;
+	else plus = 2;
+	
+	
+	int st_in = (int) (*f).pos[1][4];
+	int sect;
+	for(i=(*f).st_indx+1;i<(*f).n_nvp-plus;i++) {
+		sect = (int) (*f).nvp[i][4];
+		if(st_in != sect ) if((conf.capacy[sect])<tl.workload[sect]){
+			//~ if (rer) printf("rer Overfull Capacity %d \t %d -> %d\t%d\n",(conf.capacy[sect]),tl.workload[sect],st_in,i-1);
+			//~ else  printf("dir Overfull Capacity %d \t %d -> %d\t%d\n",(conf.capacy[sect]),tl.workload[sect],st_in,i-1);
+			
+			//return (*f).n_nvp-plus;
+
+			return i-1;
+		}
+	}
+
+	return (*f).n_nvp-plus;
+}	
+			
 int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOCK_t sh,long double tt){
 	/*If the new path is less than the original*/
 	long double diff[]={0,0};
@@ -949,7 +993,8 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 	if(diff[0]<1000.) return 0;
 		
 	int h;
-	for(i=((*f).st_indx+1),h=1;i<((*f).n_nvp-2)&&t<1200.;i++,h++) {
+	int longest_direct = _calculate_longest_direct(f,tl,conf,0);
+	for(i=((*f).st_indx+1),h=1;i<(longest_direct) &&t<1200.;i++,h++) {
 		diff[1]=_calculate_optimum_direct(f, h+1);
 		if ((diff[1]-diff[0])<1000.){
 			//printf("diff %Lf\n",diff[1]-diff[0]);
@@ -1065,26 +1110,56 @@ int _expected_fly(Aircraft_t **f, int N_f, CONF_t conf, TOOL_f tl){
 int _draw_dV(int N_f, CONF_t conf, TOOL_f *tl){
 	int i;
 	for(i=0;i<N_f;i++){
-		(*tl).dV[i] = frand(-conf.sig_V, conf.sig_V);
+		(*tl).dV[i] = frand(-conf.sig_V, conf.sig_V);	
 	}
+
 	return 1;
 }
 
 int _evaluate_workload(Aircraft_t **f,int n_f,TOOL_f tl,CONF_t conf){
-	int i,j;
-
-	for(j=0;j<(2*conf.t_w);j++){
-		for(i=1;i<=conf.n_sect;i++) tl.workload[j][i]=0;
+	int i,j,t;
+	
+	//~ for(j=0;j<(2*conf.t_w);j++){
+		//~ for(i=1;i<=conf.n_sect;i++) tl.workload[j][i]=0;
+		//~ 
+		//~ for(i=0;i<n_f;i++) {
+			//~ if( (int) (*f)[i].pos[j][4]  > conf.n_sect  || (int) (*f)[i].pos[j][4] <0 ){
+				 //~ printf(" %d su %d\n", (int) (*f)[i].pos[j][4] ,conf.n_sect);
+				 //~ exit(0);
+			 //~ }
+			//~ (tl.workload[j][ (int) (*f)[i].pos[j][4] ])++;
+			//~ 
+		//~ }
+	//~ }
+	
+	//~ for(i=1;i<conf.n_sect;i++) {
+		//~ tl.workload[i]=0;
+		//~ for(j=0;j<n_f;j++) for(t=0;t<(2*conf.t_w);t++) if( (int)(*f)[j].pos[t][4] == i ) {
+			//~ (tl.workload[i])++;
+			//~ break;
+		//~ }
+	//~ }
+	int walk[(conf).n_sect];
+	
+	for(i=0;i<conf.n_sect;i++) tl.workload[i]=0;
+	for(i=0 ;i<n_f;i++) {
 		
-		for(i=0;i<n_f;i++) {
-			if( (int) (*f)[i].pos[j][4]  > conf.n_sect  || (int) (*f)[i].pos[j][4] <0 ){
-				 printf(" %d su %d\n", (int) (*f)[i].pos[j][4] ,conf.n_sect);
-				 exit(0);
-			 }
-			(tl.workload[j][ (int) (*f)[i].pos[j][4] ])++;
-			
+		for(j=0;j<(conf).n_sect;j++) walk[j]=0;
+		
+		t = haversine_distance((*f)[i].st_point,(*f)[i].nvp[(*f)[i].st_indx])/(*f)[i].vel[(*f)[i].st_indx-1];
+		( walk[ (int) (*f)[i].pos[1][4]] )++;
+		
+		for(j=(*f)[i].st_indx;j<((*f)[i].n_nvp-1);j++) {
+			t += haversine_distance((*f)[i].nvp[j],(*f)[i].nvp[j+1])/(*f)[i].vel[j];
+			if( t > 3600. ) break;
+			(walk[(int) (*f)[i].nvp[j][4]])++;
 		}
+		for(j=1;j<(conf).n_sect;j++) if(walk[j]!=0) (tl.workload[j])++;
+		
+		
 	}
+	
+	
 	return 0;
 }
 
@@ -1095,10 +1170,10 @@ void print_workload(TOOL_f tl, CONF_t conf, char *file_w){
 	FILE *wstream = fopen(file_w,"a");
 	if(wstream==NULL) BuG("Impossible to write workload\n");
 	
-	for(i=0;i<(conf.t_w*conf.t_r-1);i++) {
-		for(j=1;j<=conf.n_sect;j++) fprintf(wstream, "%d\t",tl.workload[i][j]);
-		fprintf(wstream, "\n");
-	}
+	
+	for(j=1;j<conf.n_sect;j++) fprintf(wstream, "%d\t",tl.workload[j]);
+	fprintf(wstream, "\n");
+
 	fclose(wstream);
 	return;
 	
@@ -1124,11 +1199,13 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 	_draw_dV(N_f, conf, &tl);
 	//printf("Coin2\n");
 	
+	
 	_expected_fly(f,n_f,conf,tl); /*put dv here*/
 	//printf("Coin3\n");
 	
 #ifdef CAPACITY	
 	_evaluate_workload(f,n_f,tl,conf); //DA CONTROLLARE
+	//print_workload(tl, conf, "/tmp/work.dat");
 #endif
 
 #ifdef PLOT 

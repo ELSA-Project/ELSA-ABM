@@ -47,8 +47,8 @@ typedef struct {
 	int **neigh;
 	int *n_neigh;
 	
-	/*Matrix of the workload for each sector*/
-	int **workload;
+	/*Vector of the workload for each sector*/
+	int *workload;
 	
 } TOOL_f ;
 

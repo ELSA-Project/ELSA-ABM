@@ -22,6 +22,8 @@
 /*If It's defined cheak for intersection between flight tmp_nvp and boundary (slow)*/
 //#define BOUND_CONTROL
 
+#define CAPACITY
+
 /*Structure of shock*/
 typedef struct {
 	int Nshock;
@@ -57,4 +59,6 @@ int init_Sector(Aircraft_t **,int *,CONF_t	*,SHOCK_t *, char *, char *);
 int is_on_bound(long double *,long double **,int );
 
 int remove_aircraft(Aircraft_t **, int *, int);
+
+int alloc_shock(CONF_t,SHOCK_t *);
 #endif

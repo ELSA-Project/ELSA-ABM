@@ -56,6 +56,9 @@ typedef struct {
 	/*time used to cross the sector [0]: m1 [1]:m3*/ 
 	long double delta_t[2];
 	
+	/*Number of elementary time-increment on departures*/
+	int tp;
+	
 }  Aircraft_t ;
 
 
@@ -117,7 +120,9 @@ typedef struct {
 
 	/* Boolean. If 1, new temporary navpoints are read from the disk. Otherwise they are generated. */
 	int tmp_from_file;
-
+	
+	char *bound_file;
+	
 	/*Main directory*/
 	char *main_dir;
 
@@ -129,6 +134,9 @@ typedef struct {
 
 	/*file for boundaries*/
 	char *shock_tmp;
+	
+	/*file for capacity*/
+	char *capacity_file;
 	
 	/*safe distance for neightboors flight*/
 	long double d_neigh;

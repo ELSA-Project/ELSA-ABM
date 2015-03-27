@@ -338,7 +338,7 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	get_temp_shock(config);
 	
 	#ifdef CAPACITY
-	get_capacity("../sector_capacities.dat", config);
+	get_capacity((*config).capacity_file, config);
 	#endif
 	
 	return 1;
