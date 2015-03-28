@@ -388,7 +388,7 @@ int _sort_ready(Aircraft_t **f,int N_f){
 
 int _set_st_point(Aircraft_t **f,int N_f,CONF_t conf){
 	
-	int i,old_st,mynull;
+	int i,j,old_st,mynull;
 	/*The real position for departures*/
 	int t_x = (conf.t_w*conf.t_r);
 	for(i=0;i<N_f;i++)if((*f)[i].ready){
@@ -396,15 +396,12 @@ int _set_st_point(Aircraft_t **f,int N_f,CONF_t conf){
 			(*f)[i].ready=0;
 			continue;
 		}
-		(*f)[i].st_point[0]=(*f)[i].pos[t_x-1][0];
-		(*f)[i].st_point[1]=(*f)[i].pos[t_x-1][1];
-		(*f)[i].st_point[2]=(*f)[i].pos[t_x-1][2];
-		(*f)[i].st_point[3]=(*f)[i].pos[t_x-1][3];
-		(*f)[i].st_point[4]=(*f)[i].pos[t_x-1][3];
+		for(j=0;j<DPOS;j++) (*f)[i].st_point[j] = (*f)[i].pos[t_x-1][j];
 		
 		old_st=(*f)[i].st_indx;
 		if((*f)[i].st_point[0]==SAFE) (*f)[i].st_indx=(*f)[i].n_nvp;
-		else (*f)[i].st_indx = find_st_indx((*f)[i].nvp, (*f)[i].n_nvp, (*f)[i].st_point,(*f)[i].st_indx,(*f)[i].pos[0]);
+		else (*f)[i].st_indx = find_st_indx((*f)[i].nvp, (*f)[i].n_nvp, (*f)[i].st_point,(*f)[i].st_indx,(*f)[i].pos[(*f)[i].tp]);
+		//else (*f)[i].st_indx = find_st_indx((*f)[i].nvp, (*f)[i].n_nvp, (*f)[i].st_point,(*f)[i].st_indx,(*f)[i].st_point);
 
 		
 		if((*f)[i].ready!=0&&(*f)[i].st_indx==-1){
@@ -418,7 +415,7 @@ int _set_st_point(Aircraft_t **f,int N_f,CONF_t conf){
 			(*f)[i].st_indx=old_st;
 			printf("%d\t%d\n",old_st,(*f)[i].n_nvp);
 			//scanf("%d",&mynull);
-			//BuG("In HERE\n");
+			BuG("In HERE\n");
 			//exit(0);
 		}
 		if((*f)[i].st_indx>((*f)[i].n_nvp-1)) {
@@ -528,7 +525,7 @@ int _get_ready(Aircraft_t **f, int N_f,long double t,CONF_t conf){
 	}
 	
 	int n_f=0;
-	for(i=0;i<N_f;i++) if((*f)[i].ready) n_f++;
+	for(i=0;i<N_f;i++) if((*f)[i].ready==1) n_f++;
 	
 	_sort_ready(f,N_f);
 	
@@ -934,7 +931,7 @@ int _change_flvl(Aircraft_t *f,Aircraft_t **flight,int N_f,CONF_t conf,TOOL_f tl
 		free(h);
 		return 0;
 	}
-
+	
 	for(i=(*f).st_indx-1,j=0;i<endp;i++,j++) (*f).nvp[i][2]=h[j];
 	free(h);
 	
@@ -1070,6 +1067,7 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 		unsafe=_check_risk(tl.dist,conf,conf.t_w);
 		
 		if(unsafe) {
+		
 			unsafe=_checkFlightsCollision(tl.dist, conf, &(*f)[i]); 
 
 			unsafe=_reroute(&((*f)[i]),(*f),i,sh,conf,tl,unsafe,t);
@@ -1099,9 +1097,10 @@ int _expected_fly(Aircraft_t **f, int N_f, CONF_t conf, TOOL_f tl){
 		//printf("%d: %d\n", i, (*f)[i].ready);
 		if((*f)[i].ready){
 			//printf("%d: %d\n", i, (*f)[i].ready);
-			if(!_position(&(*f)[i], (*f)[i].st_point, conf.t_w*2, conf.t_i, conf.t_r, tl.dV[i]) && (*f)[i].pos[0][0]==SAFE) {
-				(*f)[i].ready=0;
-			}/*put the dv[i] here*/
+			if(!_position(&(*f)[i], (*f)[i].st_point, conf.t_w*2, conf.t_i, conf.t_r, tl.dV[i]) && (*f)[i].pos[0][0]==SAFE) ;
+			//~ {
+				//~ (*f)[i].ready=0;
+			//~ }/*put the dv[i] here*/
 		}
 	}
 	return 1;
@@ -1191,9 +1190,8 @@ int _update_shock(SHOCK_t *sh,int t,CONF_t *conf){
 
 int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long double t ){
 		
-	//printf("%.3Lf\n",t/3600.); 	/*Print time*/
 	int n_f = _get_ready(f,N_f,t,conf); /*do nothing*/
-
+	
 	_suffle_list(f,n_f,&tl); /*do nothing (??) */
 
 	_draw_dV(N_f, conf, &tl);
@@ -1222,8 +1220,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 		f_not_solv =_check_safe_events(f,n_f,sh,tl,conf,t); /*put the dv here*/
 		
 		if(f_not_solv>=0){
-		
-			if(++try> 500) {
+			if(++try> 50) {
 				printf("Not Solved, too many trials\n");
 				return 0;
 			}				 

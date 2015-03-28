@@ -24,7 +24,7 @@
 
 #define DEBUG0
 
-//#define PLOT 
+#define PLOT 
 
 /*Structure with useful variable 
  that is better to carry*/
