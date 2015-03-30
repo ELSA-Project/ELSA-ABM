@@ -41,6 +41,15 @@ my_conv = { FIELD_TYPE.LONG: int, FIELD_TYPE.FLOAT: float, FIELD_TYPE.DOUBLE: fl
 
 _colors=('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed')
 
+def hex_to_rgb(value):
+    value = value.lstrip('#')
+    lv = len(value)
+    rgb_255 = tuple(int(value[i:i+lv/3], 16) for i in range(0, lv, lv/3))
+    return tuple(a/255. for a in rgb_255)
+
+nice_colors = ['#348ABD',  '#7A68A6',  '#A60628',  '#467821',  '#CF4457',  '#188487',  '#E24A33']
+nice_colors = [hex_to_rgb(v) for v in nice_colors]
+
 def flip_polygon(pol):
     """
     Flip x and y axis for a polygon.

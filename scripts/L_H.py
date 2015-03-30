@@ -12,6 +12,7 @@ from shapely.geometry import LineString,Point,Polygon
 import scipy.stats as st
 import pickle
 import os.path, time
+import datetime as dt
 
 from libs.general_tools import counter
 
@@ -94,6 +95,12 @@ def n_actions_tot((m1, hm1, m3, hm3), thre=10):
 			n_acts += 1
 	return n_acts
 
+def time_flight(tm1):
+	return (tm1[-1] - tm1[0]).total_seconds()
+
+def delay_flight((tm1, tm3)):
+	return (tm3[-1] - tm1[-1]).total_seconds()
+	
 def get_M(file_r):
 	m1=readc(file_r)
 	m1={a.split('\t')[0]:map(lambda x:x.split(','),a.split('\t')[2:-1]) for a in m1.split('\n')[1:-1]}
@@ -105,7 +112,40 @@ def get_M(file_r):
 
 	return m1,hei
 
-gall_pet = lambda x :  ( 6371000.*pl.pi*x[1]/ (180.*pl.sqrt(2)) , 6371000.*pl.sqrt(2)*pl.sin(pl.pi*(x[0]/180.)) )
+def get_M_bis(file_r, put_m1_date=None):
+	m1=readc(file_r)
+	m1={a.split('\t')[0]:map(lambda x:x.split(','),a.split('\t')[2:-1]) for a in m1.split('\n')[1:-1]}
+	Fl = m1.keys()
+	t={f:[to_datetime(a[3], put_m1_date=put_m1_date) for a in m1[f]] for f in Fl}
+	hei = {f:[a[2] for a in m1[f]] for f in Fl}
+	m1={f:[tuple(map(float,a[:2])) for a in m1[f]] for f in Fl}
+	#nvp=list(set([a for f in Fl for a in m1[f]]))
+
+	return m1, hei, t
+
+def to_datetime(st, put_m1_date=None):
+	date_st, hour_st = st.split(' ')
+	year, month, day = date_st.split('-')
+	hour, minutes, sec, ms = hour_st.split(':')
+	hour = int(hour)
+	if put_m1_date!=None:
+		year, month, day = put_m1_date
+	else:
+		day = int(day)
+		year = int(year)
+		month = int(month)
+
+	if int(hour)>23:
+		day += 1
+		hour -= 24
+	try:
+		ddt =  dt.datetime(int(year), int(month), int(day), int(hour), int(minutes), int(sec), int(ms))
+	except:
+		print st 
+		raise
+	return ddt
+
+gall_pet = lambda x :  ( 6371000.*pl.pi*x[1]/ (180.*pl.sqrt(2)) , 6371000.*pl.sqrt(2)*pl.sin(pl.pi*(x[0]/180.)) ) #Input format: lat/lon
   
 def to_P(m1):
 	return [LineString(map(gall_pet,m1[f])) for f in m1]
@@ -118,11 +158,13 @@ def get_eff(sim):
 	m3=to_P(m3)   
 	return sum(map(best_p,m3))/float(sum(map(lambda x: x.length,m3)))
 
+def extract_from_file(files):
+	pass
 
 if __name__=='__main__':
 	p = Pool(2)
 
-	force = False
+	force = True
 
 	temp = __import__(sys.argv[1], globals(), locals(), ['all_paras'], -1)
 	
@@ -131,29 +173,37 @@ if __name__=='__main__':
 	with open(result_dir + '/trajectories/files/' + sys.argv[1] + '_files.pic', 'r') as f:
 		files = pickle.load(f)
 
+	#t_now = dt.now()
 	for idx, (inpt, outpt) in enumerate(files):
-		#counter(idx, len(files), message="Computing differences between trajectories ... ")
+		#print outpt 
+		# n = 4
+		# allowed = ['/home/earendil/Documents/ELSA/ABM/results/trajectories/M1/trajs_Real_LI_v5.8_Strong_EXTLIRR_LIRR_2010-5-6+0_d2_cut240.0_directed_' + str(i) + '.dat' for i in range(n)]
+		# if inpt in allowed:
+		counter(idx, len(files), message="Computing differences between trajectories ... ")
 
-		print "last modified: %s" % time.ctime(os.path.getmtime(outpt))
+		#t = dt.os.path.getmtime(outpt)
+		#print "last modified: %s" % time.ctime()
+		#raise Exception()
 		#print "created: %s" % time.ctime(os.path.getctime(outpt))
 
 		LH_file = result_dir + '/trajectories/metrics/L_H_' + outpt.split('/')[-1]
 		if not os.path.exists(LH_file) or force:
 			#F3 = result_dir + '/trajectories/M3/trajs_' + zone + '_real_data_sigV' + str(sig_V) + '_t_w' + str(t_w) + '_' + str(i) + '_0.dat'
 			#F1 = result_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
-			m1, hm1 = get_M(inpt)
-			m3, hm3 = get_M(outpt)
-			# have a look to the fact that m1 and m3 do not have the same number of flights.
-			L = p.map(lleng,[(m1[a], m3[a]) for a in m3 if a in m1.keys()])
-			H = sum( p.map(hg,[(m1[a], m3[a], hm1[a], hm3[a]) for a in m1 if a in m3.keys()]))
-			#NA = p.map(n_actions, [(m1[a], m3[a]) for a in m3 if a in m1.keys()])
-			NA = p.map(n_actions_tot, [(m1[a], hm1[a], m3[a], hm3[a]) for a in m3 if a in m1.keys()])
-			# L = p.map(lleng,[(m1[a],m3[a]) for a in m3])
-			# H = sum( p.map(hg,[(m1[a],m3[a],hm1[a],hm3[a])for a in m1]))
-			# NA = p.map(n_actions, [(m1[a],m3[a]) for a in m3])
-
-			with open(LH_file, 'w') as f:
-				pickle.dump({'L':L, 'H':H, 'NA':NA}, f)
+			try:
+				m1, hm1, tm1 = get_M_bis(inpt)
+				m3, hm3, tm3 = get_M_bis(outpt, put_m1_date=(2010, 5, 6))
+				# print len(m1)
+				# TODO: have a look to the fact that m1 and m3 do not have the same number of flights.
+				L = p.map(lleng,[(m1[a], m3[a]) for a in sorted(m3) if a in m1.keys()])
+				H = sum( p.map(hg,[(m1[a], m3[a], hm1[a], hm3[a]) for a in sorted(m1) if a in m3.keys()]))
+				#NA = p.map(n_actions, [(m1[a], m3[a]) for a in m3 if a in m1.keys()])
+				NA = p.map(n_actions_tot, [(m1[a], hm1[a], m3[a], hm3[a]) for a in sorted(m3) if a in m1.keys()])
+				T = p.map(time_flight, [tm1[a] for a in sorted(m3) if a in m1.keys()])
+				dT = p.map(delay_flight, [(tm1[a], tm3[a]) for a in sorted(m3) if a in m1.keys()])
+			finally:
+				with open(LH_file, 'w') as f:
+					pickle.dump({'L':L, 'H':H, 'NA':NA, 'N_flights':len(m1), 'T':T, 'dT':dT}, f)
 
 	# n_iter = 100
 

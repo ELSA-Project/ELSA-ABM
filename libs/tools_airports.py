@@ -2518,7 +2518,7 @@ def select_layer_sector(password_db, airac, zone, layer):
     return bounds
 
 def map_of_net(G, colors='r', num=0, limits=(0,0,0,0), title='', size_nodes=1., size_edges=2., nodes=[], zone_geo=[], edges=True, fmt='svg', dpi=100, \
-        save_file = None, show=True, figsize=(9,6), background_color='white', key_word_weight='weight', z_order_nodes=6, diff_edges=False):
+    save_file = None, show=True, figsize=(9,6), background_color='white', key_word_weight='weight', z_order_nodes=6, diff_edges=False):
     """
     Draw a net. TODO: maximum width.
     """
