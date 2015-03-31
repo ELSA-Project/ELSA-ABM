@@ -86,7 +86,7 @@ def do_sweep_on((input_file, paras, other_paras)):#, zone, suff, force)):
 	return files_input, logs_input
 
 def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, bound_file_zone, tmp_navpoints_file_zone, force=False, trajectories=None,\
-	temp_config_dir=main_dir+'/abm_tactical/config_temp', n_cores=1, suff = '', **kwargs):
+	temp_config_dir=main_dir+'/abm_tactical/config_temp', n_cores=1, suff = '', dryrun=False, **kwargs):
 
 	"""
 	Script which sweeps two levels of parameters for the tactical ABM. Config files have to be given externally.
@@ -108,37 +108,38 @@ def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, b
 	shock_file = temp_config_dir + '/shock_tmp.dat'
 	bound_file = temp_config_dir + '/bound_latlon.dat'
 	tmp_navpoints_file = temp_config_dir + '/temp_nvp.dat'
-	
-	if trajectories!=None:
-		write_trajectories_for_tact(trajectories, fil=input_file) 
 
-	# Boundaries 
-	with open(main_dir + '/libs/All_shapes_334.pic','r') as f:
-		all_shapes = pickle.load(f)
-	boundary = list(all_shapes[zone]['boundary'][0].exterior.coords)
-	assert boundary[0]==boundary[-1]
+	if not dryrun:	
+		if trajectories!=None:
+			write_trajectories_for_tact(trajectories, fil=input_file) 
 
-	# Bounds
-	if not os.path.exists(bound_file_zone):
-		with open(bound_file_zone, 'w') as f:
-			for x, y in boundary:
-				f.write(str(x) + '\t' + str(y) + '\n')
-	os.system('cp ' + bound_file_zone + ' ' + bound_file)
+		# Boundaries 
+		with open(main_dir + '/libs/All_shapes_334.pic','r') as f:
+			all_shapes = pickle.load(f)
+		boundary = list(all_shapes[zone]['boundary'][0].exterior.coords)
+		assert boundary[0]==boundary[-1]
+
+		# Bounds
+		if not os.path.exists(bound_file_zone):
+			with open(bound_file_zone, 'w') as f:
+				for x, y in boundary:
+					f.write(str(x) + '\t' + str(y) + '\n')
+		os.system('cp ' + bound_file_zone + ' ' + bound_file)
 
 
-	# Temporary navpoints
-	if not os.path.exists(tmp_navpoints_file_zone) or 1:
-		tmp_nvp = compute_temporary_points(50000, boundary, save_file=tmp_navpoints_file_zone)
-	os.system('cp ' + tmp_navpoints_file_zone + ' ' + tmp_navpoints_file)
+		# Temporary navpoints
+		if not os.path.exists(tmp_navpoints_file_zone) or 1:
+			tmp_nvp = compute_temporary_points(50000, boundary, save_file=tmp_navpoints_file_zone)
+		os.system('cp ' + tmp_navpoints_file_zone + ' ' + tmp_navpoints_file)
 
-	# Points for shocks
-	if not os.path.exists(shock_file_zone) or 1:
-		#points = points_in_sectors(zone, all_shapes)
-		points = tmp_nvp[:100]
-		with open(shock_file_zone, 'w') as f:
-			for x, y in points:
-				f.write(str(x) + '\t' + str(y) + '\n')
-	os.system('cp ' + shock_file_zone + ' ' + shock_file)
+		# Points for shocks
+		if not os.path.exists(shock_file_zone) or 1:
+			#points = points_in_sectors(zone, all_shapes)
+			points = tmp_nvp[:100]
+			with open(shock_file_zone, 'w') as f:
+				for x, y in points:
+					f.write(str(x) + '\t' + str(y) + '\n')
+		os.system('cp ' + shock_file_zone + ' ' + shock_file)
 
 	# Copy config file in temporary folder 
 	os.system('cp ' + config_file + ' ' + temp_config_dir + '/config.cfg')
@@ -162,7 +163,7 @@ def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, b
 						#counter(i, n_iter, message="Doing iterations... ")
 						files.append((input_file, output_file.split('.dat')[0] + '_' + str(i) + '.dat'))
 					
-					if not os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + suff + '.dat') or force:
+					if (not os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + suff + '.dat') or force) and not dryrun:
 						#logs.append(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.txt')
 						
 						#with stdout_redirected(to=output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + suff + '.txt'):
@@ -246,7 +247,7 @@ if __name__=='__main__':
 	# print coin
 	# p.close()
 
-	files, logs = sweep_paras_shocks(*args, **all_paras)
+	files, logs = sweep_paras_shocks(*args, dryrun = True, **all_paras)
 	#	print
 
 	# Build complete log

@@ -162,7 +162,7 @@ def extract_from_file(files):
 	pass
 
 if __name__=='__main__':
-	p = Pool(2)
+	p = Pool(4)
 
 	force = True
 
@@ -201,6 +201,8 @@ if __name__=='__main__':
 				NA = p.map(n_actions_tot, [(m1[a], hm1[a], m3[a], hm3[a]) for a in sorted(m3) if a in m1.keys()])
 				T = p.map(time_flight, [tm1[a] for a in sorted(m3) if a in m1.keys()])
 				dT = p.map(delay_flight, [(tm1[a], tm3[a]) for a in sorted(m3) if a in m1.keys()])
+			except IOError:
+				print "Did not find every files dump only", len(L), "files."
 			finally:
 				with open(LH_file, 'w') as f:
 					pickle.dump({'L':L, 'H':H, 'NA':NA, 'N_flights':len(m1), 'T':T, 'dT':dT}, f)
