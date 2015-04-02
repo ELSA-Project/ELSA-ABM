@@ -36,7 +36,7 @@ _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRe
 #shuffle(_colors)
 
 def draw_network_map(G_init, title='Network map', trajectories=[], rep='./',airports=True, 
-    load=True, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
+    load=False, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
     colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
     print "Drawing network..."
     G = deepcopy(G_init)
@@ -514,8 +514,8 @@ def post_process_paras(paras):
             if not 'ACtot' in paras.keys():
                 paras['ACtot'] = sum([len(v) for v in paras['flows'].values()])
            
-        print 'pouet' 
-        print paras['ACtot']
+        #print 'pouet' 
+        #print paras['ACtot']
         density=_func_density_vs_ACtot_na_day(paras['ACtot'], paras['na'], paras['day'])
 
         # There is no update requisites here, because the traffic should not be changed
@@ -569,6 +569,7 @@ def post_process_paras(paras):
     if paras['capacity_factor']!=1.:
         for n in paras['G'].nodes():
             paras['G'].node[n]['capacity'] = int(paras['G'].node[n]['capacity']*paras['capacity_factor'])
+            #print "Capacity sector", n, ":", paras['G'].node[n]['capacity']
 
     # ------------------- From M0 to M1 ----------------------- #
     if paras['mode_M1'] == 'standard':

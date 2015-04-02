@@ -7,6 +7,7 @@ import os
 
 import pickle
 import numpy as np
+from multiprocessing import Pool
 
 import libs	
 
@@ -51,12 +52,41 @@ def name_results_shocks(paras, **param):
 	output_file = result_dir + '/trajectories/M3/' + m1_file_name + '_sigV' + str(paras['sig_V']) + '_t_w' + str(paras['t_w'])
 	#if paras['f_shocks']>0:
 	output_file += '_shocks' + str(paras['f_shocks'])
+	output_file += param['suff']
 	output_file += '.dat'
 	#print output_file
 	return output_file
 
+def do_sweep_on((input_file, paras, other_paras)):#, zone, suff, force)):
+	files_input, logs_input = [], []
+	print "Input file:", input_file
+	name_par1, name_par2 = tuple(paras['paras_to_loop'])
+	for par1 in paras[name_par1 + '_iter']:
+		print name_par1, "=", par1
+		paras.update(name_par1, par1, config_file=other_paras['config_file'])
+		for par2 in paras[name_par2 + '_iter']:
+			print name_par2, "=", par2
+			paras.update(name_par2, par2, config_file=other_paras['config_file'])
+			with clock_time():
+				output_file = name_results_shocks(paras, m1_file_name=input_file, zone=other_paras['zone'], suff=other_paras['suff'])
+				for i in range(paras['nsim']):
+					#counter(i, n_iter, message="Doing iterations... ")
+					files_input.append((input_file, output_file.split('.dat')[0] + '_' + str(i) + '.dat'))
+				
+				if not os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + other_paras['suff'] + '.dat') or other_paras['force']:
+					#logs_input.append(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.txt')
+					
+					#with stdout_redirected(to=output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + other_paras['suff'] + '.txt'):
+					print 'config_file', other_paras['config_file']
+					do_ABM_tactical(input_file, output_file, other_paras['config_file'], verbose=1, 
+							shock_tmp=other_paras['shock_file'],
+							bound_latlon=other_paras['bound_file'],
+							temp_nvp=other_paras['tmp_navpoints_file'])
+	#print
+	return files_input, logs_input
+
 def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, bound_file_zone, tmp_navpoints_file_zone, force=False, trajectories=None,\
-	temp_config_dir=main_dir+'/abm_tactical/config_temp', **kwargs):
+	temp_config_dir=main_dir+'/abm_tactical/config_temp', n_cores=1, suff = '', dryrun=False, **kwargs):
 
 	"""
 	Script which sweeps two levels of parameters for the tactical ABM. Config files have to be given externally.
@@ -67,52 +97,57 @@ def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, b
 	# shock_file=main_dir + '/abm_tactical/config/shock_tmp.dat',\
 	# bound_file=main_dir + '/abm_tactical/config/bound_latlon.dat',\
 	# tmp_navpoints_file=main_dir + '/abm_tactical/config/temp_nvp.dat',
+	
+	# config_file_temp = temp_config_dir + '/config.cfg'
 
-	#config_file_temp = temp_config_dir + '/config.cfg'
+	# print "Sweeping parameters with", n_cores, "cores."
 
 	os.system('mkdir -p ' + temp_config_dir)
 	
+	# Targets
 	shock_file = temp_config_dir + '/shock_tmp.dat'
 	bound_file = temp_config_dir + '/bound_latlon.dat'
 	tmp_navpoints_file = temp_config_dir + '/temp_nvp.dat'
-	
-	if trajectories!=None:
-		write_trajectories_for_tact(trajectories, fil=input_file) 
 
-	# Boundaries 
-	with open(main_dir + '/libs/All_shapes_334.pic','r') as f:
-		all_shapes = pickle.load(f)
-	boundary = list(all_shapes[zone]['boundary'][0].exterior.coords)
-	assert boundary[0]==boundary[-1]
+	if not dryrun:	
+		if trajectories!=None:
+			write_trajectories_for_tact(trajectories, fil=input_file) 
 
-	# Bounds
-	if not os.path.exists(bound_file_zone):
-		with open(bound_file_zone, 'w') as f:
-			for x, y in boundary:
-				f.write(str(x) + '\t' + str(y) + '\n')
-	os.system('cp ' + bound_file_zone + ' ' + bound_file)
+		# Boundaries 
+		with open(main_dir + '/libs/All_shapes_334.pic','r') as f:
+			all_shapes = pickle.load(f)
+		boundary = list(all_shapes[zone]['boundary'][0].exterior.coords)
+		assert boundary[0]==boundary[-1]
+
+		# Bounds
+		if not os.path.exists(bound_file_zone):
+			with open(bound_file_zone, 'w') as f:
+				for x, y in boundary:
+					f.write(str(x) + '\t' + str(y) + '\n')
+		os.system('cp ' + bound_file_zone + ' ' + bound_file)
 
 
-	# Temporary navpoints
-	if not os.path.exists(tmp_navpoints_file_zone) or 1:
-		tmp_nvp = compute_temporary_points(50000, boundary, save_file=tmp_navpoints_file_zone)
-	os.system('cp ' + tmp_navpoints_file_zone + ' ' + tmp_navpoints_file)
+		# Temporary navpoints
+		if not os.path.exists(tmp_navpoints_file_zone) or 1:
+			tmp_nvp = compute_temporary_points(50000, boundary, save_file=tmp_navpoints_file_zone)
+		os.system('cp ' + tmp_navpoints_file_zone + ' ' + tmp_navpoints_file)
 
-	# Points for shocks
-	if not os.path.exists(shock_file_zone) or 1:
-		#points = points_in_sectors(zone, all_shapes)
-		points = tmp_nvp[:100]
-		with open(shock_file_zone, 'w') as f:
-			for x, y in points:
-				f.write(str(x) + '\t' + str(y) + '\n')
-	os.system('cp ' + shock_file_zone + ' ' + shock_file)
+		# Points for shocks
+		if not os.path.exists(shock_file_zone) or 1:
+			#points = points_in_sectors(zone, all_shapes)
+			points = tmp_nvp[:100]
+			with open(shock_file_zone, 'w') as f:
+				for x, y in points:
+					f.write(str(x) + '\t' + str(y) + '\n')
+		os.system('cp ' + shock_file_zone + ' ' + shock_file)
 
-	# Copy config file in temporary folder
+	# Copy config file in temporary folder 
 	os.system('cp ' + config_file + ' ' + temp_config_dir + '/config.cfg')
 	config_file = temp_config_dir + '/config.cfg'
 
 	files, logs = [], []
-	# Iterations on every input files
+	#Iterations on every input files
+
 	for input_file in input_files:
 		print "Input file:", input_file
 		name_par1, name_par2 = tuple(paras['paras_to_loop'])
@@ -123,21 +158,39 @@ def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, b
 				print name_par2, "=", par2
 				paras.update(name_par2, par2, config_file=config_file)
 				with clock_time():
-					output_file = name_results_shocks(paras, m1_file_name=input_file, zone=zone)
+					output_file = name_results_shocks(paras, m1_file_name=input_file, zone=zone, suff=suff)
 					for i in range(paras['nsim']):
 						#counter(i, n_iter, message="Doing iterations... ")
 						files.append((input_file, output_file.split('.dat')[0] + '_' + str(i) + '.dat'))
 					
-					if not os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.dat') or force:
-						#logs.append(output_file.split('.dat')[0] + '.txt')
+					if (not os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + suff + '.dat') or force) and not dryrun:
+						#logs.append(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.txt')
 						
-						with stdout_redirected(to=output_file.split('.dat')[0] + '.txt'):
-							do_ABM_tactical(input_file, output_file, config_file, verbose=1, 
+						#with stdout_redirected(to=output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + suff + '.txt'):
+						do_ABM_tactical(input_file, output_file, config_file, verbose=1, 
 								shock_tmp=shock_file,
 								bound_latlon=bound_file,
 								temp_nvp=tmp_navpoints_file)
-							raise Exception()
 		print
+
+	# print "Running parallelized sweep..."
+	# p = Pool(n_cores)
+	# chouip = {'suff':suff, 'config_file':config_file, 'shock_file':shock_file, 'tmp_navpoints_file':tmp_navpoints_file, 'bound_file':bound_file, 'force':force, 'zone':zone}
+	# coin =  p.map(do_sweep_on, [(iptf, paras, chouip) for iptf in input_files])
+	# #coin =  p.map(do_sweep_on, list(range(10)))
+	# #print coin
+	# p.close()
+
+
+
+	# files, logs = zip(*coin)
+	# files = [ff for f in files for ff in f]
+	# logs = [ff for f in logs for ff in f]
+
+	# for fs in files:
+	# 	print fs
+	
+	# raise Exception()
 
 	return files, logs
 
@@ -184,11 +237,22 @@ if __name__=='__main__':
 	# for f in all_paras['input_files']:
 	# 	print "Input file:", f
 	# 	args[2] = f
-	files, logs = sweep_paras_shocks(*args, **all_paras)
+
+	# def d2(a):
+	# 	return a**2
+
+	# p = Pool(1)
+	# #coin =  p.map(do, input_files)
+	# coin =  p.map(d2, list(range(10)))
+	# print coin
+	# p.close()
+
+	files, logs = sweep_paras_shocks(*args, dryrun = True, **all_paras)
 	#	print
 
 	# Build complete log
 	log_tot = result_dir + '/trajectories/files/'+ sys.argv[1] + '_log.txt' 
+	os.system('touch ' + log_tot)
 	for f in logs:
 		os.system('cat ' + f + ' >> ' + log_tot)
 		os.system('rm ' + f)

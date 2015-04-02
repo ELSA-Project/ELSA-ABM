@@ -265,6 +265,7 @@ class Simulation:
                         time = times[l]
                         self.ACs[k] = AirCompany(k, self.Nfp, self.na, self.G.G_nav.short.keys(), par)
                         time = int(delay(time, starting_date=self.starting_date)/60.)
+                        #print ("(idx_s, idx_d):", (idx_s, idx_d))
                         self.ACs[k].fill_FPs([time], self.tau, self.G, pairs=[(idx_s, idx_d)])
                         k+=1
                         l+=1
@@ -547,7 +548,7 @@ def add_first_last_points(trajs, secs=False):
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 5, 6, 0, 0, 0],\
      coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, 
-     record_stats_file=None, remove_flights_after_midnight=False, rectificate=None, **paras_control):
+     record_stats_file=None, remove_flights_after_midnight=False, rectificate=None, storymode=False, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 
@@ -608,10 +609,13 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     
     with clock_time():
         sim=Simulation(paras, G=G, make_dir=True, verbose=True)
-        sim.make_simu(storymode=False)
+        sim.make_simu(storymode=storymode)
         sim.compute_flags()
         queue=post_process_queue(sim.queue)
         M0_queue=post_process_queue(sim.M0_queue)
+        #for n in sim.G.nodes():
+            #print ("Load of sector", n, ": ", sim.G.node[n]['load'], "/", sim.G.node[n]['capacity'])
+            #print ("Airport capacity", n, ": ", sim.G.node[n]['load_airport'], "/", sim.G.node[n]['capacity'])
 
     print
 

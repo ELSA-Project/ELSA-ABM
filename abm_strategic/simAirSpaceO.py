@@ -148,8 +148,10 @@ class Network_Manager:
                 print "and crossing times:"
                 print fp.times
 
-            first=1 ###### ATTENTION !!!!!!!!!!!
-            last=len(path)-1 ########## ATTENTION !!!!!!!!!!!
+            #first=1 ###### ATTENTION !!!!!!!!!!!
+            first=0 ###### ATTENTION !!!!!!!!!!!
+            #last=len(path)-1 ########## ATTENTION !!!!!!!!!!!
+            last=len(path) ########## ATTENTION !!!!!!!!!!!
             
             j=first
             while j<last and not self.overload_sector(G, path[j],(times[j],times[j+1])):#and self.node[path[j]]['load'][j+time] + 1 <= self.node[path[j]]['capacity']:
@@ -174,7 +176,7 @@ class Network_Manager:
                         print "     because destination airport was full."
 
             if fp.accepted:
-                self.allocate(G, fp, storymode=storymode)
+                self.allocate(G, fp, storymode=storymode, first=first, last=last)
                 flight.fp_selected=fp
                 flight.accepted = True
                 found=True
@@ -287,7 +289,7 @@ class Network_Manager:
 
         return len(pouet[pouet>G.node[n]['capacity_airport']]) > 0
         
-    def allocate_hours(self, G, fp, storymode=False):
+    def allocate_hours(self, G, fp, storymode=False, first=0, last=-1):
         """
         Fill the network with the given flight plan. For each sector of the flight plan, 
         add one to the load for each tranch of time (one hour tranches) in which the flight 
@@ -302,7 +304,10 @@ class Network_Manager:
         if storymode:
             print "NM allocates the flight."
         path,times=fp.p,fp.times
-        for i in range(1,len(path)-1):
+        #for i in range(1,len(path)-1):
+        if last==-1: 
+            last = len(path)
+        for i in range(first, len(path)):
             n=path[i]
             t1,t2=times[i]/60.,times[i+1]/60.
             h=0
@@ -332,7 +337,7 @@ class Network_Manager:
             for k in range(i1,i2):
                 G.node[n]['load_old'][k][1]+=1
 
-    def deallocate_hours(self, G, fp):
+    def deallocate_hours(self, G, fp, first=0, last=-1):
         """
         New in 2.5: used to deallocate a flight plan not legit anymore (because one sector has been shutdown).
         Changed in 2.9: completely changed, based on hour tranches.
@@ -341,7 +346,10 @@ class Network_Manager:
         """
         
         path,times=fp.p,fp.times
-        for i in range(1, len(path)-1):
+        if last==-1: 
+            last = len(path)
+        #for i in range(1, len(path)-1):
+        for i in range(first, last):
             n = path[i]
             t1,t2=times[i]/60.,times[i+1]/60.
             h=0
