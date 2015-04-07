@@ -50,14 +50,42 @@ _colors = ('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','Dark
 
 
 def area(p):
+    """
+    Returns the area of a polygon.
+
+    Parameters
+    ----------
+    p : list of tuples (x, y)
+        Coordinates of the boundaries. Last Point must NOT be equal to first point.
+
+    Returns
+    -------
+    Area based on cartesian distance
+    """
     return 0.5 * abs(sum(x0*y1 - x1*y0
                          for ((x0, y0), (x1, y1)) in segments(p)))
 
 def attach_termination_nodes(G):
     """
-    New in 2.9.6: attach nodes with degree 1 to closest node in the same sector.
-    Changed in 2.9.7: do not attach airports
+    Attach navpoints with degree 1 to closest node in the same sector.
+    TODO: infinite loop if a navpoint is alone in a sector (and with degree 1).
+
+    Parameters
+    ----------
+    G : Hybrid network
+
+    Returns
+    -------
+    G : Hybrid network
+        where the lonely navpoints have been attached.
+
+    Notes
+    -----
+    New in 2.9.6: 
+    Changed in 2.9.7: do not attach airports.
+
     """
+
     changed = True
     while changed:
         changed = False
@@ -65,7 +93,10 @@ def attach_termination_nodes(G):
             sec = G.G_nav.node[n]['sec']
             if G.G_nav.degree(n)==1 and not n in G.G_nav.get_airports():
                 changed = True
+                # Find the nodes which are in the same sector, not already attached to n
+                # and not on a border.
                 pairs = [(n, n2) for n2 in G.node[sec]['navs'] if n2!=n and (not n2 in G.G_nav.neighbors(n)) and (not n in G.G_nav.navpoints_borders or not n2 in G.G_nav.navpoints_borders)]
+                # Compute distance between potential attaching nodes and choose the closest one.
                 distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
                 n1_selected, n2_selected = pairs[np.argmin(distances)]
                 print "I attached node", n1_selected, "with degree 1 to node", n2_selected
@@ -76,26 +107,53 @@ def attach_two_sectors(s1, s2, G):
     """
     Attach two sectors by attaching two navpoints in each of them.
     The closest navpoints to each other are chosen.
+
+    Parameters
+    ----------
+    s1 and s2 : indices of sectors
+    G : Hybrid network
+
+    Raises 
+    ------
+    AssertionError
+        if there is no navpoint in s1 or s2
+
+    Returns
+    -------
+    G : Hybrid network
+        with the two sectors attached
+
     """
-    navs_in_s1=G.node[s1]['navs']#[n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s1]
+
+    navs_in_s1=G.node[s1]['navs']
+
     try:
         assert len(navs_in_s1)>0
     except AssertionError:
         print "There is no navpoint in sector", s1, "!"
         raise
-    navs_in_s2=G.node[s2]['navs']#[n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s2]
+
+    navs_in_s2=G.node[s2]['navs']
     try:
         assert len(navs_in_s2)>0
     except AssertionError:
         print "There is no navpoint in sector", s2, "!"
         raise
     
+    # All possible connections between navpoints of both sectors
     pairs=[(n1, n2) for n1 in navs_in_s1 for n2 in navs_in_s2]
-    #print "Pairs:", pairs
+
+    print 'pairs', pairs
+
+    # Compute distances of all possible pairs
     distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
-    #print "Distances:", distances
+
+    print zip(pairs, distances)
+
+    # Select the closest navpoints
     n1_selected, n2_selected = pairs[np.argmin(distances)]
-    G.G_nav.add_edge(n1_selected,n2_selected)#, weight=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord'])))
+    G.G_nav.add_edge(n1_selected, n2_selected)
+
     return G
 
 def automatic_name(G, paras_G):
@@ -161,6 +219,20 @@ def check_and_fix_empty_sectors(G, checked, repair=False):
     return G, problem
 
 def check_empty_polygon(G, repair = False):
+    """
+    Check all sector-polygons of G to see if they are reduced to a
+    single point (in which case they have no representative_point).
+
+    Parameters
+    ----------
+    G : networkx object with attribute polygons
+        giving the dictionary of the shapely Polygons to check
+    repair : boolean
+        if set to True, the empty polygons are removed from the 
+        dictionary
+
+    """
+
     for n in G.nodes():
         try:
             assert len(G.polygons[n].representative_point().coords) != 0 
@@ -189,7 +261,7 @@ def check_everybody_is_attached(G, repair=False):
 
 def check_everybody_has_one_cc(G, repair=False):
     """
-    Changed in 2.9.6: we attach the nodes to the closest. Recursive check
+    Changed in 2.9.6: we attach the nodes to the closest. Recursive check.
     """
     problem=False
     for s in G.nodes():
@@ -261,14 +333,41 @@ def check_two_sectors_attached(s1, s2, G):
             break
     return found
 
-def compute_navpoints_borders(borders_coordinates, shape, lin_dens = 10, only_outer_boundary = False, thr = 1e-2):
+def compute_navpoints_borders(borders_coordinates, shape, lin_dens=10, only_outer_boundary=False,
+    small=10**(-5.), thr=1e-2):
     """
-    Put some navpoints on each segments given by borders.
+    Put some navpoints on each segments given by borders. The points are shifted slightly to as to 
+    belong to only one sector without any ambiguity.
+
+    Parameters
+    ----------
+    borders_coordinates : list of segments
+        Segments must 2-tuple of 2-tuples containinf the coordinates.
+    shape : shapely Polygon
+        representing the union of all sectors. Only used to check if the 
+        new navpoints are in the global shape (which should be the case).
+    lin_dens : float
+        Number of new navpoints per unit of length
+    only_outer_boundary : bool
+        if set to True, navpoints will be created only on the global_shape
+        Otherwise the navpoints are created on every boundaries.
+    thr : float 
+        Spatial threshold for the detection of navpoint on the borders.
+    small : float
+        Used to shift the points.
+
+    Returns
+    -------
+    navpoints : list of coordinates
+        of the new points.
+
+    Notes
+    -----
     New in 2.9.7.
+    Changed in 2.9.8: don't check if coordinates of the new points are wihtin a square of size 1x1
     """
 
     navpoints = []
-    small = 10**(-5.)
     for c1,c2 in borders_coordinates:
         c1, c2 = np.array(c1), np.array(c2)
         #print "c1=", c1, "; c2=", c2
@@ -287,22 +386,22 @@ def compute_navpoints_borders(borders_coordinates, shape, lin_dens = 10, only_ou
                 P = Point(c)
                 if shape.contains(P): # Check that this point is actually in the global shape.
                     break
-                #print "With these coordinates:", c, "the point is not contained in the global shape."
+            
             #if not shape.contains(P):
             #    print "Could not find any coordinates in the shape for this point."
 
-            if -1.<c[0]<1. and -1.<c[1]<1.:
-                if not only_outer_boundary or shape.exterior.distance(P)<thr:
-                    changed = True
-                    navpoints.append(c)
-                    #print "New border point with this coordinate:", c
-                    try:
-                        assert shape.contains(P)
-                    except AssertionError:
-                        print "The selected node is not contained in the global shape."
-                        raise
+            # if -1.<c[0]<1. and -1.<c[1]<1.:
+            if not only_outer_boundary or shape.exterior.distance(P)<thr:
+                changed = True
+                navpoints.append(c)
+                #print "New border point with this coordinate:", c
+                try:
+                    assert shape.contains(P)
+                except AssertionError:
+                    print "The selected node is not contained in the global shape."
+                    raise
             k+=1
-
+        #print
     return navpoints
 
 def compute_possible_outer_pairs(G):
@@ -319,59 +418,67 @@ def compute_possible_outer_pairs(G):
 
     return pairs
 
-def compute_voronoi(G):
-    polygons={}
+def compute_voronoi(G, a=1.):
+    """
+    Compute the voronoi tesselation of the network G. 
+    Tessels are given to G through the polygons attribute,
+    which is a list of shapely Polygons. In order to avoid 
+    infinite polygons, the polygons are acute with a sqre of 
+    size a.
+
+    TODO: there is a problem with the outer polyongs which can be 
+    GeomtryCollections (see corresponding unit test).
+
+    Parameters
+    ----------
+    G : networkx object
+        Each node of the network needs to have a 'coord' key
+        with a 2-tuple for coordinates.
+    a : float, optional
+        size of the square which is used to cut the polygons.
+
+    Returns
+    -------
+    G : same networkx object
+        With a (new) attribute 'polygons', which is a list of shapely Polygons
+        representing the cells.
+    vor : Output of the Voronoi function of scipy.
+
+    """
+    polygons = {}
     nodes = G.nodes()
+
+    # Compute the voronoi tesselation with scipy
     vor = Voronoi(np.array([G.node[n]['coord'] for n in nodes]))
-    for i,p in enumerate(vor.point_region):
+
+    # Build polygons objects
+    for i, p in enumerate(vor.point_region):
         r = vor.regions[p]
-        coords=[vor.vertices[n] for n in  r + [r[0]] if n!=-1]
+        coords=[vor.vertices[n] for n in r + [r[0]] if n!=-1]
         if len(coords)>2:
-            G.node[i]['area']=area(coords)
-            polygons[i]=Polygon(coords)
+            G.node[i]['area'] = area(coords)
+            polygons[i] = Polygon(coords)
             try:
                 assert abs(G.node[i]['area'] - polygons[i].area)<10**(-6.)
             except:
                 raise Exception(i, G.node[i]['area'], polygons[i].area)
         else:
+            # Case where the polygon is only made of 2 points...
             print "Problem: the sector", i, "has the following coords for its vertices:", coords
             print "I remove the corresponding node from the network."
             G.remove_node(nodes[i])
     
-    eps=0.1
-    minx,maxx,miny,maxy=min([n[0] for n in vor.vertices]) -eps, max([n[0] for n in vor.vertices]) +eps, min([n[1] for n in vor.vertices]) -eps, max([n[1] for n in vor.vertices]) +eps
+    eps = 0.1
+    # minx, maxx, miny, maxy = min([n[0] for n in vor.vertices])-eps, max([n[0] for n in vor.vertices]) +eps, min([n[1] for n in vor.vertices]) -eps, max([n[1] for n in vor.vertices]) +eps
     
-    square=Polygon([[-1,-1],[-1,1],[1,1],[1,-1],[-1,-1]])
+    square = Polygon([[-a,-a],[-a,a],[a,a],[a,-a],[-a,-a]])
 
-    for n,pol in polygons.items():
-        polygons[n]=pol.intersection(square)
+    # Cut all polygons with the square.
+    for n, pol in polygons.items():
+        polygons[n] = pol.intersection(square)
         
-    G.polygons=polygons
+    G.polygons = polygons
     return G, vor
-
-def default_prepare_sectors_network(paras_G, generate_new_sectors=False, mode = "fake", no_airports=False):
-    """
-    New in 2.9.6: refactorization.
-    Obsolete.
-    """
-    file_net = None
-    if not generate_new_sectors:
-        if mode == 'fake':
-            file_net = 'DEL_C_6A.pic'
-            #G.type_of_net='D'
-        else:
-            #fille='Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0_undirected_threshold'
-            file_net='../Modules/' + paras_G['country'] + '_sectors_network_one_layer_FL' + str(layer) + '_A334.pic'
-
-    file_polygons = None
-
-    if mode!="fake":
-        file_polygons = '../Modules/sectors_network_one_layer_FL' + str(layer) + '_A334_polygons.pic'
-
-    paras_G['file_net'] = file_net
-    paras_G['file_polygons'] = file_net
-
-    return prepare_navpoint_network(paras_G, no_airports=no_airports)
 
 def detect_nodes_on_boundaries(paras_G, G, thr = 1e-2):
     """
@@ -441,9 +548,30 @@ def extract_airports_from_traffic(G, flows): #,paras_G):
     
 def extract_weights_from_traffic(G, flights):
     """
-    For each edge of G, computes the average time elapsed between two navpoints.
+    Compute the average times needed for a filght to go from one node to the other.
+    Segments of flights which are not edges of G are not considered.
+
+    Parameters
+    ----------
+    G : Net or NavpointNet object 
+        with matching dictionnary between names and indices of nodes as
+        attribute 'idx_nodes'.
+    flights : list of Flight Object from the Distance library
+        Object needs to have a key 'route_m1t' which is a list of the navpoint label 
+        and times (name, time), with time a tuple (y, m, d, h, m s).
+
+    Returns
+    -------
+    weights : dictionnary
+        keys are tuple (node index, node index) and values are the weights, 
+        i.e. the average time needed to go from one node to the other, in minutes.
+
+    Notes
+    -----
     Changed in 2.9.4: added paras_real.
     Changed in 2.9.5: flights are given externally.
+    TODO: use datetime instead of delay.
+
     """
     print 'Extracting weights from data...'
 
@@ -634,13 +762,39 @@ def give_capacities_and_weights(G, paras_G):
 
 def navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-2):
     """
+    Create navpoints at the boundaries of all sectors or only on the boundary
+    of the aggregated shape. Build the list of borders and then call 
+    compute_navpoints_borders.
+
+    Parameters
+    ----------
+    G : networkx object with list of polygons and global_shape
+        global_shape must be the union of all polygons.
+    lin_dens : float
+        number of points per unit of length on the border
+    only_outer_boundary : bool
+        if set to True, navpoints will be created only on the global_shape
+        Otherwise the navpoints are created on every boundaries.
+    thr : float 
+        Spatial threshold for the detection of navpoint on the borders.
+
+    Returns
+    -------
+    navpoints : list of coordinates of new navpoints.
+
+    Notes
+    -----
     Changed in 2.9.7: don't use vor anymore. More efficient.
     """
     shape = G.global_shape
+
+    # Build the list of borders
     if only_outer_boundary:
+        # Only the exterior of the global_shape
         borders_coords = list(shape.exterior.coords)
         borders = [(borders_coords[i], borders_coords[i+1]) for i in range(len(borders_coords)-1)]
     else:
+        # All borders of all sectors
         borders = []
         for n, pol in G.polygons.items():
             for i in range(len(pol.exterior.coords)-1):
@@ -653,75 +807,44 @@ def navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-
     print "I will create", len(navpoints), "navpoints on the borders."
     return navpoints
 
-def _OLD_navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-2):
-    """
-    Create navpoints at the bondaries of a Voronoi tesselation.
-    Changed in 2.9.7: added the possibility to add points only on the outer bounday. Changed 
-    the small shift if the point lies outside the global shape.
-    """
-    small = 10**(-5.)
-    borders=[]
-    shape = G.global_shape
-
-    print "shape exterior coordinates:", list(shape.exterior.coords)
-    for p in G.vor.point_region:
-        r=G.vor.regions[p]
-        for n1,n2 in [(r[i],r[i+1]) for i in range(len(r)-1)] + [(r[-1],r[0])]:
-            borders.append(tuple(sorted((n1,n2))))
-    
-    navpoints=[]
-    for n1,n2 in borders: # TODO: this loop is HIGHLY inefficient...
-        a=np.array(G.vor.vertices[n2] - G.vor.vertices[n1])
-        l=np.linalg.norm(a) #length of border
-        n_p=max(1,int(l*lin_dens)) # number of points to put on the border
-        d=l/float(n_p+1) # distance between each future pair of nodes.
-        k=1
-        changed=False
-        while d*k<l-10**(-4.):# put points until vertex is reached
-            #We shift slighly the points on the borders so there is no ambiguity about which sector they belong to.
-            for shift in [[s*small, ss*small] for s in [1., -1.] for ss in [1., -1.]]: 
-                x,y=list(G.vor.vertices[n1] + k*(d/l)*a +[small, small])
-                if shape.contains(Point(np.array([x,y]))): # Check that this point is actually in the global shape.
-                    break
-                print "With this shift:", shift, "the point is not contained in the global shape."
-
-            if not shape.contains(Point(np.array([x,y]))):
-                print "WARNING: The selected node is not contained in the global shape." # Or exception?
-
-            if -1.<x<1. and -1.<y<1.:
-                print "Distance of point to closest outer boundary:", shape.exterior.distance(Point(np.array([x,y])))
-                if not only_outer_boundary or shape.exterior.distance(Point(np.array([x,y])))<thr:
-                    changed=True
-                    navpoints.append([x,y])
-                    print "New border point with this coordinate:", [x,y]
-            k+=1
-        #if not changed:
-        #    print 'Did not put any points between:', n1,n2, G.vor.vertices[n1], G.vor.vertices[n2]
-
-    print "Final number of point on the outer boundaries:", len(navpoints)
-    return navpoints
-
 def prepare_sectors_network(paras_G, no_airports=False):  
     """
+    Prepare the network of sectors which will be the base for the navpoint network.
+
+    Parameters
+    ----------
+    paras_G : dictionnary
+        of the parameters for the construction of the network
+    no_airports : boolean
+        Don't add airports to network if True.
+
+    Returns
+    -------
+    G : Net object.
+
+    Notes
+    -----
     New in 2.9.6: refactorization.
+
     """
-    G=Net()
-    G.type='sec' #for sectors
+
+    G = Net()
+    G.type = 'sec' #for sectors
     G.type_of_net = paras_G['type_of_net']
 
+    # Import the network from the paras if given, build a new one otherwise
     if paras_G['net_sec'] !=None:
         G.import_from(paras_G['net_sec'], numberize=((type(paras_G['net_sec'].nodes()[0])!=type(1.)) and (type(paras_G['net_sec'].nodes()[0])!=type(1))))
     else:
         G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'],put_nodes_at_corners = True)
 
+    # Give the pre-built polygons to the network.
     if paras_G['polygons']!=None:
         G.polygons={}
         for name, shape in paras_G['polygons'].items():
             G.polygons[G.idx_nodes[name]]=shape
     else:
         G, vor= compute_voronoi(G)
-        #G.vor = vor #I should remove this. It is useful for navpoints_at_borders only, and I am sure I could do without it.
-
     
     # Check if every sector has a polygon
     for n in G.nodes():
@@ -731,12 +854,15 @@ def prepare_sectors_network(paras_G, no_airports=False):
             print "Sector", n, "doesn't have any polygon associated!"
             raise
 
+    # Check if there are polygons reduced to a single point.
     check_empty_polygon(G, repair = True)
     check_empty_polygon(G, repair = False)
 
+    # Make sure that neighbors have a common boundary
     recompute_neighbors(G)
 
-    G.global_shape=unary_union(G.polygons.values()).convex_hull
+    # Convex hull of the sectors
+    G.global_shape = unary_union(G.polygons.values()).convex_hull
 
     if not no_airports:
         if paras_G['airports']!=[]:
@@ -745,63 +871,19 @@ def prepare_sectors_network(paras_G, no_airports=False):
             G.generate_airports(paras_G['nairports'],paras_G['min_dis'])
 
     return G
-        
-def prepare_sectors_network_bis(paras_G, mode = 'fake', generate_new_sectors=False, layer=0, no_airports=False):  
-    """
-    Prepare a sector network.
-    Changed in 2.9.6: obsolete.
-    """   
-    G=Net()
-    G.type='sec' #for sectors
-
-    if generate_new_sectors:
-        G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'])
-    else:
-        if mode == 'fake':
-            fille='DEL_C_6A'
-            G.type_of_net='D'
-        else:
-            #fille='Weak_EXTLF_2010-5-6_15:0:0_2010-5-6_16:59:0_undirected_threshold'
-            fille='../Modules/' + paras_G['country'] + '_sectors_network_one_layer_FL' + str(layer) + '_A334'
-            G.type_of_net='R'  # For "Real"
-            G.airac=paras_G['airac']
-            G.country=paras_G['country']
-            G.layer=layer #indicates the layer; '0' for full otherwise.
-   
-        with open(fille + '.pic','r') as _g:           
-            H=pickle.load(_g)
-        
-        if G.type_of_net=='R':  # Numberize the sectors (instead of initial names)
-            G.idx_nodes={s:i for i,s in enumerate(H.nodes())}
-            for n in H.nodes():
-                G.add_node(G.idx_nodes[n], name=n, **H.node[n])
-            for e in H.edges():
-                G.add_edge(G.idx_nodes[e[0]], G.idx_nodes[e[1]])
-        else:
-            G.import_from(H)
-
-        if not no_airports:
-            if paras_G['airports']!=[]:
-                G.add_airports(paras_G['airports'], paras_G['min_dis'], pairs=paras_G['pairs'])
-            else:
-                G.generate_airports(paras_G['nairports'],paras_G['min_dis'])
-            
-        if G.type_of_net=='D':
-            G, vor=compute_voronoi(G)
-            G.vor=vor
-        elif G.type_of_net=='R':
-            with open('../Modules/sectors_network_one_layer_FL' + str(layer) + '_A334_polygons.pic', 'r') as f:
-                polygons_names=pickle.load(f)
-            G.polygons={}
-            for name, shape in polygons_names.items():
-                G.polygons[G.idx_nodes[name]]=shape
-            G.global_shape=cascaded_union(G.polygons.values())
-                
-    return G
     
 def recompute_neighbors(G):
     """
-    New in 2.9.6: Checks if neighbouring sectors have a common boundary. Disconnects them otherwise.
+    Checks if neighbouring sectors have a common boundary. Disconnects them otherwise.
+
+    Parameters
+    ----------
+    G : networkx object with attribute polygons
+        'polygons' must be a list of shapely Polygons.
+
+    Notes
+    -----
+    New in 2.9.6
     """
 
     for n1 in G.nodes():
@@ -815,14 +897,36 @@ def recompute_neighbors(G):
                     G.remove_edge(n1,n2)
 
 def reduce_airports_to_existing_nodes(G, pairs, airports):
+    """
+    Remove all nodes in airports list and list of origin-destination 
+    which are not in the list of nodes of G. 
+    
+    Parameters
+    ----------
+    G : networkx object
+    pairs : list of 2-tuples (int, int)
+        list of origin-destination pairs. If set to None, the procedure
+        is skipped for this list.
+    airports : list of integers
+        list of possible airports. If set to None, the procedure is 
+        skipped for this list.
+
+    Returns
+    -------
+    pairs : same as input without the tuples including nodes absent of G
+    airports : same as inpurt without nodes absent of G
+    """
+
     if pairs!=None:
         for e1, e2 in pairs[:]:
             if not G.has_node(e1) or not G.has_node(e2):
                 pairs.remove((e1,e2))
+
     if airports!=None:
         for a in airports[:]:
             if not G.has_node(a):
-                airports.remove(a)        
+                airports.remove(a)    
+
     return pairs, airports
 
 def remove_singletons(G, pairs_nav):
@@ -833,8 +937,21 @@ def remove_singletons(G, pairs_nav):
     return pairs_nav
 
 def segments(p):
+    """
+    Compute the list of segments given a list of coordinates. Attach
+    the end point to the first one.
+
+    Parameters
+    ----------
+    p : list of tuples (x, y)
+        Coordinates of the boundaries.
+
+    Returns
+    l : list of 2-tuples of 2-tuples.
+    """
+
     return zip(p, p[1:] + [p[0]])
-    
+
 def show_polygons(polygons,nodes):
     fig = plt.figure()
     ax = fig.add_subplot(111)

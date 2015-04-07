@@ -1,0 +1,50 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module interface_distance</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>interface_distance</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/interface_distance.py">/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/interface_distance.py</a></font></td></tr></table>
+    <p><tt>@author:&nbsp;earendil<br>
+&nbsp;<br>
+Used&nbsp;for&nbsp;interface&nbsp;with&nbsp;Distance&nbsp;library.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="pickle.html">pickle</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-build_net_distance"><strong>build_net_distance</strong></a>(zone<font color="#909090">='LF'</font>, data_version<font color="#909090">=None</font>, layer<font color="#909090">=350.0</font>, checks<font color="#909090">=True</font>, show<font color="#909090">=True</font>, **kwargs_distance)</dt></dl>
+ <dl><dt><a name="-extract_airports_from_traffic"><strong>extract_airports_from_traffic</strong></a>(G_nav, flights)</dt><dd><tt>This&nbsp;is&nbsp;a&nbsp;function&nbsp;you&nbsp;can&nbsp;pass&nbsp;to&nbsp;the&nbsp;builder&nbsp;(prepare_hybrid_network)&nbsp;in&nbsp;<br>
+order&nbsp;to&nbsp;infer&nbsp;the&nbsp;airports&nbsp;and&nbsp;pairs&nbsp;from&nbsp;traffic.&nbsp;<br>
+You&nbsp;can&nbsp;build&nbsp;your&nbsp;own&nbsp;custom&nbsp;function&nbsp;(for&nbsp;instance&nbsp;to&nbsp;restrict&nbsp;to&nbsp;some&nbsp;navpoints/pairs).<br>
+By&nbsp;default,&nbsp;this&nbsp;one&nbsp;extract&nbsp;every&nbsp;possible&nbsp;entry/exit&nbsp;from&nbsp;flights,&nbsp;finding&nbsp;the&nbsp;first&nbsp;node<br>
+(forward&nbsp;and&nbsp;backward)&nbsp;which&nbsp;are&nbsp;in&nbsp;the&nbsp;list&nbsp;of&nbsp;nodes&nbsp;of&nbsp;the&nbsp;network.</tt></dd></dl>
+ <dl><dt><a name="-name"><strong>name</strong></a>(paras_nav, data_version)</dt></dl>
+ <dl><dt><a name="-paras_strategic"><strong>paras_strategic</strong></a>(zone<font color="#909090">='LF'</font>, airac<font color="#909090">=334</font>, starting_date<font color="#909090">=[2010, 5, 6]</font>, n_days<font color="#909090">=1</font>, cut_alt<font color="#909090">=240.0</font>, mode<font color="#909090">='navpoints'</font>, data_version<font color="#909090">=None</font>)</dt><dd><tt>Custom&nbsp;paras&nbsp;building&nbsp;for&nbsp;the&nbsp;distance&nbsp;library.</tt></dd></dl>
+ <dl><dt><a name="-produce_M1_trajs_from_data"><strong>produce_M1_trajs_from_data</strong></a>(zone<font color="#909090">='LF'</font>, data_version<font color="#909090">=None</font>, put_fake_sectors<font color="#909090">=False</font>, save_file<font color="#909090">=None</font>, **kwargs_distance)</dt></dl>
+ <dl><dt><a name="-trajectories_from_data"><strong>trajectories_from_data</strong></a>(zone<font color="#909090">='LF'</font>, fmt<font color="#909090">='(n, z, t)'</font>, data_version<font color="#909090">=None</font>, save_file<font color="#909090">=None</font>, **kwargs_distance)</dt></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>distance_version</strong> = '5.8'</td></tr></table>
+</body></html>

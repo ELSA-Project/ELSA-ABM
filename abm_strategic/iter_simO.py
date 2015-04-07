@@ -50,7 +50,7 @@ def parmap(f,X):
 
 def header(paras, paras_to_display=['departure_times','par','nA', 'ACtot', 'density','Delta_t','ACsperwave']):
     """
-    Used just to show the main parameters in the console.
+    Show the main parameters in the console.
     """
     if paras_to_display==[]:
         paras_to_display=paras.keys()
@@ -86,6 +86,9 @@ def header(paras, paras_to_display=['departure_times','par','nA', 'ACtot', 'dens
     return head
     
 def build_path_average(paras, vers=main_version, in_title=['tau', 'par', 'ACtot', 'nA'], Gname=None):
+    """
+    Build the path for results.
+    """
     if Gname==None:
         Gname=paras['G'].name
     

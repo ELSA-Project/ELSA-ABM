@@ -1,0 +1,177 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module prepare_navpoint_network</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>prepare_navpoint_network</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/prepare_navpoint_network.py">/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/prepare_navpoint_network.py</a></font></td></tr></table>
+    <p><tt>@author:&nbsp;earendil<br>
+&nbsp;<br>
+===========================================================================<br>
+This&nbsp;file&nbsp;is&nbsp;used&nbsp;to&nbsp;build&nbsp;a&nbsp;navpoint&nbsp;network&nbsp;with&nbsp;superimposed&nbsp;sector&nbsp;<br>
+network.&nbsp;The&nbsp;main&nbsp;function&nbsp;is&nbsp;prepare_hybrid_network,&nbsp;with&nbsp;which&nbsp;the&nbsp;<br>
+user&nbsp;can&nbsp;build&nbsp;a&nbsp;totally&nbsp;new&nbsp;network,&nbsp;or&nbsp;take&nbsp;some&nbsp;data&nbsp;from&nbsp;elsewhere.<br>
+===========================================================================</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="networkx.html">networkx</a><br>
+</td><td width="25%" valign=top><a href="pickle.html">pickle</a><br>
+<a href="matplotlib.pyplot.html">matplotlib.pyplot</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="exceptions.html#Exception">exceptions.Exception</a>(<a href="exceptions.html#BaseException">exceptions.BaseException</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="prepare_navpoint_network.html#NoEdges">NoEdges</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="NoEdges">class <strong>NoEdges</strong></a>(<a href="exceptions.html#Exception">exceptions.Exception</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="prepare_navpoint_network.html#NoEdges">NoEdges</a></dd>
+<dd><a href="exceptions.html#Exception">exceptions.Exception</a></dd>
+<dd><a href="exceptions.html#BaseException">exceptions.BaseException</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><a name="NoEdges-__init__"><strong>__init__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__init__">__init__</a>(...)&nbsp;initializes&nbsp;x;&nbsp;see&nbsp;help(type(x))&nbsp;for&nbsp;signature</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#NoEdges-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<hr>
+Methods inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><a name="NoEdges-__delattr__"><strong>__delattr__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__delattr__">__delattr__</a>('name')&nbsp;&lt;==&gt;&nbsp;del&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="NoEdges-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="NoEdges-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="NoEdges-__getslice__"><strong>__getslice__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__getslice__">__getslice__</a>(i,&nbsp;j)&nbsp;&lt;==&gt;&nbsp;x[i:j]<br>
+&nbsp;<br>
+Use&nbsp;of&nbsp;negative&nbsp;indices&nbsp;is&nbsp;not&nbsp;supported.</tt></dd></dl>
+
+<dl><dt><a name="NoEdges-__reduce__"><strong>__reduce__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="NoEdges-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="NoEdges-__setattr__"><strong>__setattr__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__setattr__">__setattr__</a>('name',&nbsp;value)&nbsp;&lt;==&gt;&nbsp;x.name&nbsp;=&nbsp;value</tt></dd></dl>
+
+<dl><dt><a name="NoEdges-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="NoEdges-__str__"><strong>__str__</strong></a>(...)</dt><dd><tt>x.<a href="#NoEdges-__str__">__str__</a>()&nbsp;&lt;==&gt;&nbsp;str(x)</tt></dd></dl>
+
+<dl><dt><a name="NoEdges-__unicode__"><strong>__unicode__</strong></a>(...)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+<dl><dt><strong>message</strong></dt>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-area"><strong>area</strong></a>(p)</dt></dl>
+ <dl><dt><a name="-attach_termination_nodes"><strong>attach_termination_nodes</strong></a>(G)</dt><dd><tt>New&nbsp;in&nbsp;2.9.6:&nbsp;attach&nbsp;nodes&nbsp;with&nbsp;degree&nbsp;1&nbsp;to&nbsp;closest&nbsp;node&nbsp;in&nbsp;the&nbsp;same&nbsp;sector.<br>
+Changed&nbsp;in&nbsp;2.9.7:&nbsp;do&nbsp;not&nbsp;attach&nbsp;airports</tt></dd></dl>
+ <dl><dt><a name="-attach_two_sectors"><strong>attach_two_sectors</strong></a>(s1, s2, G)</dt><dd><tt>Attach&nbsp;two&nbsp;sectors&nbsp;by&nbsp;attaching&nbsp;two&nbsp;navpoints&nbsp;in&nbsp;each&nbsp;of&nbsp;them.<br>
+The&nbsp;closest&nbsp;navpoints&nbsp;to&nbsp;each&nbsp;other&nbsp;are&nbsp;chosen.</tt></dd></dl>
+ <dl><dt><a name="-automatic_name"><strong>automatic_name</strong></a>(G, paras_G)</dt></dl>
+ <dl><dt><a name="-check_and_fix_empty_sectors"><strong>check_and_fix_empty_sectors</strong></a>(G, checked, repair<font color="#909090">=False</font>)</dt></dl>
+ <dl><dt><a name="-check_empty_polygon"><strong>check_empty_polygon</strong></a>(G, repair<font color="#909090">=False</font>)</dt></dl>
+ <dl><dt><a name="-check_everybody_has_one_cc"><strong>check_everybody_has_one_cc</strong></a>(G, repair<font color="#909090">=False</font>)</dt><dd><tt>Changed&nbsp;in&nbsp;2.9.6:&nbsp;we&nbsp;attach&nbsp;the&nbsp;nodes&nbsp;to&nbsp;the&nbsp;closest.&nbsp;Recursive&nbsp;check</tt></dd></dl>
+ <dl><dt><a name="-check_everybody_is_attached"><strong>check_everybody_is_attached</strong></a>(G, repair<font color="#909090">=False</font>)</dt><dd><tt>Check&nbsp;if&nbsp;all&nbsp;neighboring&nbsp;sectors&nbsp;have&nbsp;at&nbsp;least&nbsp;one&nbsp;navpoint&nbsp;each&nbsp;which&nbsp;are&nbsp;neighbors.</tt></dd></dl>
+ <dl><dt><a name="-check_matching"><strong>check_matching</strong></a>(G, repair<font color="#909090">=False</font>)</dt></dl>
+ <dl><dt><a name="-check_two_sectors_attached"><strong>check_two_sectors_attached</strong></a>(s1, s2, G)</dt><dd><tt>Check&nbsp;if&nbsp;two&nbsp;sectors&nbsp;s1&nbsp;and&nbsp;s2&nbsp;have&nbsp;at&nbsp;least&nbsp;one&nbsp;navpoint&nbsp;each&nbsp;which&nbsp;are&nbsp;neighbors.</tt></dd></dl>
+ <dl><dt><a name="-compute_navpoints_borders"><strong>compute_navpoints_borders</strong></a>(borders_coordinates, shape, lin_dens<font color="#909090">=10</font>, only_outer_boundary<font color="#909090">=False</font>, thr<font color="#909090">=0.01</font>)</dt><dd><tt>Put&nbsp;some&nbsp;navpoints&nbsp;on&nbsp;each&nbsp;segments&nbsp;given&nbsp;by&nbsp;borders.<br>
+New&nbsp;in&nbsp;2.9.7.</tt></dd></dl>
+ <dl><dt><a name="-compute_possible_outer_pairs"><strong>compute_possible_outer_pairs</strong></a>(G)</dt></dl>
+ <dl><dt><a name="-compute_voronoi"><strong>compute_voronoi</strong></a>(G)</dt></dl>
+ <dl><dt><a name="-default_prepare_sectors_network"><strong>default_prepare_sectors_network</strong></a>(paras_G, generate_new_sectors<font color="#909090">=False</font>, mode<font color="#909090">='fake'</font>, no_airports<font color="#909090">=False</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.9.6:&nbsp;refactorization.<br>
+Obsolete.</tt></dd></dl>
+ <dl><dt><a name="-detect_nodes_on_boundaries"><strong>detect_nodes_on_boundaries</strong></a>(paras_G, G, thr<font color="#909090">=0.01</font>)</dt><dd><tt>Detects&nbsp;the&nbsp;nodes&nbsp;on&nbsp;the&nbsp;OUTER&nbsp;boundary&nbsp;of&nbsp;the&nbsp;airspace.<br>
+New&nbsp;in&nbsp;2.9.6.</tt></dd></dl>
+ <dl><dt><a name="-erase_small_sectors"><strong>erase_small_sectors</strong></a>(G, thr)</dt><dd><tt>New&nbsp;in&nbsp;2.9.6:&nbsp;remove&nbsp;sectors&nbsp;having&nbsp;a&nbsp;small&nbsp;number&nbsp;of&nbsp;navpoints.<br>
+Changed&nbsp;in&nbsp;2.9.7:&nbsp;set&nbsp;thr&lt;0&nbsp;for&nbsp;no&nbsp;action&nbsp;(instead&nbsp;of&nbsp;0).</tt></dd></dl>
+ <dl><dt><a name="-extract_airports_from_traffic"><strong>extract_airports_from_traffic</strong></a>(G, flows)</dt><dd><tt>New&nbsp;in&nbsp;2.8:&nbsp;gives&nbsp;naiports&nbsp;"airports"&nbsp;among&nbsp;all&nbsp;points&nbsp;of&nbsp;entries&nbsp;and&nbsp;exits&nbsp;from&nbsp;data&nbsp;trajectories.<br>
+Changed&nbsp;in&nbsp;2.9:&nbsp;gives&nbsp;pairs&nbsp;as&nbsp;well.&nbsp;Gives&nbsp;all&nbsp;airports.<br>
+Changed&nbsp;in&nbsp;2.9.4:&nbsp;added&nbsp;paras_real.<br>
+Chanded&nbsp;in&nbsp;2.9.5:&nbsp;flows&nbsp;are&nbsp;given&nbsp;externally<br>
+Obsolete&nbsp;probably&nbsp;TODO.</tt></dd></dl>
+ <dl><dt><a name="-extract_capacity_from_traffic"><strong>extract_capacity_from_traffic</strong></a>(G, flights, date<font color="#909090">=[2010, 5, 6, 0, 0, 0]</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.9.3:&nbsp;Extract&nbsp;the&nbsp;"capacity",&nbsp;the&nbsp;maximum&nbsp;number&nbsp;of&nbsp;flight&nbsp;per&nbsp;hour,&nbsp;based&nbsp;on&nbsp;the&nbsp;traffic.<br>
+Changed&nbsp;in&nbsp;2.9.4:&nbsp;added&nbsp;paras_real.<br>
+Changed&nbsp;in&nbsp;2.9.5:&nbsp;fligths&nbsp;are&nbsp;given&nbsp;externally.</tt></dd></dl>
+ <dl><dt><a name="-extract_old_capacity_from_traffic"><strong>extract_old_capacity_from_traffic</strong></a>(G, paras_real, date<font color="#909090">=[2010, 5, 6, 0, 0, 0]</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.9.4.</tt></dd></dl>
+ <dl><dt><a name="-extract_weights_from_traffic"><strong>extract_weights_from_traffic</strong></a>(G, flights)</dt><dd><tt>For&nbsp;each&nbsp;edge&nbsp;of&nbsp;G,&nbsp;computes&nbsp;the&nbsp;average&nbsp;time&nbsp;elapsed&nbsp;between&nbsp;two&nbsp;navpoints.<br>
+Changed&nbsp;in&nbsp;2.9.4:&nbsp;added&nbsp;paras_real.<br>
+Changed&nbsp;in&nbsp;2.9.5:&nbsp;flights&nbsp;are&nbsp;given&nbsp;externally.</tt></dd></dl>
+ <dl><dt><a name="-find_pairs"><strong>find_pairs</strong></a>(all_airports, all_pairs, nairports, G, remove_pairs_same_sector<font color="#909090">=False</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.9:&nbsp;find&nbsp;nairports&nbsp;for&nbsp;which&nbsp;each&nbsp;of&nbsp;them&nbsp;have&nbsp;at&nbsp;least&nbsp;a&nbsp;link&nbsp;with&nbsp;one&nbsp;of&nbsp;the&nbsp;other&nbsp;ones.<br>
+The&nbsp;algorithm&nbsp;should&nbsp;never&nbsp;fail&nbsp;for&nbsp;nairport=2&nbsp;(you&nbsp;can&nbsp;always&nbsp;find&nbsp;a&nbsp;pair)&nbsp;and&nbsp;of&nbsp;course&nbsp;<br>
+for&nbsp;naiports=len(all_airports).<br>
+New&nbsp;in&nbsp;2.9.3:&nbsp;Possibility&nbsp;of&nbsp;removing&nbsp;the&nbsp;pairs&nbsp;which&nbsp;have&nbsp;their&nbsp;airports&nbsp;in&nbsp;the&nbsp;same&nbsp;sector.</tt></dd></dl>
+ <dl><dt><a name="-give_capacities_and_weights"><strong>give_capacities_and_weights</strong></a>(G, paras_G)</dt></dl>
+ <dl><dt><a name="-navpoints_at_borders"><strong>navpoints_at_borders</strong></a>(G, lin_dens<font color="#909090">=10.0</font>, only_outer_boundary<font color="#909090">=False</font>, thr<font color="#909090">=0.01</font>)</dt><dd><tt>Changed&nbsp;in&nbsp;2.9.7:&nbsp;don't&nbsp;use&nbsp;vor&nbsp;anymore.&nbsp;More&nbsp;efficient.</tt></dd></dl>
+ <dl><dt><a name="-prepare_hybrid_network"><strong>prepare_hybrid_network</strong></a>(paras_G, rep<font color="#909090">='.'</font>, save<font color="#909090">=True</font>, save_path<font color="#909090">=None</font>, show<font color="#909090">=True</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.9.6:&nbsp;refactorization.<br>
+Changed&nbsp;in&nbsp;2.9.7:&nbsp;-&nbsp;navpoints&nbsp;are&nbsp;not&nbsp;contained&nbsp;in&nbsp;any&nbsp;sectors&nbsp;but&nbsp;touch&nbsp;one&nbsp;are&nbsp;linked&nbsp;to&nbsp;it.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;numberize&nbsp;also&nbsp;airports&nbsp;and&nbsp;pairs.<br>
+Changed&nbsp;in&nbsp;2.9.8:&nbsp;supports&nbsp;single&nbsp;sector&nbsp;network&nbsp;TODO.&nbsp;Supports&nbsp;custom&nbsp;external&nbsp;function&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;choosing&nbsp;airports.<br>
+TODO:&nbsp;make&nbsp;an&nbsp;object&nbsp;and&nbsp;different&nbsp;methods.</tt></dd></dl>
+ <dl><dt><a name="-prepare_sectors_network"><strong>prepare_sectors_network</strong></a>(paras_G, no_airports<font color="#909090">=False</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.9.6:&nbsp;refactorization.</tt></dd></dl>
+ <dl><dt><a name="-prepare_sectors_network_bis"><strong>prepare_sectors_network_bis</strong></a>(paras_G, mode<font color="#909090">='fake'</font>, generate_new_sectors<font color="#909090">=False</font>, layer<font color="#909090">=0</font>, no_airports<font color="#909090">=False</font>)</dt><dd><tt>Prepare&nbsp;a&nbsp;sector&nbsp;network.<br>
+Changed&nbsp;in&nbsp;2.9.6:&nbsp;obsolete.</tt></dd></dl>
+ <dl><dt><a name="-recompute_neighbors"><strong>recompute_neighbors</strong></a>(G)</dt><dd><tt>New&nbsp;in&nbsp;2.9.6:&nbsp;Checks&nbsp;if&nbsp;neighbouring&nbsp;sectors&nbsp;have&nbsp;a&nbsp;common&nbsp;boundary.&nbsp;Disconnects&nbsp;them&nbsp;otherwise.</tt></dd></dl>
+ <dl><dt><a name="-reduce_airports_to_existing_nodes"><strong>reduce_airports_to_existing_nodes</strong></a>(G, pairs, airports)</dt></dl>
+ <dl><dt><a name="-remove_singletons"><strong>remove_singletons</strong></a>(G, pairs_nav)</dt></dl>
+ <dl><dt><a name="-segments"><strong>segments</strong></a>(p)</dt></dl>
+ <dl><dt><a name="-show_everything"><strong>show_everything</strong></a>(polygons, G, save<font color="#909090">=True</font>, name<font color="#909090">='network_navpoints'</font>, show<font color="#909090">=True</font>)</dt></dl>
+ <dl><dt><a name="-show_polygons"><strong>show_polygons</strong></a>(polygons, nodes)</dt></dl>
+ <dl><dt><a name="-write_down_network"><strong>write_down_network</strong></a>(G)</dt><dd><tt>New&nbsp;in&nbsp;2.9.4:&nbsp;write&nbsp;down&nbsp;the&nbsp;atributes,&nbsp;nodes&nbsp;and&nbsp;edges&nbsp;of&nbsp;the&nbsp;sector&nbsp;network.<br>
+Used&nbsp;in&nbsp;particular&nbsp;to&nbsp;convert&nbsp;2.9&nbsp;graphs&nbsp;(model&nbsp;2)&nbsp;to&nbsp;2.6&nbsp;(model&nbsp;1).</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>version</strong> = '2.9.8'</td></tr></table>
+</body></html>

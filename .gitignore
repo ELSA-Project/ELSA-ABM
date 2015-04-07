@@ -20,3 +20,7 @@ abm_strategic/Model2.sublime-workspace
 .ipynb*
 results/*
 *.ipynb
+scripts/paras_sweep_*
+scripts/.sync
+.sync
+scripts/strategic_simulations*

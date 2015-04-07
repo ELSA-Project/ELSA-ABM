@@ -71,12 +71,16 @@ class Network_Manager:
     def initialize_load(self, G, length_day=24):
         """
         Initialize loads, with length given by t_max.
+
+        Notes
+        -----
         Changed in 2.2: keeps in memory only the intervals.
         Changed in 2.5: t_max is set to 10**6.
         Changed in 2.7: load of airports added.
         Changed in 2.9: no more load of airports. Load is an array giving the load for each hour.
         Changed in 2.9.3: airports again :).
         """
+
         if not self.old_style:
             for n in G.nodes():
                 G.node[n]['load']=[0 for i in range(length_day)]
@@ -91,8 +95,18 @@ class Network_Manager:
     def build_queue(self, ACs):
         """
         Add all the flights of all ACs to a queue, in random order.
-        @return queue
+
+        Parameters
+        ----------
+        ACs : a list of AirCompany objects 
+            The AirCompanys must have their flights and flight plans computed. 
+
+        Returns
+        -------
+        queue : a list of objects flights
+            This is the priority list for the allocation of flights.
         """
+
         queue=[]
         for ac in ACs.values():
             for f in ac.flights:
@@ -125,7 +139,20 @@ class Network_Manager:
         """
         Tries to allocate the flights by sequentially checking if each flight plan does not overload any sector,
         beginning with the best ones. The rejection of the flights is kept in memory, as
-        well as the first sector overloaded (bottleneck), and the flight plan selected,.
+        well as the first sector overloaded (bottleneck), and the flight plan selected.
+
+        Parameters
+        ----------
+        G : Net Object
+            (Sector) Network on which on which the flights will be allocated. 
+            Needs to have an attribute G_nav which is the network of navpoints.
+        flight : Flight object
+            The flight which has to allocated to the network.
+        storymode : bool, optional
+            Used to print very descriptive output.
+
+        Notes
+        -----
         Changed in 2.2: using intervals.
         Changed in 2.7: sectors of airports are checked independently.
         Changed in 2.9: airports are not checked anymore.
@@ -134,11 +161,8 @@ class Network_Manager:
 
         i=0
         found=False
-        #print 'flight id', flight.ac_id
         while i<len(flight.FPs) and not found:
-            # print 'fp id', i
             fp=flight.FPs[i]
-            #print 'fp.p', fp.p
             self.compute_flight_times(G, fp)
             path, times=fp.p, fp.times
 
@@ -652,18 +676,60 @@ class AirCompany:
     coefficients for the utility function and the pairs of airports used.
     """
     def __init__(self, Id, Nfp, na, pairs, par):
+        """
+        Initialize the AirCompany.
+
+        Parameters
+        ----------
+        Id: integer
+            unique identifier of the company.
+        Nfp : integer
+            Number of flights plans that flights will submit
+        na: integer
+            Number of flights per destination-origin operated by the Air company.
+            Right now the Model supports only na=1
+        pairs : list of tuple with origin-destination
+            departure/arrivale point will be drawn from them if not specified in fill_FPs
+        par : tuple (float, float, float)
+            Parameters for the utility function
+
+        """
+
+        try:
+            assert na==1
+        except AssertionError:
+            raise Exception("na=1 is not supported by the model.")
+
         self.Nfp=Nfp
         self.par=par
-        self.pairs=pairs
+        self.pairs=pairs 
         #self.G=G
         self.na=na
         self.id=Id
         
     def fill_FPs(self, t0spV, tau, G, pairs=[]):
         """
-        Fills na flights with Nfp flight plans each, between airports given by pairs.
+        Fill na flights with Nfp flight plans each, between airports given by pairs.
+
+        Parameters
+        ----------
+        t0spV : iterable with floats
+            Desired times of departure for each origin-destination pair.
+        tau : float
+            Amount of time (in seconds) used to shift the flights plans
+        G : Net Object
+            (Sector) Network on which on which the flights will be allocated. 
+            Needs to have an attribute G_nav which is the network of navpoints.
+        pairs : list of tuples (int, int), optional
+            If given, it is used as the list origin destination for the flights. 
+            Otherwise self.pairs is used. TODO: remove this?
+
+        Notes
+        -----
+
         New in 2.9.5: can specify a pair of airports.
         Changed in 2.9.6: the flight computes the flight plans itself.
+
         """
         if pairs==[]:
             assigned_airports=sample(self.pairs, self.na) 

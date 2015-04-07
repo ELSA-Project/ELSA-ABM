@@ -77,7 +77,7 @@ noise = 0. 								# noise on departures in minutes.
 
 # ------------------ Behavioral parameters ---------------- #
 nA=1.                        			# percentage of Flights of the first population.
-par=[[1.,0.,0.001], [1.,0.,1000.]]
+par=[[1.,0.,0.001], [1.,0.,1000.]]		# Parameters of the utility function for each population.
 
 # ------------------- From M0 to M1 ----------------------- #
 mode_M1 = 'standard' # sweep or standard
