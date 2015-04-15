@@ -31,8 +31,13 @@ void plot(Aircraft_t f,CONF_t c,char *fr){
 	int i;
 	long double p[2];
 	for(i=0;i<f.n_nvp;i++) {
+		#ifdef EUCLIDEAN
+		fprintf(wstream, "%Lf\t%Lf\n",f.nvp[i][0],f.nvp[i][1]);
+		#else
 		gall_peter(f.nvp[i], p);
 		fprintf(wstream, "%Lf\t%Lf\n",p[0],p[1]);
+		#endif
+		
 	}
 	fclose(wstream);
 	
@@ -71,13 +76,34 @@ void plot_ID(Aircraft_t *flight,int Nflight,CONF_t config,int ID){
 	return;
 }
 
-void plot_pos(Aircraft_t f,CONF_t c){
-	plot(f,c,"/tmp/pp");
-	FILE *wstream=fopen("/tmp/pp","w");
+void plot_pos(Aircraft_t f,CONF_t c,char *file_w){
+	//plot(f,c,"/tmp/pp");
+	FILE *wstream=fopen(file_w,"w");
 	int i;
-	for(i=0;i<(c.t_w*c.t_r-1);i++) fprintf(wstream,"%Lf\t%Lf\n",f.pos[i][0],f.pos[i][1]);
+	#ifdef EUCLIDEAN
+	for(i=0;i<(c.t_w);i++) fprintf(wstream,"%Lf\t%Lf\n",f.pos[i][0],f.pos[i][1]);
+	#else
+	long double p[2];
+	for(i=0;i<(c.t_w);i++){
+		gall_peter(f.pos[i], p);
+		fprintf(wstream,"%Lf\t%Lf\n",p[0],p[1]);
+	}
+	#endif
 	fclose(wstream);
 }
+
+void plot_pos_gall(Aircraft_t f,CONF_t c,char *file_w){
+	
+	FILE *wstream=fopen(file_w,"w");
+	int i;
+	long double p[2];
+	for(i=0;i<(c.t_w);i++){
+		gall_peter(f.pos[i],p);
+		fprintf(wstream,"%Lf\t%Lf\n",p[0],p[1]);
+	 }
+	fclose(wstream);
+}
+
 void gall_peter(long double *a,long double *A){
 	A[0]=RH*PI*a[1]/(180.*sqrt(2));
 	A[1]=RH*sqrt(2)*sin(rad(a[0]));
@@ -101,7 +127,7 @@ void plot_movie( Aircraft_t **f,int N_f,CONF_t conf,char *fw ){
 
 	int i,j;
 	long double P[2];
-	for(j=0;j<(conf.t_w*conf.t_r-1);j++) {
+	for(j=0;j<(conf.t_w*conf.t_r);j++) {
 		for(i=0;i<N_f;i++) if((*f)[i].pos[j][3]==1. && (*f)[i].pos[j][0]!=SAFE)
 		{
 			gall_peter((*f)[i].pos[j],P);

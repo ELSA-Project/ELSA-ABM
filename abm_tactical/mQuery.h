@@ -59,6 +59,9 @@ typedef struct {
 	/*Number of elementary time-increment on departures*/
 	int tp;
 	
+	/* It is one if the aircraft is moved within the time-step*/
+	int touched;
+	
 }  Aircraft_t ;
 
 

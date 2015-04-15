@@ -8,6 +8,8 @@
  */
 
 #include "mUtility.h"
+
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<malloc.h>
@@ -169,6 +171,11 @@ void q_sort(long double **arr, int beg, int end){
 		q_sort(arr, r, end);
 	}
 }
+long double euclid_dist2d(long double *a,long double *b){
+	return sqrtl(powl(a[0]-b[0],2)+powl(a[1]-b[1], 2));
+}
+
+
 long double euclid_dist(long double *a,long double *b){
 	return sqrtl(powl(a[0]-b[0],2)+powl(a[1]-b[1], 2)+powl(a[2]-b[2], 2));
 }
@@ -290,6 +297,13 @@ int	 irand(int max){
 	return (int)((rand()/(RAND_MAX +1.0))*max);
 }
 
+int eucl_isbetween(long double *a,long double *b, long double *p){
+	long double x = a[0]*b[1] + a[1]*p[0] + b[0]*p[1] - p[1]*a[0] - b[0]*a[1] - p[0]*b[1];
+	
+	if( x<0.1 ) return 1;
+	else return 0;
+	
+}
 //ritorna 1 se x compreso nella retta passante per a,b
 int isbetween(long double *a,long double *b, long double *x){
 
@@ -376,20 +390,31 @@ void ffree_3D(long double ***x,int N,int M){
 	free(x);
 }
 
+
 int find_st_indx(long double **nvp,int n_nvp,long double *st_point,int st_indx,long double *old_st_point){
 	int i,N=n_nvp-1;
+	
+	#ifdef EUCLIDEAN
+	if(st_indx!=0) if(eucl_isbetween(old_st_point,nvp[st_indx],st_point)) return st_indx;
+	for(i=st_indx;i<N;i++) {
+		if(eucl_isbetween(nvp[i],nvp[i+1],st_point)) return i+1;
+	}
+	#else
 	if(st_indx!=0) if(isbetween(old_st_point,nvp[st_indx],st_point)) return st_indx;
 	for(i=st_indx;i<N;i++) {
 		if(isbetween(nvp[i],nvp[i+1],st_point)) return i+1;
 	}
-	
+	#endif
 	return -1;
 }
 
 int find_p_indx(long double **nvp,int n_nvp,long double *p){
 	int i;
-	for(i=0;i<(n_nvp-1);i++) if(isbetween(nvp[i],nvp[i+1],p)) return i+1;
-	
+	#ifdef EUCLIDEAN
+	for(i=0;i<(n_nvp-1);i++) if(eucl_isbetween(nvp[i],nvp[i+1],p)) return i+1;
+	#else
+	for(i=0;i<(n_nvp-1);i++) if(isbetween(nvp[i],nvp[i+1],p)) return i+1;	
+	#endif
 	//BuG("Impossible to find point\n");
 	
 	return 0;	
@@ -406,6 +431,19 @@ void mischia(int *carte,int N){
 	}
 	return;
 }
+
+int eucl_coord(long double vel,long double *pa,long double *pb,long double *p,long double t){
+	
+	long double D = euclid_dist2d(pb,pa);
+	long double d = vel*t;
+	
+	p[0] = pa[0] + d*(pb[0]-pa[0])/D;
+	p[1] = pa[1] + d*(pb[1]-pa[1])/D;
+	
+	return 1;
+
+}
+
 int coord(long double vel,long double *pa,long double *pb,long double *p,long double t){
 	
 	long double A[3],B[3],P[3];
@@ -431,16 +469,33 @@ int coord(long double vel,long double *pa,long double *pb,long double *p,long do
 	
 }
 
-int coord3(long double vel, long double beta, long double *pos, long double t,long double *p){
-	long double a=(vel*t)/RH;
-	long double b=asinl(sinl(a)*sinl(beta));
+//~ int coord3(long double vel, long double beta, long double *pos, long double t,long double *p){
+	//~ long double a=(vel*t)/RH;
+	//~ long double b=asinl(sinl(a)*sinl(beta));
+	//~ 
+	//~ long double c=2*atan2l(tanl(0.5*(a-b))*sinl(0.5*(PI/2+beta)), sinl(0.5*(PI/2-beta)));
+	//~ if(c>PI/2) c=2*PI -c;
+	//~ p[0]=pos[0]+deg(c);
+	//~ p[1]=pos[1]+deg(b);
+		//~ 
+	//~ return 0;
+//~ }
+long double eucl_angle_direction(long double *a,long double *b, long double *c){
+	long double Ap[2];
+	long double Cp[2];
 	
-	long double c=2*atan2l(tanl(0.5*(a-b))*sinl(0.5*(PI/2+beta)), sinl(0.5*(PI/2-beta)));
-	if(c>PI/2) c=2*PI -c;
-	p[0]=pos[0]+deg(c);
-	p[1]=pos[1]+deg(b);
-		
-	return 0;
+	Ap[0] = a[0]-b[0];
+	Ap[1] = a[1]-b[1];
+	
+	Cp[0] = c[0]-b[0];
+	Cp[1] = c[1]-b[1];
+	
+	long double DAp = atan2l(Ap[1],Ap[0]);
+	long double DCp = atan2l(Cp[1],Cp[0]);
+	
+	return DAp - DCp ;
+	//return  2*PI - DAp - DCp ;
+
 }
 
 long double angle_direction(long double *a,long double *b, long double *c){

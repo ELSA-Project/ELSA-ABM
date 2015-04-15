@@ -79,13 +79,18 @@ int generate_temporary_point(CONF_t *config){
 			(*config).tmp_nvp[n][0]=atof(c);
 			for(i=0;c[i]!='\t';i++);
 			(*config).tmp_nvp[n][1]=atof(&c[++i]);
+			
+			#ifdef EUCLIDEAN
+			project((*config).tmp_nvp[n],(*config).tmp_nvp[n]);
+			#endif
+
 #ifdef BOUND__CONTROL
 			if( !point_in_polygon((*config).tmp_nvp[n],(*config).bound,(*config).Nbound))
 				BuG("Temporary Point outside boundary\n");
 #endif
 		}
 		fclose(rstream);
-		//free(rep);
+		//free(rep);	
 		return 1;
 	}
 //#endif
@@ -210,6 +215,17 @@ int _add_nvp_bound(Aircraft_t **f,int i,int j,long double **bound,int k){
 }
 */
 
+
+int project(long double *in, long double *out){
+	long double in2[2];
+	in2[0]=in[0];
+	in2[1]=in[1];
+	
+	/*Change this to change Projection*/
+	gall_peter(in2,out);
+	return 1;
+}
+
 int _is_to_add(Aircraft_t f,int xp,long double **bound,int k){
 	
 	if( ( segments_intersect(f.nvp[xp], f.nvp[xp+1], bound[k], bound[k+1]) && !isbetween(bound[k], bound[k+1],f.nvp[xp+1]) ) && !isbetween( bound[k], bound[k+1],f.nvp[xp]) ){
@@ -220,15 +236,7 @@ int _is_to_add(Aircraft_t f,int xp,long double **bound,int k){
 
 int modify_traj_intersect_bound(Aircraft_t **flight,int *Nflight,CONF_t config){
 	int i,j;
-		
-	/*Change exagerate velocity: flight too much speed*/
-	/*
-	for(i=0;i<*Nflight;i++){
-		for(j=0;j<((*flight)[i].n_nvp-1);j++) if((*flight)[i].vel[j]>V_THR) {
-			(*flight)[i].vel[j]=240.;
-		}
-	}*/
-	
+			
 	/*Add flag to nvp*/
 	for(i=0;i<*Nflight;i++){
 		(*flight)[i].nvp[0][3]=0;
@@ -324,14 +332,6 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	
 	modify_traj_intersect_bound(flight, Nflight, *config);
 
-	//cheak_traj_intersect_bound(*flight, *Nflight, *config);
-	
-	//set_boundary_flag_onFlight(flight,Nflight,*config);
-	
-	
-	
-	
-	//_set_cross_timeM1(flight,*Nflight);
 	_alloc_flight_pos(flight,*Nflight,config);
 	
 	_alloc_shock(*config,shock);

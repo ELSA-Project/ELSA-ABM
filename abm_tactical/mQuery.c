@@ -42,11 +42,13 @@ int _calculate_velocity(Aircraft_t *flight,int Nflight){
 	for(i=0;i<Nflight;i++){
 		for(j=0;j<(flight[i].n_nvp-1);j++) {
 			t=(flight[i].time[j+1]-flight[i].time[j]);
-			//if(t>0.001) 
+
+			#ifdef EUCLIDEAN
+			flight[i].vel[j]=euclid_dist2d(flight[i].nvp[j], flight[i].nvp[j+1])/t;
+			#else
 			flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/t;
-			//else  flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/1.;
+			#endif
 			
-			//flight[i].vel[j]=200.;
 		}	
 	}
 	return 1;
@@ -109,6 +111,9 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			if(c[j]=='\0') BuG("BUG in M1 File -lx2\n");
 			(*flight)[i].nvp[h][1]=atof(&c[++j]);
 			
+			#ifdef EUCLIDEAN
+			project((*flight)[i].nvp[h],(*flight)[i].nvp[h]);
+			#endif
 
 			for(++j;c[j]!=','&&c[j]!='\0'&&c[j]!='\n';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx3\n");
@@ -300,6 +305,10 @@ int get_temp_shock(CONF_t *conf){
 		for(j=0;c[j]!='\t'&&c[j]!=' '&&c[j]!='\0';j++);
 		if(c[j]=='\0') BuG("Error in shock_tmp.dat");
 		(*conf).point_shock[i][1]=atof(&c[++j]);
+		
+		#ifdef EUCLIDEAN
+		project((*conf).point_shock[i],(*conf).point_shock[i]);
+		#endif 
 	}
 	fclose(rstream);
 	//free(rep);
