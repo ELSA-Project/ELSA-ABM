@@ -8,6 +8,8 @@
 This file is used to build a navpoint network with superimposed sector 
 network. The main function is prepare_hybrid_network, with which the 
 user can build a totally new network, or take some data from elsewhere.
+
+TODO: write a Builder
 ===========================================================================
 """
 
@@ -17,7 +19,7 @@ import pickle
 import networkx as nx
 from descartes.patch import PolygonPatch
 import matplotlib.pyplot as plt
-from scipy.spatial import Voronoi
+from scipy.spatial import Voronoi, voronoi_plot_2d
 import numpy as np
 from shapely.geometry import Polygon, Point, LineString
 from shapely.ops import cascaded_union, unary_union
@@ -32,7 +34,7 @@ from utilities import clean_network, find_entry_exit
 #Distance
 from libs.tools_airports import get_paras, extract_flows_from_data, expand, dist_flat_kms
 #Modules
-from libs.general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval
+from libs.general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval, voronoi_finite_polygons_2d
 
 if 0:
     # Manual seed
@@ -143,12 +145,8 @@ def attach_two_sectors(s1, s2, G):
     # All possible connections between navpoints of both sectors
     pairs=[(n1, n2) for n1 in navs_in_s1 for n2 in navs_in_s2]
 
-    print 'pairs', pairs
-
     # Compute distances of all possible pairs
     distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
-
-    print zip(pairs, distances)
 
     # Select the closest navpoints
     n1_selected, n2_selected = pairs[np.argmin(distances)]
@@ -157,6 +155,26 @@ def attach_two_sectors(s1, s2, G):
     return G
 
 def automatic_name(G, paras_G):
+    """
+    Automatic name based on the parameters of construction.
+
+    Parameters
+    ----------
+    G : finalized Net object.
+    paras_G : dictionary
+        The function extract some relevenant keys and values from it
+        in order to build the name. 
+
+    Returns
+    -------
+    long_name : string
+
+    Notes
+    -----
+    Note all parameters (keys of paras_G) are taken into account.
+
+    """
+
     long_name=G.type_of_net + '_N' + str(len(G.nodes()))
     
     if G.airports!=[] and len(G.airports)==2:
@@ -177,13 +195,40 @@ def automatic_name(G, paras_G):
 
     return long_name
 
-def check_and_fix_empty_sectors(G, checked, repair=False):
-    # Check if every sectors have at least one navpoint left. 
-    # TODO: another way to go would be to add a constant number of navpoints per sector. On the other
-    # hand, having exactly the same number of navpoints per sector might not be really realistic.
+def check_and_fix_empty_sectors(G, checked=None, repair=False):
+    """
+    Check-and-fix procedure for an hybrid network. 
+
+    Parameters
+    ----------
+    G : Hybrid network 
+        needs polygons of sectors as attributes.
+    checked : dictionary, optional
+        keys are ALL sectors and values are boolean, True if the sectors
+        is not empty, False otherwise. If None, empty sectors are recomputed
+    repair : bool, False
+        if True, adds a cheaply computed point inside each empty sector.
+        Updates the sectors' list of navpoints, then put some links between 
+        this navpoint and the closest one off each neighboring sector.
+
+    Returns
+    -------
+    G : modified hybrid network
+    problem : bool
+        True if at least one empty sector has been found during the procedure.
+
+    Notes
+    -----
+    Possible improvements: put more than one points in the empty sectors.
+
+    """
+
     problem = False
     try:
-        empty_sectors = [k for k,v in checked.items() if not v]
+        if checked!=None:
+            empty_sectors = [k for k,v in checked.items() if not v]
+        else:
+            empty_sectors = [n for n in G.nodes() if len(G.node[n]['navs'])==0]
         assert len(empty_sectors)==0
     except AssertionError:
         print "The following sectors do not have any navpoint left:", empty_sectors
@@ -192,25 +237,23 @@ def check_and_fix_empty_sectors(G, checked, repair=False):
             print "I add also some links with the closest points of neighboring sectors."
             for sec in empty_sectors:
                 nav = len(G.G_nav.nodes())
-                print G.polygons
                 RP = G.polygons[sec].representative_point()
-                print RP.wkt
-                coords = RP.coords
-                print coords
-                G.G_nav.add_node(nav, coord = coords)
+                G.G_nav.add_node(nav, coord = RP.coords)
 
-                if G.polygons[sec].contains(Point(np.array(coords))):
+                if G.polygons[sec].contains(RP):
                     G.G_nav.node[nav]['sec']=sec
                     G.node[sec]['navs'].append(nav)
                 else:
                     Exception("The representative point in not in the shape!")
                 
+                print 'G.neighbors(sec)', G.neighbors(sec)
                 for sec2 in G.neighbors(sec):
                     pairs = []
                     for nav2 in G.node[sec2]['navs']:
                         pairs.append((nav, nav2))
                     distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
                     n1_selected, n2_selected = pairs[np.argmin(distances)]
+                    print "Adding edge between", n1_selected, "and", n2_selected
                     G.G_nav.add_edge(n1, n2)#, weight=np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])))
         problem = True
     except:
@@ -245,6 +288,20 @@ def check_empty_polygon(G, repair = False):
 def check_everybody_is_attached(G, repair=False):
     """
     Check if all neighboring sectors have at least one navpoint each which are neighbors.
+
+    Parameters
+    ----------
+    G : Hybrid network
+    repair : boolen, optional
+        If True, attach the two closest navpoints in each sector.
+
+    Returns
+    -------
+    G : hybrid network 
+        untouched if repair=False
+    problem : boolean
+        True if a problem was detected (but it should have been fixed).
+
     """
     problem=False
     for s1, s2 in G.edges():
@@ -261,35 +318,88 @@ def check_everybody_is_attached(G, repair=False):
 
 def check_everybody_has_one_cc(G, repair=False):
     """
+    Check that all sectors have only one connected component of navpoints.
+    For each sector, the connected components are computed with the subnetwork 
+    of G containing all navpoints in the sector.
+
+    Parameters
+    ----------
+    G : Hybrid network
+    repair : boolean, optional
+        If True, attach the connected components by creating edges between 
+        a node in each of them to a node in the biggest component. The pairs
+        of nodes are chosen for each pair of components by using the closest 
+        points.
+
+    Returns
+    -------
+    G : hybrid network 
+        untouched if repair=False
+    problem : boolean
+        True if a problem was detected (but it should have been fixed).
+
+    Notes
+    -----
+    Remark: does not recompute weights for new edges.
     Changed in 2.9.6: we attach the nodes to the closest. Recursive check.
+    Changed in 2.9.8: avoid infinite loop when there is no problem.
+
     """
-    problem=False
+
+    problem = False
     for s in G.nodes():
         nodes_in_s = [n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s]
         H_nav_s = G.G_nav.subgraph(nodes_in_s)
         cc = nx.connected_components(H_nav_s)
-        while len(cc)>1:
+        problem_here = len(cc)>1
+        while len(cc)>1 and repair:
             print 'Problem: sector', s, 'has more than one connected component (' + str(len(cc)) + ' exactly).'
-            #cc.sort(key=lambda c:len(c))
-            #cc = cc[::-1] # sort the components by decreasing size
-            problem=True
             if repair:
                 print "I'm fixing this."
                 c1 = cc[0] # we attach everyone to the biggest cc.
-                #for j in range(len(cc)):
-                #c1 = cc[j]
                 all_other_nodes = [n for c in cc for n in c if c!=c1]
-                pairs=[(n1, n2) for n1 in c1 for n2 in all_other_nodes]
+                pairs = [(n1, n2) for n1 in c1 for n2 in all_other_nodes]
                 distances = [np.linalg.norm(np.array(G.G_nav.node[n1]['coord']) - np.array(G.G_nav.node[n2]['coord'])) for n1, n2 in pairs]
                 n1_selected, n2_selected = pairs[np.argmin(distances)]
-                #w=np.linalg.norm(np.array(G.G_nav.node[n1_selected]['coord']) - np.array(G.G_nav.node[n2_selected]['coord']))
                 G.G_nav.add_edge(n1_selected,n2_selected)#, weight=w)
                 H_nav_s.add_edge(n1_selected,n2_selected)#, weight=w)
             cc = nx.connected_components(H_nav_s)
-
+        problem = problem or problem_here
     return G, problem
 
 def check_matching(G, repair=False):
+    """
+    Check that the list of navpoints contained in each sector
+    is consistent with the sector to which the napvoint belongs.
+
+    Parameters
+    ----------
+    G : Hybrid network
+    repair : boolean, optional
+        If set to True, does two things:
+        - add navpoint flagged as belonging to a sector to the list
+        of navpoints in a sector
+        - flag navpoint if the right sector if the found in the list 
+        of navpoints of a sector.
+
+    Returns
+    -------
+    G : hybrid network 
+        untouched if repair=False
+    problem : boolean
+        True if a problem was detected (but it should have been fixed).
+
+    Raises
+    ------
+    Exception : if a node lacks the key 'sec'. 
+
+    Notes
+    -----
+    Changed in 2.9.8: do not raise Exception in case missing keys 'sec'
+    for sectors
+
+    """
+
     print "Checking matching integrity..."
     problem = False
     for s in G.nodes():
@@ -302,8 +412,12 @@ def check_matching(G, repair=False):
                     print "I match", n, "to", s, "."
                     G.G_nav.node[n]['sec']=s
             elif G.G_nav.node[n].has_key('sec') and G.G_nav.node[n]['sec']!=s:
-                raise Exception("Navpoint", n, "have matches sector", G.G_nav.node[n]['sec'], \
-                 "instead of sector", s, ".")
+                print "Navpoint", n, "have matches sector", G.G_nav.node[n]['sec'], \
+                        "instead of sector", s, "."
+                problem = True
+                if repair:
+                    print "I match", n, "to", s, "."
+                    G.G_nav.node[n]['sec']=s
 
     for n in G.G_nav.nodes():
         if not G.G_nav.node[n].has_key('sec'):
@@ -405,8 +519,23 @@ def compute_navpoints_borders(borders_coordinates, shape, lin_dens=10, only_oute
     return navpoints
 
 def compute_possible_outer_pairs(G):
-    pairs = []
+    """
+    Compute the legitimate pairs of entry/exits. 
+    Legitimate means that entry/exit are in different non-neighbouring
+    sectors.
 
+    Parameters
+    ----------
+    G : hybrid network
+        Must have attributes outer_nodes.
+
+    Returns
+    -------
+    pairs : list of entry/exits 
+
+    """
+
+    pairs = []
     for i, n1 in enumerate(G.G_nav.outer_nodes):
         s1 = G.G_nav.node[n1]['sec']
         for j in range(i+1,len(G.G_nav.outer_nodes)):
@@ -418,7 +547,7 @@ def compute_possible_outer_pairs(G):
 
     return pairs
 
-def compute_voronoi(G, a=1.):
+def compute_voronoi(G, xlims=(-1., 1.), ylims=(-1., 1.)):
     """
     Compute the voronoi tesselation of the network G. 
     Tessels are given to G through the polygons attribute,
@@ -449,12 +578,31 @@ def compute_voronoi(G, a=1.):
     nodes = G.nodes()
 
     # Compute the voronoi tesselation with scipy
+    # print np.array([G.node[n]['coord'] for n in nodes])
     vor = Voronoi(np.array([G.node[n]['coord'] for n in nodes]))
+    # print
+    # print dir(vor)
+    # print vor.point_region
+    # print vor.vertices
+    # print vor.ridge_points
+    # print
+    # print
+
+    new_regions, new_vertices = voronoi_finite_polygons_2d(vor)
+    # print new_vertices
+    # print 
+    # print new_regions
+
+    voronoi_plot_2d(vor)
+    #plt.show()
 
     # Build polygons objects
-    for i, p in enumerate(vor.point_region):
-        r = vor.regions[p]
-        coords=[vor.vertices[n] for n in r + [r[0]] if n!=-1]
+    #for i, p in enumerate(vor.point_region):
+    #    r = vor.regions[p]
+    #    coords=[vor.vertices[n] for n in r + [r[0]] if n!=-1]
+    for i, p in enumerate(new_regions):
+        coords = list(new_vertices[p]) + [new_vertices[p][0]]
+        #print "YAYAH", p, coords
         if len(coords)>2:
             G.node[i]['area'] = area(coords)
             polygons[i] = Polygon(coords)
@@ -462,29 +610,61 @@ def compute_voronoi(G, a=1.):
                 assert abs(G.node[i]['area'] - polygons[i].area)<10**(-6.)
             except:
                 raise Exception(i, G.node[i]['area'], polygons[i].area)
+
+
         else:
             # Case where the polygon is only made of 2 points...
             print "Problem: the sector", i, "has the following coords for its vertices:", coords
             print "I remove the corresponding node from the network."
             G.remove_node(nodes[i])
     
-    eps = 0.1
+    # raise Exception()
+    # eps = 0.1
     # minx, maxx, miny, maxy = min([n[0] for n in vor.vertices])-eps, max([n[0] for n in vor.vertices]) +eps, min([n[1] for n in vor.vertices]) -eps, max([n[1] for n in vor.vertices]) +eps
     
-    square = Polygon([[-a,-a],[-a,a],[a,a],[a,-a],[-a,-a]])
+    square = Polygon([[xlims[0],ylims[0]], [xlims[0], ylims[1]], [xlims[1],ylims[1]], [xlims[1], ylims[0]], [xlims[0],ylims[0]]])
 
     # Cut all polygons with the square.
     for n, pol in polygons.items():
         polygons[n] = pol.intersection(square)
         
+        try:
+            assert type(polygons[n])==type(Polygon())
+        except:
+            print "BAM", n, 'coords:', coords
+            raise
+
     G.polygons = polygons
     return G, vor
 
 def detect_nodes_on_boundaries(paras_G, G, thr = 1e-2):
     """
     Detects the nodes on the OUTER boundary of the airspace.
+
+    Parameters
+    ----------
+    paras_G : dictionary
+        Must have the key make_borders_points with corresponding 
+        boolean value. If False, the outer nodes are set to the 
+        navpoints at borders. Otherwise they are recomputed.
+
+    G : hybrid network
+        Must have attributes global_shape and navpoints_borders. 
+        Use the build method of G for that.
+
+    thr : float, optional
+        small number of geometrical detection.
+
+    Returns
+    -------
+    G : modified hybrid network
+
+    Notes
+    -----
     New in 2.9.6.
+
     """
+
     if paras_G['make_borders_points']:
         shape = G.global_shape
         nodes = G.G_nav.navpoints_borders
@@ -504,10 +684,27 @@ def detect_nodes_on_boundaries(paras_G, G, thr = 1e-2):
 
 def erase_small_sectors(G, thr):
     """
+    Remove from the network sectors which have a number of navpoints
+    smaller (or equal) than thr. Detection is based on the key 'navs' of navpoints.
+
+    Parameters
+    ----------
+    G : hybrid network
+    thr : int
+        Number of navpoints under which the sector is removed
+
+    Returns
+    -------
+    G : modified network
+    removed : list
+        of sectors removed.
+
+    Notes
+    -----
     New in 2.9.6: remove sectors having a small number of navpoints.
     Changed in 2.9.7: set thr<0 for no action (instead of 0).
     """
-    #if thr>0:
+
     removed = []
     for s in G.nodes()[:]:
         if len(G.node[s]['navs'])<=thr:
@@ -670,13 +867,40 @@ def extract_old_capacity_from_traffic(G, paras_real, date = [2010, 5, 6, 0, 0, 0
     
     return capacities
 
-def find_pairs(all_airports, all_pairs, nairports, G, remove_pairs_same_sector = False):
+def find_pairs(all_airports, all_pairs, nairports, G, remove_pairs_same_sector=False, n_tries=500):
     """
-    New in 2.9: find nairports for which each of them have at least a link with one of the other ones.
+    Find nairports for which each of them have a link with at least one of the others (no
+    isolated airport).
+
     The algorithm should never fail for nairport=2 (you can always find a pair) and of course 
-    for naiports=len(all_airports).
-    New in 2.9.3: Possibility of removing the pairs which have their airports in the same sector.
+    for naiports=len(all_airports) if there is no isolated airport in the original list. Return all pairs from all_pairs for which the origin and 
+    destination are among the nairports. 
+    
+    Parameters
+    ----------
+    all_airports : list
+        list of all airports among which the airports are drawn.
+    all_pairs : list 2-tuple
+        list of all pairs origins-destinations
+    nairports : int
+        Number of airports to return.
+    remove_pairs_same_sector : boolean, optional
+        If True, remove the pairs of airports which are in the same sector.
+
+    Returns
+    -------
+    candidates : list
+        of nairports airports taken among all_airports which have at least one link with 
+        another airport in the same set.
+    pairs : list of 2-tuple
+        of pairs taken from all_pairs for which origin and destination are in candidates.
+
+    Notes
+    -----
+    Changed in 2.9.3: Possibility of removing the pairs which have their airports in the same sector.
+    Chnaged in 2.9.8: Completely modified, use connected components
     """
+    
     if remove_pairs_same_sector:
         to_remove = []
         for p1, p2 in all_pairs:
@@ -685,26 +909,53 @@ def find_pairs(all_airports, all_pairs, nairports, G, remove_pairs_same_sector =
         for p in to_remove:
             all_pairs.remove(p)
 
-    black_list= []
-    candidates=sample(all_airports, nairports)
-    found=len(all_airports)==nairports
-    pairs=[p for p in all_pairs if p[0] in candidates and p[1] in candidates]
-    while not found and len(black_list)<(len(all_airports) - nairports):
-        pairs=[p for p in all_pairs if p[0] in candidates and p[1] in candidates]
-        selected=np.unique([p[0] for p in pairs] + [p[1] for p in pairs])
-        found=True
-        for candidate in candidates:
-            if not candidate in selected:
-                candidates.remove(candidate)
-                black_list.append(candidate)
-                found=False
-        if not found:
-            candidates += sample([a for a in all_airports if not a in black_list], nairports - len(candidates))
-    if not found:
-        raise Exception('Impossible to find pairs with that much airports. Try with less airports.')
-    else:
-        assert len(candidates)==nairports
-        return candidates, pairs
+    # Build the network of airports
+    net_air = nx.Graph()
+    for a in all_airports:
+        net_air.add_node(a)
+
+    for a1, a2 in all_pairs:
+        net_air.add_edge(a1, a2)
+
+    #cc = [c for c in nx.connected_components(net_air) if len(c)>=nairports]
+
+    # Brute force algorithm
+    #while len(cc)>0:
+        #c = cc[0]
+    for n in range(n_tries):
+        #candidates = sample(c, nairports)    
+        candidates = sample(net_air.nodes(), nairports)    
+        sub = net_air.subgraph(candidates)
+        if min([len(c) for c in nx.connected_components(sub)])>1:
+            pairs = sub.edges()
+            return candidates, pairs
+    #cc.pop(0)
+
+    raise Exception('Impossible to find pairs with so many airports. Try with less airports.')
+
+
+
+    # black_list = set()
+    # candidates = sample(all_airports, nairports)
+    # #found = len(all_airports)==nairports
+    # found = False
+    # #pairs = [p for p in all_pairs if p[0] in candidates and p[1] in candidates]
+    # while not found and len(black_list)<(len(all_airports) - nairports):
+    #     pairs = [p for p in all_pairs if p[0] in candidates and p[1] in candidates]
+    #     selected = np.unique([p[0] for p in pairs] + [p[1] for p in pairs])
+    #     found = True
+    #     for candidate in candidates:
+    #         if not candidate in selected: # isolated from the rest of the group
+    #             candidates.remove(candidate)
+    #             black_list.update([candidate])
+    #             found = False
+    #     if not found:
+    #         candidates += sample([a for a in all_airports if not a in black_list], nairports - len(candidates))
+    # if not found:
+    #     raise Pouet('Impossible to find pairs with so many airports. Try with less airports.')
+    # else:
+    #     assert len(candidates)==nairports
+    #     return candidates, pairs
 
 def give_capacities_and_weights(G, paras_G):
     if paras_G['generate_capacities_from_traffic']:
@@ -785,6 +1036,7 @@ def navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-
     Notes
     -----
     Changed in 2.9.7: don't use vor anymore. More efficient.
+
     """
     shape = G.global_shape
 
@@ -825,6 +1077,7 @@ def prepare_sectors_network(paras_G, no_airports=False):
     Notes
     -----
     New in 2.9.6: refactorization.
+    Changed in 2.9.8: updating signature of build function
 
     """
 
@@ -836,7 +1089,8 @@ def prepare_sectors_network(paras_G, no_airports=False):
     if paras_G['net_sec'] !=None:
         G.import_from(paras_G['net_sec'], numberize=((type(paras_G['net_sec'].nodes()[0])!=type(1.)) and (type(paras_G['net_sec'].nodes()[0])!=type(1))))
     else:
-        G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'],put_nodes_at_corners = True)
+        #G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'],put_nodes_at_corners = True)
+        G.build(paras_G['N'], Gtype=paras_G['type_of_net'], put_nodes_at_corners = True)
 
     # Give the pre-built polygons to the network.
     if paras_G['polygons']!=None:
@@ -914,7 +1168,8 @@ def reduce_airports_to_existing_nodes(G, pairs, airports):
     Returns
     -------
     pairs : same as input without the tuples including nodes absent of G
-    airports : same as inpurt without nodes absent of G
+    airports : same as input without nodes absent of G
+
     """
 
     if pairs!=None:
@@ -930,6 +1185,23 @@ def reduce_airports_to_existing_nodes(G, pairs, airports):
     return pairs, airports
 
 def remove_singletons(G, pairs_nav):
+    """
+    Remove from pairs_nav the ones for which both navpoints are
+    in the same sector.
+
+    Parameters
+    ----------
+    G : hybrid network
+    pairs_nav : list of 2-tuple
+        list of pairs of nodes of navpoints.
+
+    Returns
+    -------
+    pairs_nav : list of 2-tuple
+        same as input with pairs in the same sector removed.
+
+    """
+
     for n1, n2 in pairs_nav[:]:
         if G.G_nav.node[n1]['sec'] == G.G_nav.node[n2]['sec']:
             pairs_nav.remove((n1, n2))
@@ -1026,7 +1298,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
                       - numberize also airports and pairs.
     Changed in 2.9.8: supports single sector network TODO. Supports custom external function 
         for choosing airports.
-    TODO: make an object and different methods.
+    TODO: make an builder and different methods.
     """
     print
 
