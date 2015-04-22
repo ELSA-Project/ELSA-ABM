@@ -22,29 +22,34 @@ int simulation(char **args){
 	char *input_ABM=args[1];
 	char *output_ABM=args[2];
 	char *config_file=args[3];
-	//long double mult = atof(args[4]);
 	char output_ABM_nsim[400]; //TODO: change this!
 	
+	/*Initialization of Variable*/
 	init_Sector(&Flight,&Nflight,&config,&shock,input_ABM, config_file);
 	
 	int i;
+	/* run nsim simulation with the same M1 file*/
 	for(i=0;i<config.nsim;i++) {
 		
+		/*Create a backup copy for the flight*/
 		copy_flight(Flight,Nflight,&flight);
 		
 		
 		if( ABM(&flight,Nflight,config,shock) == 0){
+			/*if ABM does not solve the conflicts It run again the simulation*/
 			del_flight(&flight, Nflight, Flight);
 			i--;
 			continue;
 		}
 		printf("Sim %d\n",i+1);
+		/*create and save the ouptput file*/
 		add_nsim_output(output_ABM_nsim,output_ABM,i);
 		save_m3(flight,Nflight,Flight,output_ABM_nsim);
 		
 		del_flight(&flight, Nflight, Flight);
 	}
 	
+	/*free the memory*/
 	del_flight_pos(&Flight,Nflight,config);
 	del_flight(&Flight, Nflight, Flight);
 	del_conf(&config);
@@ -56,6 +61,7 @@ int simulation(char **args){
 // Manual entry
 int main(int argc,char *argv[]){
 	simulation(argv);
+	return 0;
 }
 
 

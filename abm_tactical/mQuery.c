@@ -75,6 +75,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 	#endif
 	
 	#ifdef WORKAROUND_NIGHT
+	/*It does not manage date*/
 	int over_night;
 	#endif
 	
@@ -140,6 +141,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			#endif		
 			
 			#ifdef BOUND_CONTROL
+			/*It does not work! */
 			if(inside==0) if(point_in_polygon((*flight)[i].nvp[h],(*conf).bound,(*conf).Nbound))inside=1;
 			#endif
 
@@ -152,7 +154,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 		#endif
 	}
 	
-	
+	/*Evaluate velocity as the mean velocity between two NVPs*/
 	_calculate_velocity((*flight),Nflight);
 	
 	return Nflight;
@@ -222,6 +224,7 @@ char * _find_value_string_char(char *config_file,char *label){
 
 int get_configuration(char *config_file,CONF_t *config){
 	
+	/*It searches for a #string in the configuration file and it assignes the left value*/
 	(*config).max_ang = _find_value_string(config_file,"max_ang");
 	(*config).nsim = (int) _find_value_string(config_file,"nsim");
 	(*config).direct_thr = _find_value_string(config_file,"direct_thr");
