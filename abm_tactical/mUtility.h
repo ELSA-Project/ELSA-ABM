@@ -108,7 +108,6 @@ int find_p_indx(long double **,int ,long double *);
 /*Evaluate the euclidean distanca in 2Dim*/
 long double euclid_dist2d(long double *,long double *);
 
-
 /*cheak se il punto e compreso nel segmento EUCLIDEAN*/
 int eucl_isbetween(long double *,long double *, long double *);
 

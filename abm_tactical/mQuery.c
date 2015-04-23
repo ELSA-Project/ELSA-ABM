@@ -16,6 +16,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<malloc.h>
+#include<time.h>
 
 /*Take string as HH:MM:SS and return the number of seconds*/
 
@@ -79,6 +80,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 	int over_night;
 	#endif
 	
+	struct tm t;
 	
 	for(i=0;i<Nflight;i++){
 		
@@ -122,9 +124,14 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx4\n");
-			for(++j;c[j]!=' '&&c[j]!='\0';j++);
-			if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
-			(*flight)[i].time[h]=_convert_time(&c[++j]);
+			
+			
+			strptime(&c[++j],"%Y-%m-%d %H:%M:%S",&t);
+			(*flight)[i].time[h]=(long double) mktime(&t);
+			
+			//~ for(++j;c[j]!=' '&&c[j]!='\0';j++);
+			//~ if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
+			//~ (*flight)[i].time[h]=_convert_time(&c[++j]);
 			
 			#ifdef WORKAROUND_NIGHT
 			if(h>0 && over_night==0){
@@ -187,6 +194,36 @@ long double _find_value_string(char *config_file,char *label){
 	printf("Impossible to find %s in config-file\n",label);
 	exit(0);
 }
+long double _find_value_datetime (char *config_file,char *label){
+
+	FILE *rstream=fopen(config_file, "r");
+	if(rstream==NULL){
+		printf("I was looking here %s for the config file\n", config_file);
+		BuG("BUG - configuration file doesn't exist\n");
+	}
+	struct tm t;
+	char c[R_BUFF];
+	int i,lsize;
+	
+	for(lsize=0;label[lsize]!='\0';lsize++);
+	
+	while (fgets(c, R_BUFF, rstream)) {
+		if(c[0]=='#'||c[0]=='\n'||c[0]==' ') continue;
+		for(i=0;c[i]!='#'&&c[i]!='\0';i++);
+		if(c[i]=='\0') BuG("configuration file not standard\n");
+		if(!memcmp(&c[++i], label, lsize)) {
+			fclose(rstream);
+			
+			strptime(c,"%Y-%m-%d %H:%M:%S",&t);
+			return (long double) mktime(&t);	
+		}
+	}
+	
+	fclose(rstream);
+	printf("Impossible to find %s in config-file\n",label);
+	exit(0);
+}
+
 
 char * _find_value_string_char(char *config_file,char *label){
 	/*
@@ -225,7 +262,8 @@ char * _find_value_string_char(char *config_file,char *label){
 int get_configuration(char *config_file,CONF_t *config){
 	
 	/*It searches for a #string in the configuration file and it assignes the left value*/
-	(*config).max_ang = _find_value_string(config_file,"max_ang");
+	(*config).conf_ang = _find_value_string(config_file,"max_ang");
+	(*config).extr_ang = _find_value_string(config_file,"extr_ang");
 	(*config).nsim = (int) _find_value_string(config_file,"nsim");
 	(*config).direct_thr = _find_value_string(config_file,"direct_thr");
 	(*config).xdelay = _find_value_string(config_file,"xdelay");
@@ -252,6 +290,9 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).shock_tmp = _find_value_string_char(config_file, "shock_tmp");
 	(*config).bound_file = _find_value_string_char(config_file, "bound_file");
 	(*config).capacity_file = _find_value_string_char(config_file, "capacity_file");
+	
+	(*config).start_datetime = _find_value_datetime(config_file, "start_datetime");
+	(*config).end_datetime = _find_value_datetime(config_file, "end_datetime");
 
 	return 1;
 }

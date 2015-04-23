@@ -16,7 +16,15 @@
 
 #define DPOS 5
 
-#define WORKAROUND_NIGHT
+/*Solved*/
+//#define WORKAROUND_NIGHT
+
+/* To use strptime and other Time features*/
+#define __USE_XOPEN 
+#define  _GNU_SOURCE
+
+
+
 
 /*************************** STRUCTURE ***********************************/
 
@@ -74,6 +82,8 @@ typedef struct {
 	
 	//Max angle of deviation from original trajectory
 	long double max_ang;
+	long double extr_ang;
+	long double conf_ang;
 	
 	//Number of simulation
 	int nsim;
@@ -147,6 +157,10 @@ typedef struct {
 	/*Capcity vector of n_sect+1 elements; 0 element is an infinity capacity sector*/
 	int *capacy;
 	int n_sect;
+	
+	/* Start and End datetime of the simulation*/
+	long double start_datetime;
+	long double end_datetime;
 	
 } CONF_t ;
 

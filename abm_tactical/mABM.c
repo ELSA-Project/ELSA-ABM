@@ -16,7 +16,8 @@
 #include<stdlib.h>
 #include<malloc.h>
 #include<math.h>
-
+#include<time.h>
+#include<float.h>
 
 void init_output(Aircraft_t *flight,int Nflight,char *output_ABM){
 	/* Non capisco a che serve l M1
@@ -49,18 +50,33 @@ void save_m3(Aircraft_t *flight, int Nflight,Aircraft_t *Flight,char *output_ABM
 	FILE *wstream=fopen(output_ABM,"w");
 	if(wstream==NULL) BuG("Impossible to save output data\n");
 	
+	time_t pT;
+	struct tm *pTm;
+	char buff[100];
+	
 	fprintf(wstream,"%d\tNflight\n",Nflight);
 	int i,j,h,T[DPOS];
-	for(h=0;h<Nflight;h++){
-		for(i=0;i<Nflight;i++) if(Flight[h].ID==flight[i].ID) { 
+	//for(h=0;h<Nflight;h++){
+		//for(i=0;i<Nflight;i++) if(Flight[h].ID==flight[i].ID) { 
+		for(i=0;i<Nflight;i++) { 
+			
 			fprintf(wstream,"%d\t%d\t",flight[i].ID,flight[i].n_nvp);
 			for(j=0;j<flight[i].n_nvp;j++){
-				time_to_int(flight[i].time[j],T);
-				fprintf(wstream,"%Lf,%Lf,%.0Lf,2010-05-04 %d:%d:%d:%d\t",flight[i].nvp[j][0],flight[i].nvp[j][1],flight[i].nvp[j][2],T[0],T[1],T[2],T[3]);
+				
+				//time_to_int(flight[i].time[j],T);
+				pT = (time_t) flight[i].time[j];
+				pTm = localtime(&pT);
+				
+				strftime(buff,100,"%Y-%m-%d %H:%M:%S",pTm);
+				#ifdef CAPACITY
+				fprintf(wstream,"%.10LF,%.10LF,%.0Lf,%s,%d\t",flight[i].nvp[j][0],flight[i].nvp[j][1],flight[i].nvp[j][2],buff,(int) flight[i].nvp[j][DPOS-1]);
+				#else
+				fprintf(wstream,"%.10Lf,%.10Lf,%.0Lf,%s\t",flight[i].nvp[j][0],flight[i].nvp[j][1],flight[i].nvp[j][2],buff);				
+				#endif
 			}
 			fprintf(wstream, "\n");
 		}
-	}
+	//}
 	//fprintf(wstream, "---\n");
 	fclose(wstream);
 	
@@ -70,7 +86,7 @@ void save_m3(Aircraft_t *flight, int Nflight,Aircraft_t *Flight,char *output_ABM
 int del_flight(Aircraft_t **f, int N,Aircraft_t *F){
 	int i,j;
 	for(i=0;i<N;i++){
-		for(j=0;j<N;j++) if((F)[j].ID==(*f)[i].ID) break;
+		//for(j=0;j<N;j++) if((F)[j].ID==(*f)[i].ID) break;
 		//ffree_2D((*f)[i].nvp, (F)[j].n_nvp);
 		ffree_2D((*f)[i].nvp, (*f)[i].n_nvp);
 		free( (*f)[i].vel );
@@ -149,10 +165,14 @@ int _init_tool(TOOL_f *t,int N, CONF_t conf){
 	(*t).lista = ialloc_vec(N);
 	for(i=0;i<N;i++) (*t).lista[i]=i;
 	
+	
+	
 	(*t).dist = falloc_vec(2*conf.t_w);
 	
+
 	(*t).sel_nvp_index=falloc_matrix(conf.n_tmp_nvp,2);
 	if((*t).sel_nvp_index==NULL) BuG("not enough Memory\n");
+
 	
 	(*t).temp_angle=falloc_vec(conf.n_tmp_nvp);
 
@@ -161,9 +181,12 @@ int _init_tool(TOOL_f *t,int N, CONF_t conf){
 	(*t).neigh = ialloc_matrix(N,N);
 	(*t).n_neigh = ialloc_vec(N);
 	
-
+	#ifdef CAPACITY
 	(*t).workload = ialloc_vec(conf.n_sect+1);
+	#endif
 
+	(*t).F = (Aircraft_t*) malloc(N*sizeof(Aircraft_t));
+	if( (*t).F==NULL) BuG("No Memory\n");
 	
 	return 1;
 }
@@ -179,14 +202,14 @@ int _del_tool(TOOL_f *t,int N,CONF_t conf){
 	
 
 	free((*t).workload);
-
+	free((*t).F);
 	
 	return 1;
 }
 
 int _create_shock(SHOCK_t *sh,CONF_t conf){
 	
-	int i,coin, niter= (int)(DAY/ (conf.t_r*conf.t_w*conf.t_i));
+	int i,coin, niter= (int)((conf.end_datetime - conf.start_datetime)/ (conf.t_r*conf.t_w*conf.t_i));
 	for(i=0;i<(*sh).Nshock;i++){
 		coin=irand(conf.n_point_shock);
 		(*sh).shock[i][0]=conf.point_shock[coin][0];
@@ -409,61 +432,43 @@ int _laplacian_change_vel(Aircraft_t **f,int N_f){
 }
 
 /*Sort in the first position the element of that are flying (ready==1)*/
-int _sort_ready(Aircraft_t **f,int N_f){
-	int i,j;
-	Aircraft_t comodo;
-	
-	for(i=0;i<N_f;i++){
-		if((*f)[i].ready) continue;
-		else for(j=i+1;j<N_f;j++) if((*f)[j].ready){
-			comodo=(*f)[i];
-			(*f)[i]=(*f)[j];
-			(*f)[j]=comodo;
-		}
-	}
-	return 1;
-}
-
-//~ int _set_st_point(Aircraft_t **f,int N_f,CONF_t conf){
+//~ int _sort_ready(Aircraft_t **f,int N_f){
+	//~ int i,j;
+	//~ Aircraft_t comodo;
 	//~ 
-	//~ int i,j,old_st,mynull;
-	//~ /*The real position for departures*/
-	//~ int t_x = (conf.t_w*conf.t_r);
-	//~ for(i=0;i<N_f;i++)if((*f)[i].ready){
-		//~ if((*f)[i].pos[t_x-1][0]==SAFE){
-			//~ (*f)[i].ready=0;
-			//~ continue;
-		//~ }
-		//~ for(j=0;j<DPOS;j++) (*f)[i].st_point[j] = (*f)[i].pos[t_x-1][j];
-		//~ 
-		//~ old_st=(*f)[i].st_indx;
-		//~ 
-		//~ if((*f)[i].st_point[0]==SAFE) (*f)[i].st_indx=(*f)[i].n_nvp;
-		//~ else (*f)[i].st_indx = find_st_indx((*f)[i].nvp, (*f)[i].n_nvp, (*f)[i].st_point,(*f)[i].st_indx,(*f)[i].pos[(*f)[i].tp]);
-		//~ //else (*f)[i].st_indx = find_st_indx((*f)[i].nvp, (*f)[i].n_nvp, (*f)[i].st_point,(*f)[i].st_indx,(*f)[i].st_point);
-//~ 
-		//~ 
-		//~ if((*f)[i].ready!=0&&(*f)[i].st_indx==-1){
-			//~ int j;
-			//~ for(j=0;j<((*f)[i].n_nvp-1);j++) printf("%Lf ",(*f)[i].vel[j]);
-			//~ printf("\n");
-			//~ plot_pos((*f)[i], conf,"/tmp/flight.dat");
-			//~ plot((*f)[i],conf,"/tmp/nvp_f.dat");
-			//~ //plot_where((*f)[i],conf,"/tmp/nvp_f");
-			//~ printf("BUBU %d ID\n",(*f)[i].ID);
-			//~ (*f)[i].st_indx=old_st;
-			//~ printf("%d\t%d\n",old_st,(*f)[i].n_nvp);
-			//~ //scanf("%d",&mynull);
-			//~ BuG("In HERE\n");
-			//~ //exit(0);
-		//~ }
-		//~ if((*f)[i].st_indx>((*f)[i].n_nvp-1)) {
-			//~ (*f)[i].ready=0;
+	//~ for(i=0;i<N_f;i++){
+		//~ if((*f)[i].ready) continue;
+		//~ else for(j=i+1;j<N_f;j++) if((*f)[j].ready){
+			//~ comodo=(*f)[i];
+			//~ (*f)[i]=(*f)[j];
+			//~ (*f)[j]=comodo;
 		//~ }
 	//~ }
 	//~ return 1;
 //~ }
 
+int _sort_ready(Aircraft_t **f,TOOL_f *tl, int N_f){
+	int i;
+	
+	int i_r = 0;
+	int i_u = N_f-1;
+	
+	for(i=0;i<N_f;i++){
+		if((*f)[i].ready){
+			(*tl).F[i_r] = (*f)[i];
+			i_r++;
+		}
+		else{
+			(*tl).F[i_u] = (*f)[i];
+			i_u--;			
+			
+		}
+	}
+	for(i=0;i<N_f;i++) (*f)[i] = (*tl).F[i];
+	
+	
+	return 1;
+}
 
 int _set_st_point(Aircraft_t **f,int N_f,CONF_t conf){
 	
@@ -633,7 +638,7 @@ int _calculate_st_point(Aircraft_t *f,CONF_t conf,long double t){
 
 /* Put to one ready flag for plane on departures and sort in the first position them 
  and calculate starting point */
-int _get_ready(Aircraft_t **f, int N_f,long double t,CONF_t conf){
+int _get_ready(Aircraft_t **f, TOOL_f *tl, int N_f,long double t,CONF_t conf){
 	int i,j;
 	/* Time step */
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
@@ -662,7 +667,7 @@ int _get_ready(Aircraft_t **f, int N_f,long double t,CONF_t conf){
 	for(i=0;i<N_f;i++) if((*f)[i].ready==1) n_f++;
 	
 	/* sort in the fist position of the Aircraft array the active flight*/
-	_sort_ready(f,N_f);
+	_sort_ready(f,tl,N_f);
 	
 	return n_f;
 }
@@ -700,16 +705,26 @@ int _suffle_list(Aircraft_t **f, int n, TOOL_f *tool){
 
 int _suffle_list_top(Aircraft_t **f, int n_f, TOOL_f *tool){
 	int i;
-	Aircraft_t comodo;
-	//Aircraft_t xfli=(*f)[n_f];
-	
-	for(i=n_f;i>1;i--){
-		comodo = (*f)[i];
-		(*f)[i] = (*f)[i-1];
-		(*f)[i-1]=comodo;
 		
-	}
+	(*f)[n_f].touched = 0;
 	
+	
+	int i_pre = 0;
+	int i_post = n_f-1;
+	for(i=0;i<n_f;i++){
+		if((*f)[i].touched == 1 ){
+			(*tool).F[i_pre] = (*f)[i];
+			i_pre++;
+		}
+	}
+	(*tool).F[i_pre]=(*f)[n_f];
+	for(i=0,++i_pre ;i<n_f;i++) if( (*f)[i].touched == 0 ){
+		(*tool).F[i_pre] = (*f)[i];
+		i_pre++;
+	}
+		
+	for(i=0;i<=n_f;i++) (*f)[i] = (*tool).F[i];	
+		
 	return 1;
 }
 
@@ -1287,7 +1302,9 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 		
 		if(unsafe) {
 			/* If I already moved the i-Flight in the current time step*/
+			#ifdef SINGLE_TOUCH
 			if( (*f)[i].touched == 1 ) return i;
+			#endif
 			
 			/*Return the next nvp after the first expected collision*/
 			unsafe=_checkFlightsCollision(tl.dist, conf, &(*f)[i]); 
@@ -1302,7 +1319,9 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 	
 			if(unsafe) {
 				/*if it does not work*/
-				printf("Unsolved\n");
+				printf("Unsolved %d Flight\n",(*f)[i].ID);
+				print_time(t);
+				printf("\n");
 				return i;
 			}
 			
@@ -1427,10 +1446,18 @@ int _untouch_flight(Aircraft_t **f,int n_f){
 	return 1;	
 }
 
+int _set_angle(CONF_t *c, int try){
+	(*c).max_ang = (*c).conf_ang + ((float) try/N_TRY)*( (*c).extr_ang - (*c).conf_ang);
+	return 1;
+}
+
 int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long double t ){
 	
+	//print_time(t);
+	
 	/*Get the active flight for the current time-step (n_f) */
-	int n_f = _get_ready(f,N_f,t,conf); /*do nothing*/
+	int n_f = _get_ready(f,&tl,N_f,t,conf); /*do nothing*/
+	//printf("%d Flight Active\n",n_f);
 	
 	/*shuffle the priority list to solve conflicts*/
 	_suffle_list(f,n_f,&tl); 
@@ -1455,9 +1482,12 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 	 * is not touched from the ATC in the current time-step*/
 	_untouch_flight(f,n_f);
 	
+	
 	int try=0;
 	int f_not_solv=-1;
 
+	_set_angle(&conf,try);
+	
 	do{	
 		/*Evaluate the edgelist for the flight that could interact 
 		 * according to the maximum interation distance*/
@@ -1469,13 +1499,18 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 		/*if f_not_solv>0, the f_not_solv flight cannot be solved*/
 		if(f_not_solv>=0){
 			/*if it does not sol the conflict for 50 trials it exit form the simulation*/
-			if(++try> 50) {
+			if(++try> N_TRY) {
 				printf("Not Solved, too many trials\n");
 				return 0;
-			}			
+			}
+			/*Increase the maximum angle of deviation until extr_ang value*/
+			_set_angle(&conf,try);
+					
 			/*It moves the f_not_solv flight on the top of the list,
 			 * (no conflict check for the fist of the list*/	 
-			_suffle_list_top(f,f_not_solv,&tl);	
+			_suffle_list_top(f,f_not_solv,&tl);
+			
+			//return 0;
 		}
 	}while(f_not_solv>=0);
 	
@@ -1509,10 +1544,12 @@ int ABM(Aircraft_t **f, int N_f, CONF_t conf, SHOCK_t sh){
 #endif
 	
 
-
+	
+		
 	TOOL_f tool;
 
 	_init_tool(&tool,N_f,conf);
+
 
 	/*Create shocks for the current simulation*/
 	_create_shock(&sh,conf);
@@ -1530,13 +1567,17 @@ int ABM(Aircraft_t **f, int N_f, CONF_t conf, SHOCK_t sh){
 	int t,step;
 	/* definition of the time-step*/
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
-
+	
+	printf("Starting Simulation\n");
+	
 	/*For each time-step it runs evolution*/
-	for(t=0,step=0 ;t<=DAY+t_stp; t+=t_stp, step++ ) if(_evolution(f,N_f, conf,sh,tool,t) == 0) {
+	long double NT = ((conf.end_datetime)+t_stp);
+	for(t=conf.start_datetime,step=0 ;t<=NT; t+=t_stp, step++ ) if(_evolution(f,N_f, conf,sh,tool,t) == 0) {
 		/*If it does not solve the conflict it exit to the main with 0*/		
 		_del_tool(&tool,N_f,conf);
 		return 0;
 	}
+	
 	
 	_del_tool(&tool,N_f,conf);
 	

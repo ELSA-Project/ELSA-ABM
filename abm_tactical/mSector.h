@@ -22,7 +22,7 @@
 /*If It's defined cheak for intersection between flight tmp_nvp and boundary (slow)*/
 //#define BOUND_CONTROL
 
-//#define CAPACITY
+#define CAPACITY
 
 /*Structure of shock*/
 typedef struct {

@@ -11,9 +11,9 @@
 #include "mUtility.h"
 #include "mABM.h"
 #include "mTest.h"
+
 #include<math.h>
-
-
+#include<time.h>
 #include<stdio.h>
 #include<stdlib.h>
 
@@ -168,6 +168,18 @@ int cheak_nan_pos(Aircraft_t *f,CONF_t conf){
 	
 }
 
-
+void print_time(long double t){
+	struct tm *T;
+	char buff[100];
+	time_t pT = (time_t) t;
+	
+	T = localtime(&pT);
+				
+	strftime(buff,100,"%Y-%m-%d %H:%M:%S",T);
+	printf("%s\n",buff);
+	
+	return;
+	
+}
 
 

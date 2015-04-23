@@ -27,6 +27,9 @@ int simulation(char **args){
 	/*Initialization of Variable*/
 	init_Sector(&Flight,&Nflight,&config,&shock,input_ABM, config_file);
 	
+	
+	
+	printf("Finished Initialization\n");
 	int i;
 	/* run nsim simulation with the same M1 file*/
 	for(i=0;i<config.nsim;i++) {
@@ -34,13 +37,15 @@ int simulation(char **args){
 		/*Create a backup copy for the flight*/
 		copy_flight(Flight,Nflight,&flight);
 		
-		
+
 		if( ABM(&flight,Nflight,config,shock) == 0){
 			/*if ABM does not solve the conflicts It run again the simulation*/
 			del_flight(&flight, Nflight, Flight);
 			i--;
 			continue;
 		}
+		;
+		
 		printf("Sim %d\n",i+1);
 		/*create and save the ouptput file*/
 		add_nsim_output(output_ABM_nsim,output_ABM,i);
