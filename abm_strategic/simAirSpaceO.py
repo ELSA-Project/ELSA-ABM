@@ -36,8 +36,8 @@ class NoShortH(Exception):
 
 class Network_Manager:
     """
-    Class Network_Manager. 
-    =============
+    Class Network_Manager 
+    =====================
     The network manager receives flight plans from air companies and tries to
     fill the best ones on the network, by increasing order of cost. If the 
     flight plan does not overreach the capacity of any sector, it is 
@@ -49,7 +49,7 @@ class Network_Manager:
     Notes
     -----
     New in 2.9.2: gather methods coming from class Net (and Simulation) to make a proper agent.
-    
+
     """
     
     def __init__(self, old_style=False):
@@ -73,7 +73,28 @@ class Network_Manager:
 
     def initialize_load(self, G, length_day=24):
         """
-        Initialize loads, with length given by t_max.
+        Initialize loads for network G. If the NM is new style, it creates for each node a 
+        list of length length_day which represents loads. Load is increased by one when a 
+        flights crosses the airspace in the corresponding hour. Note that there is no explicit
+        dates. If the NM is old style, the load is represented by a list of the 2-lists. The
+        is a float representing the time at which the load changes, the second element is the
+        load of the sector starting from the first element to the first element of the next 
+        2-list.
+
+        The load of normal sectors and airport sectors are tracked separately.
+
+        Examples:
+        ---------
+        This sequence:
+        G.node[n]['load_old'] = [[0, 0], [10., 1], [10.5, 2], [15.5, 1], [20., 0], [10**6,0]]
+        Means that there is no flight between 0. and 10., one flight between 10. and 10.5, 
+        two between 10.5 and 15.5, one again between 15.5 and 20. and no flight afterwards.
+
+        Parameters
+        ----------
+        G : Net object (or networkx)
+        length_day : int
+            Number of hours tracked by the Network Manager.
 
         Notes
         -----
@@ -82,6 +103,7 @@ class Network_Manager:
         Changed in 2.7: load of airports added.
         Changed in 2.9: no more load of airports. Load is an array giving the load for each hour.
         Changed in 2.9.3: airports again :).
+
         """
 
         if not self.old_style:
@@ -108,6 +130,7 @@ class Network_Manager:
         -------
         queue : a list of objects flights
             This is the priority list for the allocation of flights.
+
         """
 
         queue=[]
@@ -160,6 +183,7 @@ class Network_Manager:
         Changed in 2.7: sectors of airports are checked independently.
         Changed in 2.9: airports are not checked anymore.
         Changed in 2.9.3: airports are checked again :).
+
         """
 
         i=0
@@ -218,12 +242,20 @@ class Network_Manager:
         
     def compute_flight_times(self, G, fp):
         """
-        Compute the entry times and exit times of each sector the trajectory of the given flight plan.
+        Compute the entry times and exit times of each sector for the trajectory of the given flight
+        plan. Store them in the 'times' attribute of the flight plan.
+
+        Parameters
+        ----------
+        G : hybrid network.
+        fp : FlightPlan object.
+        
+        Notes
+        -----
         Changed in 2.8: based on navpoints.
 
-        @input G: network.
-        @input fp: flight plan.
         """
+        
         entry_times=[0.]*(len(fp.p)+1)
         entry_times[0]=fp.t
         road=fp.t
@@ -243,38 +275,50 @@ class Network_Manager:
         """
         Check if the sector n would be overloaded if an additional flight were to 
         cross it between times t1 and t2.
+
+        Parameters
+        ----------
+        G : hybrid network
+            Unmodified.
+        n : int or string
+            sector to check.
+        (t1, t2) : (float, float)
+            times of entry and exit of the flight in the sector n.
+        
+        Returns
+        -------
+        overload : boolean,
+            True if the sector would be overloaded with the allocation of this flight plan.
+
+        Notes
+        -----
         Changed in 2.9: it does not check anymore if the maximum number of flights have 
         overreached the capacity, but if the total number of flights during an hour 
         (counting those already there at the beginning and those still there at the end)
         is greater than the capacity. 
-        Changed in 2.9.8: added the condition h<len(G.node[n]['load'])
+        Changed in 2.9.8: added the condition h<len(G.node[n]['load']). There is now an 
+        absolute reference in time and the weights of the network are in minutes.
 
-        There is now an absolute reference in time and the weights of the network are 
-        in minutes.
-
-        @input G: network on which to allocate the flight.
-        @input n: sector to check
-        @input (t1, t2): time of entry and exit of the flight in the sector n.
-        @return overload: True if the sector would be overloaded with the allocation of this flight plan.
         """
 
         overload = False
         h = 0 
         while float(h) <= t2/60. and h<len(G.node[n]['load']) and not overload:
-            try:
-                if h+1 > t1/60. and G.node[n]['load'][h]+1>G.node[n]['capacity']:
-                    overload = True
-            except:
-                print "Problem. t1/60., t2/60., h:", t1/60., t2/60., h
-                print "G.node[n]['load']:", G.node[n]['load']
-                raise
+            # try:
+            if h+1 > t1/60. and G.node[n]['load'][h]+1>G.node[n]['capacity']:
+                overload = True
+            # except:
+            #     print "Problem. t1/60., t2/60., h:", t1/60., t2/60., h
+            #     print "G.node[n]['load']:", G.node[n]['load']
+            #     raise
             h += 1
         return overload
 
     def overload_sector_peaks(self, G, n, (t1, t2)):
         """
         Old version (2.8.2) of previous method. Based on maximum number of 
-        planes in a given sector at any time.
+        planes in a given sector at any time. See initialize_load method
+        for more details.
 
         Note: was previously called overload_capacity
         """
@@ -291,11 +335,10 @@ class Network_Manager:
     def overload_airport_hours(self, G, n, (t1, t2)):
         """
         Same than overload_sector_hours, for airports.
-        Changed in 2.9.8: added the condition h<len(G.node[n]['load'])
         """
+        
         overload = False
         h = 0 
-        # h=max(0, floor(t1/60.)) # a tester pour virer la premiere condition.
         while float(h) <= t2/60. and h<len(G.node[n]['load']) and not overload:
             if h+1 > t1/60. and G.node[n]['load_airport'][h]+1>G.node[n]['capacity_airport']:
                 overload = True
@@ -319,30 +362,47 @@ class Network_Manager:
     def allocate_hours(self, G, fp, storymode=False, first=0, last=-1):
         """
         Fill the network with the given flight plan. For each sector of the flight plan, 
-        add one to the load for each tranch of time (one hour tranches) in which the flight 
-        is present in the sector.
+        add one to the load for each slice of time (one hour slices) in which the flight 
+        is present in the sector. 
+        The 'first' and 'last' optional arguments are used if the user wants to avoid 
+        to load the first and last sectors, as it was in the first versions.
+
+        Parameters
+        ----------
+        G : hybrid network
+            Modified in output with loads updated.
+        fp : FlightPlan object
+            flight plan to allocate.
+        storymode : boolean, optional
+            verbosity.
+        first : int, optional
+            position of the first sector to load in the trajectory. Deprecated.
+        last : int, optional
+            position of the last sector to load. Deprecated.
+
+        Notes
+        -----
         Changed in 2.9: completely changed (count number of flights per hour).
         Changed in 2.9.5: does change the load of the first and last sector.
         Changed in 2.9.8: added condition h<G.node[n]['load']
 
-        @input G: network.
-        @input fp: flight plan to allocate.
         """
+
         if storymode:
             print "NM allocates the flight."
-        path,times=fp.p,fp.times
+        path, times = fp.p, fp.times
         #for i in range(1,len(path)-1):
         if last==-1: 
             last = len(path)
         for i in range(first, len(path)):
-            n=path[i]
-            t1,t2=times[i]/60.,times[i+1]/60.
-            h=0
+            n = path[i]
+            t1, t2 = times[i]/60.,times[i+1]/60.
+            h = 0
             while h<t2 and h<len(G.node[n]['load']):
                 if h+1>t1:
                     if storymode:
                         print "Load of sector", n, "goes from",  G.node[n]['load'][h], "to", G.node[n]['load'][h]+1, "for interval", h, "--", h+1
-                    G.node[n]['load'][h]+=1
+                    G.node[n]['load'][h] += 1
                 h+=1
 
     def allocate_peaks(self, G, fp, storymode=False):
@@ -366,10 +426,27 @@ class Network_Manager:
 
     def deallocate_hours(self, G, fp, first=0, last=-1):
         """
-        New in 2.5: used to deallocate a flight plan not legit anymore (because one sector has been shutdown).
-        Changed in 2.9: completely changed, based on hour tranches.
-        @input G: network
-        @input fp: flight plan to deallocate.
+        Used to deallocate a flight plan not legit anymore, for instance because one 
+        sector has been shutdown.
+        
+        Parameters
+        ----------
+        G : hybrid network
+            Loads are modified as output
+        fp : FlightPlan object
+            Flight plan to deallocate.
+        first : int, optional
+            position of the first sector to unload in the trajectory. Must be consistent
+            with the allocation's parameters. Deprecated.
+        last : int, optional
+            position of the last sector to unload. Must be consistent
+            with the allocation's parameters. Deprecated.
+
+        Notes
+        -----
+        New in 2.5
+        Changed in 2.9: completely changed, based on hour slices.
+
         """
         
         path,times=fp.p,fp.times
@@ -421,7 +498,6 @@ class Network_Manager:
         @Nsp_nav: number of navpoints shortes paths per sector path (should not here either...)
         """
         sectors_to_shut = sample(G.nodes(), N_shocks)
-        #sectors_to_shut = [33]
 
         for n in sectors_to_shut:
             flights_to_reallocate = []
@@ -432,7 +508,6 @@ class Network_Manager:
                 if f.accepted:
                     path_sec = f.fp_selected.p
                     if n in path_sec:
-                        #print path_sec
                         if path_sec[0]==n or path_sec[-1]==n:
                             flights_suppressed.append(f) # The flight is suppressed if the source or the destination is within the shut sector
                         else:
@@ -460,10 +535,7 @@ class Network_Manager:
 
             if storymode:
                 print 'Recomputing shortest paths...'
-            G.compute_all_shortest_paths(Nsp_nav, perform_checks = True, sec_pairs_to_compute = sec_pairs_to_compute, nav_pairs_to_compute = nav_pairs_to_compute)                
-        
-
-            #shuffle(flights_to_reallocate)
+            G.compute_all_shortest_paths(Nsp_nav, perform_checks=True, sec_pairs_to_compute=sec_pairs_to_compute, nav_pairs_to_compute=nav_pairs_to_compute)                
             
             for f in flights_to_reallocate:
                 if not (f.source, f.destination) in G.G_nav.short.keys():
@@ -479,21 +551,20 @@ class Network_Manager:
                     fp.accepted = False
                 f.accepted = False
 
-    def M0_to_M1_quick(self, G, queue, N_shocks, tau, Nsp_nav, storymode=False, sectors_to_shut = None):
+    def M0_to_M1_quick(self, G, queue, N_shocks, tau, Nsp_nav, storymode=False, sectors_to_shut=None):
         """
-        Same method than previous one, but closes all sectors at the same time, then recomputes the hosrtest paths.
+        Same method than previous one, but closes all sectors at the same time, then recomputes the shortest paths.
         New in 2.9.7.
         """
-        print "N_shocks:", N_shocks
+        if storymode:
+            print "N_shocks:", N_shocks
         if sectors_to_shut==None:
             #sectors_to_shut = shock_sectors(G, N_shocks)#sample(G.nodes(), N_shocks)
             sectors_to_shut = sample(G.nodes(), int(N_shocks))
         else:
             sectors_to_shut = [sectors_to_shut]
-        #sectors_to_shut = [33]
 
         if sectors_to_shut!=[]:
-            #for n in sectors_to_shut:
             flights_to_reallocate = []
             flights_suppressed = []          
             sec_pairs_to_compute = []
@@ -502,7 +573,6 @@ class Network_Manager:
                 if f.accepted:
                     path_sec = f.fp_selected.p
                     if set(sectors_to_shut).intersection(set(path_sec))!=set([]):
-                        #print path_sec
                         if path_sec[0] in sectors_to_shut or path_sec[-1] in sectors_to_shut:
                             flights_suppressed.append(f) # The flight is suppressed if the source or the destination is within the shut sector
                         else:
@@ -532,10 +602,7 @@ class Network_Manager:
 
             if storymode:
                 print 'Recomputing shortest paths...'
-            G.compute_all_shortest_paths(Nsp_nav, perform_checks = True, sec_pairs_to_compute = sec_pairs_to_compute, nav_pairs_to_compute = nav_pairs_to_compute, verb = storymode)                
-        
-
-            #shuffle(flights_to_reallocate)
+            G.compute_all_shortest_paths(Nsp_nav, perform_checks=True, sec_pairs_to_compute=sec_pairs_to_compute, nav_pairs_to_compute=nav_pairs_to_compute, verb = storymode)                
             
             for f in flights_to_reallocate:
                 if not (f.source, f.destination) in G.G_nav.short.keys():
@@ -560,16 +627,36 @@ class FlightPlan:
     Changed in 2.8: added p_nav.
     Changed in 2.9.6: added shift_time method.
     """
-    def __init__(self,path,time,cost,ac_id, path_nav):
-        self.p=path # path in sectors
-        self.p_nav=path_nav # path in navpoints
-        self.t=time # of departure
-        self.cost=cost # cost given the utilisty function
-        self.ac_id=ac_id # id of the air company
-        self.accepted=True # if the flighr plan has been accpeted by the NM.
-        self.bottleneck=-1
+    def __init__(self, path, time, cost, ac_id, path_nav):
+        """
+        Parameters
+        ----------
+        path : list of sectors
+        path_nav : lis of navpoints
+        time : float
+            time of departure in minutes.
+        cost : float
+            Cost of the nav-path given by the utility function of the company.
+        ac_id : int
+            Id of the Air Company.
+        
+        Note
+        ----
+        No check of consistency between sec-path and nav-path.
+
+        """
+        self.p = path # path in sectors
+        self.p_nav = path_nav # path in navpoints
+        self.t = time # of departure
+        self.cost = cost # cost given the utility function
+        self.ac_id = ac_id # id of the air company
+        self.accepted = True # if the flight plan has been accepted by the NM.
+        self.bottleneck = -1 # for post-processing.
 
     def shift_time(self, shift):
+        """
+        Shift the time of departure by shift (in minutes).
+        """
         self.t += shift
         
 class Flight:
@@ -581,22 +668,59 @@ class Flight:
     Changed in 2.9.6: Compute FPs added (coming from AirCompany object).
     New in 2.9.6: method shift_desired_time.
     """
-    def __init__(self, Id, source, destination, pref_time, ac_id, par, Nfp): # Id is relative to the AC
+    def __init__(self, Id, source, destination, pref_time, ac_id, par, Nfp):
         """
+        Parameters
+        ----------
+        Id : int
+            Identifier of the flight, relative to the AirCompany
+        source : int or string
+            label of origin node
+        destination : int or string
+            label of destination node.
+        pref_time : float
+            Preferred time of departure, in minutes (from time 0, beginning of the day)
+        ac_id : int
+            Unique Id of the AirCompany.
+        par : tuple (float, float, float)
+            behavioral parameter of the AirCompany for utility function.
+        Nfp : int
+            Maximum number of flights plans that the AirCompany is going to submit 
+            for this flight. 
+
+        Notes
+        -----
         Changed in 2.9.6: added Nfp.
+
         """
-        self.id=Id
-        self.source=source
-        self.destination=destination
-        self.pref_time=pref_time
-        #self.FPs=FPs
-        self.ac_id=ac_id 
-        self.par=par
+        self.id = Id
+        self.source = source
+        self.destination = destination
+        self.pref_time = pref_time
+        self.ac_id = ac_id 
+        self.par = par
         self.Nfp = Nfp
 
     def compute_flightplans(self, tau, G): 
         """
         Compute the flight plans for a given flight, based on Nfp, Nsp_nav and the best paths, and the utility function.
+        
+        Parameters
+        ----------
+        tau : float
+            The different flight plans of the flight will be shifted by this amount (in minutes).
+        G : Net object
+            Used to compute cost of paths. Not modified.
+
+        Raises
+        ------
+        Exception
+            If some pairs in the network to not have enough shortest paths
+        Exception
+            If the list of flight plans in output is smaller than self.Nfp
+
+        Notes
+        -----
         Changed in 2.2: tau introduced.
         Changed in 2.8: paths made of navpoints and then converted.
         Changed in 2.9: ai and aj are navpoints, not sectors.
@@ -604,35 +728,39 @@ class Flight:
         New in 2.9.6: comes from AirCompany object.
         Changed in 2.9.7: ai and aj are source and destination.
         Changed in 2.9.9: resolved a serious bug of references on paths.
+        
         """
 
         ai, aj = self.source, self.destination
         t0sp = self.pref_time
+
+        # Check that all origin-destination pairs in the network
+        # have a number of shortest paths exactly equal to the number 
+        # of flight plans to be submitted.
         try:
             for k, v in G.G_nav.short.items():
                 assert len(v)==G.Nfp
         except:
-            print k, len(v), G.Nfp
-            raise
+            raise Exception("OD Pair", k, "have", len(v), "shortest paths whereas", G.Nfp, "were required.")
 
-        SP=[(p, G.convert_path(p), G.G_nav.weight_path(p)) for p in G.G_nav.short[(ai,aj)]]
+        # For each shortest path, compute the path in sectors and the total weight of the nav-path
+        SP = [(p, G.convert_path(p), G.G_nav.weight_path(p)) for p in G.G_nav.short[(ai,aj)]]
 
-        #print 'len(SP)', len(SP)
-        
-        uworst=utility(self.par, SP[0][-1], t0sp, SP[-1][-1], t0sp)
+        # Compute the cost of the worst path (with desired time).
+        uworst = utility(self.par, SP[0][-1], t0sp, SP[-1][-1], t0sp)
                 
-        #u=[[(p,t0sp + i*tau,utility(self.par,G.weight_path(shortestPaths[0]),t0sp,G.weight_path(p),t0sp + i*tau)) for p in shortestPaths] for i in range(self.Nfp)\
-        #    if utility(self.par,G.weight_path(shortestPaths[0]),t0sp,G.weight_path(shortestPaths[0]),t0sp + i*tau)<=uworst]
-        u=[[(cp, t0sp + i*tau, utility(self.par, SP[0][-1], t0sp, c, t0sp + i*tau),p) for p,cp,c in SP] for i in range(self.Nfp)\
+        # Compute the cost of all paths which have a cost smaller than uworst 
+        u = [[(cp, t0sp + i*tau, utility(self.par, SP[0][-1], t0sp, c, t0sp + i*tau),p) for p,cp,c in SP] for i in range(self.Nfp)\
             if utility(self.par,SP[0][-1], t0sp, SP[0][-1],t0sp + i*tau)<=uworst]
-            
-        fp=[FlightPlan(a[0][:],a[1],a[2],self.id,a[3][:]) for a in sorted([item for sublist in u for item in sublist], key=lambda a: a[2])[:self.Nfp]]
+
+        # Select the Nfp flight plans less costly, ordered by increasing cost.
+        fp = [FlightPlan(a[0][:],a[1],a[2],self.id,a[3][:]) for a in sorted([item for sublist in u for item in sublist], key=lambda a: a[2])[:self.Nfp]]
 
         if len(fp)!=self.Nfp:
-            raise Exception('Boum', len(fp))
+            raise Exception('Problem: there are', len(fp), 'flights plans whereas there should be', self.Nfp)
     
-        if not G.weighted:
-            # ------------- shuffling of the flight plans with equal utility function ------------ #
+        if not G.G_nav.weighted:
+            # Shuffle the flight plans with equal utility function
             uniq_util=np.unique([item.cost for item in fp])
             sfp=[]
             for i in uniq_util:
@@ -645,24 +773,27 @@ class Flight:
         
     def make_flags(self):
         """
+        Used for post-processing.
         Used to remember the flight plans which were overloading the network, 
         as well as the first sector to be overloaded on the trajectories.
         """
         try:
-            self.flag_first=[fp.accepted for fp in self.FPs].index(True)
-        except:
-            self.flag_first=len(self.FPs)
+            self.flag_first = [fp.accepted for fp in self.FPs].index(True)
+        except ValueError:
+            self.flag_first = len(self.FPs)
             
-        self.overloadedFPs=[self.FPs[n].p for n in range(0,self.flag_first)]
-        self.bottlenecks=[fp.bottleneck for fp in self.FPs if fp.bottleneck!=-1]
+        self.overloadedFPs = [self.FPs[n].p for n in range(0,self.flag_first)]
+        self.bottlenecks = [fp.bottleneck for fp in self.FPs if fp.bottleneck!=-1]
 
     def shift_desired_time(self, shift):
         """
         Shift the desired time of all flight plans of the flight.
+        Parameters
+        ----------
+        shift : float
+            Amount of time in minutes.
         """
-        #print 'shift', shift
         shift = int(shift)
-        #print 'Shift: previous time:', self.pref_time, 'new time:', self.pref_time + shift
         self.pref_time += shift
         for fp in self.FPs:
             fp.shift_time(shift)
@@ -701,12 +832,11 @@ class AirCompany:
         try:
             assert na==1
         except AssertionError:
-            raise Exception("na=1 is not supported by the model.")
+            raise Exception("na!=1 is not supported by the model.")
 
         self.Nfp=Nfp
         self.par=par
         self.pairs=pairs 
-        #self.G=G
         self.na=na
         self.id=Id
         
@@ -725,7 +855,7 @@ class AirCompany:
             Needs to have an attribute G_nav which is the network of navpoints.
         pairs : list of tuples (int, int), optional
             If given, it is used as the list origin destination for the flights. 
-            Otherwise self.pairs is used. TODO: remove this?
+            Otherwise self.pairs is used.
 
         Notes
         -----
@@ -734,40 +864,18 @@ class AirCompany:
         Changed in 2.9.6: the flight computes the flight plans itself.
 
         """
+
         if pairs==[]:
-            assigned_airports=sample(self.pairs, self.na) 
+            assigned_airports = sample(self.pairs, self.na) 
         else:
             assigned_airports = pairs
-        self.flights=[]
-        i=0
+
+        self.flights = []
+        i = 0
         for (ai,aj) in assigned_airports:
             self.flights.append(Flight(i, ai, aj, t0spV[i], self.id, self.par, self.Nfp))
-            #self.flights[-1].FPs=self.add_flightplans(ai,aj,t0spV[i],tau, G)
             self.flights[-1].compute_flightplans(tau, G)
-            i+=1
-    
-    # def convert_path(self, G, path):
-    #     """
-    #     New in 2.8: used to convert a path of navigation points into a path of sectors.
-    #     """
-    #     path_sec=[]
-    #     j,sec=0,G.G_nav.node[path[0]]['sec']
-    #     while j<len(path):
-    #         path_sec.append(sec)
-    #         while j<len(path) and G.G_nav.node[path[j]]['sec']==sec:
-    #             j+=1
-    #         if j<len(path):
-    #             sec=G.G_nav.node[path[j]]['sec']
-    #     return path_sec
-        
-    def add_dummy_flightplans(self,ai,aj,t0sp): 
-        """
-        New in 2.5: Add dummy flight plans to a given flight. Used if there is no route between source and destination airports.
-        """
-        
-        fp=[FlightPlan([],t0sp,10**6,self.id) for i in range(self.Nfp)]
-        
-        return fp
+            i += 1
         
     def __repr__(self):
         return 'AC with para ' + str(self.par)
@@ -1770,7 +1878,7 @@ class Net(nx.Graph):
 
         """
         os.system('mkdir -p ' + rep)
-        with open(join(rep, 'basic_stats_net.txt'),'w')
+        with open(join(rep, 'basic_stats_net.txt'),'w') as f:
             print >>f, 'Mean/std degree:', np.mean([self.degree(n) for n in self.nodes()]), np.std([self.degree(n) for n in self.nodes()])
             print >>f, 'Mean/std weight:', np.mean([self[e[0]][e[1]]['weight'] for e in self.edges()]), np.std([self[e[0]][e[1]]['weight'] for e in self.edges()])
             print >>f, 'Mean/std capacity:', np.mean([self.node[n]['capacity'] for n in self.nodes() if not n in self.airports]),\
