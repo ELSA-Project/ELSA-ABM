@@ -3,7 +3,7 @@
 """
 Created on Mon Dec 17 14:38:09 2012
 
-@author: earendil
+@author: gerald.gurtner
 
 ===========================================================================
 This is the main interface to the model. The main functions are 
@@ -16,9 +16,8 @@ from __future__ import print_function
 
 import sys
 sys.path.insert(1, '..')
+from os.path import join as jn
 import networkx as nx
-#from paras import paras
-#from random import getstate, setstate, 
 from random import shuffle, uniform,  sample, seed, choice, gauss, randrange
 import pickle
 from string import split
@@ -37,71 +36,15 @@ from utilities import draw_network_map, read_paras, post_process_paras, write_tr
 from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
 from tools_airports import extract_flows_from_data
 from efficiency import rectificate_trajectories_network_with_time, compute_efficiency
+from libs.paths import result_dir
 
-version='2.9.6'
-main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
+version = '2.9.6'
+main_version = split(version,'.')[0] + '.' + split(version,'.')[1] # like '2.9' for instance.
 
 if 0:
     see = 7122008
-    #see = randrange(1,10000000)
     print ('Caution! Seed:', see)
     seed(see)
-
-def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot', 'nA', 'departure_times','Nsp_nav', 'old_style_allocation', 'noise'], only_name = False):
-    """
-    Used to build a path from a set of paras. 
-    Changed 2.2: is only for single simulations.
-    Changed 2.4: takes different departure times patterns. Takes names.
-    Changed in 2.5: added N_shocks and improved the rest.
-    """
-    
-    name='Sim_v' + vers + '_' + paras['G'].name
-    if not only_name:
-        name = '../results/' + name
-    
-    in_title=list(np.unique(in_title))
-        
-    if paras['departure_times']!='zeros':
-        try:
-            in_title.remove('ACtot')
-        except ValueError:
-            pass
-        in_title.insert(1,'density')
-        in_title.insert(2,'day')
-        if paras['departure_times']=='square_waves':
-            in_title.insert(1,'Delta_t')
-            
-    if paras['N_shocks']==0 and paras['mode_M1']=='standard':
-        try:
-            in_title.remove('N_shocks')
-        except ValueError:
-            pass      
-    elif paras['N_shocks']!=0 and paras['mode_M1']=='standard':
-        in_title.insert(-1,'N_shocks')
-    elif paras['mode_M1']=='sweep':
-        in_title.insert(-1,'STS')
-    
-    in_title=np.unique(in_title)
-    
-    for p in in_title:
-        if p=='par':
-            if len(paras[p])==1 or paras['nA']==1.:
-                coin=str(float(paras[p][0][0])) + '_' + str(float(paras[p][0][1])) + '_' + str(float(paras[p][0][2]))
-            elif len(paras[p])==2:
-                coin=str(float(paras[p][0][0])) + '_' + str(float(paras[p][0][1])) + '_' + str(float(paras[p][0][2])) + '__' +str(float(paras[p][1][0])) + '_' + str(float(paras[p][1][1])) + '_' + str(float(paras[p][1][2])) 
-            else:
-                coin='_several'
-        else:
-            coin=str(paras[p])
-        name+='_' + p + coin
-
-    return name
-
-def check_object(G):
-    """
-    Use to check if you have an old object. Used for legacy.
-    """
-    return hasattr(G, 'comments')
             
 class Simulation:
     """
@@ -111,12 +54,27 @@ class Simulation:
     calls network manager, keeps the M1 queue in memory, calls for possible 
     shocks.
     """
-    def __init__(self, paras, G=None, verbose=False, make_dir=False):
+
+    def __init__(self, paras, G=None, verbose=False):#, make_dir=False):
         """
         Initialize the simulation, build the network if none is given in argument, set the verbosity
+
+        Parameters
+        ----------
+        paras : Paras object, dict-like
+            Gathers all parameters of the simulation.
+        G : hybrid network
+            compulsory, None is deprecated TODO.
+        verbose : boolean, optional
+            set verbosity.
+
+        Notes
+        -----
         Change in 2.9.3: self.make_times is computed at each simulations.
         Changed in 2.9.3: update shortest paths if there is a change of Nsp_nav.
+        
         """
+        
         self.paras = paras
         
         for k in ['AC', 'Nfp', 'na', 'tau', 'departure_times', 'ACtot', 'N_shocks','Np',\
@@ -126,7 +84,7 @@ class Simulation:
                 setattr(self, k, paras[k])
 
         self.make_times()#, times_data=paras['times'])
-        self.pars=paras['par']
+        self.pars = paras['par']
 
         assert check_object(G)
         assert G.Nfp==paras['Nfp']
@@ -140,23 +98,36 @@ class Simulation:
                 print ('Updating shortest path due to a change of Nsp_nav...')
             self.G.choose_short(self.Nsp_nav)
 
-        if make_dir:
-            os.system('mkdir -p ' + self.rep)
+        #if make_dir:
+        os.system('mkdir -p ' + self.rep)
         
     def make_simu(self, clean=False, storymode=False):
         """
         Do the simulation, clean afterwards the network (useful for iterations).
+
+        Parameters
+        ----------
+        clean : boolean, optional
+            if True, ask the network manager to initialize load on the network 
+            beforehand.
+        storymode : boolean, optional
+            sets verbosity.
+
+        Notes
+        -----
         Changed in 2.9.6: added the shuffle_departure.
+        
         """
+        
         if self.verb:
             print ('Doing simulation...')
         #self.make_times()#, times_data=paras['times'])
-        Netman = Network_Manager(old_style = self.old_style_allocation)
+        Netman = Network_Manager(old_style=self.old_style_allocation)
         self.storymode = storymode
 
         #------------------------------------------------------# 
 
-        Netman.initialize_load(self.G, length_day = int(self.day/60.))
+        Netman.initialize_load(self.G, length_day=int(self.day/60.))
 
         if self.flows == {}:
             self.build_ACs()
@@ -164,7 +135,7 @@ class Simulation:
             self.build_ACs_from_flows()
 
         if clean:
-            Netman.initialize_load(self.G, length_day = int(self.day/60.)) # TODO: check why I am doing this again.
+            Netman.initialize_load(self.G, length_day=int(self.day/60.)) # TODO: check why I am doing this again.
 
 
         self.queue = Netman.build_queue(self.ACs)
@@ -185,30 +156,39 @@ class Simulation:
         If n_AC is an integer and if several sets of parameters are given for the utility 
         function, make the same number of AC sor each set. If n_AC is an array of integers 
         of the same size than the number of set of parameters, populates the different
-        types with this array.
-        Exs:
-            self.n_AC=30, self.pars=[[1,0,0]] 
-            gives 30 ACs with parameters [1,0,0].
-            
-            self.n_AC=30, self.pars=[[1,0,0], [0,0,1]] 
-            gives 15 ACs with parameters [1,0,0] and 15 ACs with parameters [0,0,1].
-            
-            self.n_AC=[10,20], self.pars=[[1,0,0], [0,0,1]] 
-            gives 10 ACs with parameters [1,0,0] and 20 ACs with parameters [0,0,1].
-            
-        Builds all flight plans for all ACs.
+        types with this array. 
 
-        Changed in 2.9: pairs given to ACs are navpoints, not sectors
+        Request the computation of all flight plans for all ACs.
+        
+        Examples:
+        ---------
+        self.AC=30, self.pars=[[1,0,0]] 
+        gives 30 ACs with parameters [1,0,0].
+        
+        self.AC=30, self.pars=[[1,0,0], [0,0,1]] 
+        gives 15 ACs with parameters [1,0,0] and 15 ACs with parameters [0,0,1].
+        
+        self.AC=[10,20], self.pars=[[1,0,0], [0,0,1]] 
+        gives 10 ACs with parameters [1,0,0] and 20 ACs with parameters [0,0,1].
+
+        Raises
+        ------
+        Exception
+            if self.AC is a list with a different length from self.pars
+
+        Notes
+        -----
+        Changed in 2.9: pairs given to ACs are navpoints, not sectors.
+
         """
         
-        if type(self.AC)==type(1):
+        if type(self.AC)==int:
             self.AC=[self.AC/len(self.pars) for i in range(len(self.pars))]
         
         try:
             assert len(self.AC)==len(self.pars)
         except:
-            print ('n_AC should have the same length than the parameters, or be an integer')
-            raise
+            raise Exception('AC should have the same length than the parameters, or be an integer')
     
         self.ACs={}
         k=0
@@ -219,25 +199,29 @@ class Simulation:
                 self.ACs[k]=AirCompany(k, self.Nfp, self.na, self.G.G_nav.connections(), par)
                 self.ACs[k].fill_FPs(self.t0sp[k], self.tau, self.G)
                 k+=1
-        # if clean:  # Not sure if this is useful.
-        #     self.Netman.initialize_load(self.G)
 
     def build_ACs_from_flows(self): 
         """
-        New in 2.9.2: the list of ACs is built from the flows (given by times). 
+        Build the list of ACs from the flows. 
+
+        Notes
+        -----
+        New in 2.9.2 
         Changed in 2.9.5: record the day of simulation.
-        Changed in 2.9.6: added bootstrap_mode
+        Changed in 2.9.6: added bootstrap_mode. Changed times of departure from integers to floats.
+        
         """
+
         self.ACs={}
         all_times = [time for ((source, destination), times) in self.flows.items() for time in times]
         
         if not self.bootstrap_mode:
             flows = self.flows
         else:
-            # Rmq: at this stage, self.ACtot is already either the nu,ber of flights from data
+            # Note: at this stage, self.ACtot is already either the number of flights from data
             # or some user defined number.
             if self.bootstrap_only_time:
-                # resampling times keeping number of flights constant per each entry/exit
+                # resampling times keeping number of flights constant per each entry/exit (scaling them up)
                 tot_AC = len(all_times)
                 flows = {(entry, exit):sample(all_times, int(len(times)*self.ACtot/float(tot_AC))) for (entry, exit), times in self.flows.items()}
             else:
@@ -248,13 +232,16 @@ class Simulation:
                     flows[pair] = flows.get(pair, []) + [choice(all_times)]
         
         all_times = [delay(time) for time in all_times]
+        # Guess the starting date.
         min_time = date_st(min(all_times))
         self.starting_date = [min_time[0], min_time[1], min_time[2], 0, 0, 0]
         k=0
+
         for ((source, destination), times) in flows.items():
             idx_s = self.G.G_nav.idx_nodes[source]
             idx_d = self.G.G_nav.idx_nodes[destination]
             if idx_s in self.G.G_nav.airports and idx_d in self.G.G_nav.airports and self.G.G_nav.short.has_key((idx_s, idx_d)):    
+                # For each OD, put nA fraction of the flights as company A and 1-nA as company B
                 n_flights_tot = len(times)
                 n_flights_A = int(self.nA*n_flights_tot)
                 n_flights_B = n_flights_tot - int(self.nA*n_flights_tot)
@@ -264,19 +251,15 @@ class Simulation:
                     for j in range(AC[i]):
                         time = times[l]
                         self.ACs[k] = AirCompany(k, self.Nfp, self.na, self.G.G_nav.short.keys(), par)
-                        time = int(delay(time, starting_date=self.starting_date)/60.)
-                        #print ("(idx_s, idx_d):", (idx_s, idx_d))
+                        time = delay(time, starting_date=self.starting_date)/60.
                         self.ACs[k].fill_FPs([time], self.tau, self.G, pairs=[(idx_s, idx_d)])
                         k+=1
                         l+=1
             else:
-                if 1:#self.storymode:
+                if self.verb:
                     print ("I do " + (not idx_s in self.G.G_nav.airports)*'not', "find", idx_s, ", I do " + (not idx_d in self.G.G_nav.airports)*'not', "find", idx_d,\
                      'and the couple is ' + (not self.G.G_nav.short.has_key((idx_s, idx_d)))*'not', 'in pairs.')
                     print ('I skip this flight.')
-                pass     
-        # if clean:   
-        #     self.Netman.initialize_load(self.G)
 
     def compute_flags(self):
         """
@@ -312,7 +295,13 @@ class Simulation:
         """
         Save the network in a pickle file, based on the paras.
         Can be saved in a single file, or different files to speed up the post-treatment.
+        
+        Notes
+        -----
+        This is a bit dusty maybe.
+
         """
+
         if rep=='':
             rep=build_path(self.paras)
 
@@ -330,39 +319,62 @@ class Simulation:
                 with open(rep + '_ACs.pic','w') as f:
                     pickle.dump(self.ACs,f)
                 
-                f=open(rep + '_G.pic','w')
-                pickle.dump(self.G,f)
-                f.close()
+                with open(rep + '_G.pic','w') as f:
+                    pickle.dump(self.G,f)
                 
-                f=open(rep + '_flags.pic','w')
-                pickle.dump((self.flag_first, self.bottlenecks, self.overloadedFPs),f)
-                f.close()
+                with open(rep + '_flags.pic','w') as f:
+                    pickle.dump((self.flag_first, self.bottlenecks, self.overloadedFPs),f)
             
     def load(self, rep=''):
         """
-        Load a split Simulation from disk.
+        Load a splitted Simulation from disk.
+
+        Notes
+        -----
+        This is a bit dusty maybe.
+
         """            
+        
         if rep=='':
             rep=build_path(self.paras)
-        print ('Loading split simu from ', rep)
-        f=open(rep + '_ACs.pic','r')
-        self.ACs=pickle.load(f)
-        f.close()
+        if self.verb:
+            print ('Loading splitted simulation from', rep)
+
+        with open(rep + '_ACs.pic','r') as f:
+            self.ACs=pickle.load(f)
         
-        f=open(rep + '_G.pic','r')
-        self.G=pickle.load(f)
-        f.close()
+        with open(rep + '_G.pic','r') as f:
+            self.G=pickle.load(f)
         
-        f=open(rep + '_flags.pic','r')
-        (self.flag_first, self.bottlenecks, self.overloadedFPs)=pickle.load(f)
-        f.close()
+        with open(rep + '_flags.pic','r') as f:
+            (self.flag_first, self.bottlenecks, self.overloadedFPs)=pickle.load(f)
         
-    def make_times(self, times_data=[]):
+    def make_times(self):
         """
-        Prepare t0sp, the matrix of desired times.
-        New in 2.9: added departures from data.
-        New in 2.9.3: added noise.
+        Prepares t0sp, the matrix of desired times. Three modes are possible, controlled
+        by attribute 'departure_times'. 
+
+        If 'zeros', all departure times are set to 0,
+        if 'uniform', departure times are drawn uniformly between zero and self.day,
+        if 'square_waves', departure times are drawn from a distribution of in wave shaped. The
+        attribute 'width_peak' controls the width of the waves and 'Delta_t' controls the time
+        between the end of the a wave and the beginning of the following. Note that for Delta_t=0.,
+        the distribution is not not completely equivalent to a uniform distribution, since the 
+        flights are evenly spread between waves anyway.
+
+        Raises
+        ------
+        Exception
+            if ACs are requested to have more than one flight and self.departure_times='square_waves'.
+
+        Notes
+        -----
+        Changed in 2.9: added departures from data.
+        Changed in 2.9.3: added noise.
+        Changed in 2.9.5(?): removed departures from data
+
         """
+
         if self.departure_times=='zeros':
             self.t0sp=[[0 for j in range(self.na)] for i in range(self.ACtot)]     
         elif self.departure_times=='uniform':
@@ -374,33 +386,129 @@ class Simulation:
                     for j in range(self.ACsperwave):
                         self.t0sp.append([uniform(i*(self.width_peak+self.Delta_t),i*(self.width_peak+self.Delta_t)+self.width_peak)])
             else:
-                print ('Not implemented yet...')
-                raise
-        # elif self.departure_times=='from_data':
-        #     self.t0sp=[]
-        #     if self.na==1:
-        #         for i in range(self.ACtot):
-        #             self.t0sp.append([choice(times_data)])
-        #elif self.departure_times=='exterior':
-        #    self.t0sp=[]
+                raise Exception('na=1 is not implemented yet...')
 
     def shuffle_departure_times(self):
+        """
+        Adds a gaussian noise on the departure times. The standard deviation is
+        given by attribute 'noise'.
+        """
+        
         if self.noise!=0:
             for f in self.queue:
                 f.shift_desired_time(gauss(0., self.noise))
 
     def mark_best_of_queue(self):
+        """
+        Records the cost the best flight plan (first one) for each flight.
+
+        Notes
+        -----
+        This method belongs here and not in the Flight object. The reason is that when 
+        there are some reallocations, hence some recomputations of the flight plans by 
+        the flights, the best costs should not be recomputed.
+
+        """
+        
         for f in self.queue:
             f.best_fp_cost=f.FPs[0].cost
-                       
+     
+def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot', 'nA', 'departure_times',
+    'Nsp_nav', 'old_style_allocation', 'noise'], rep=result_dir):
+    """
+    Used to build name + path from a set of paras. 
+
+    Parameters
+    ----------
+    paras : dict
+        standard paras dict used by the model
+    vers : string, optional
+        Normally formatted like 'X.Y'
+    in_title : list of str
+        lisf of keys to include in the title.
+    rep : string
+        path to (left-)append to the name of the file. Use '' to have only the name.
+
+    Returns
+    -------
+
+    Notes
+    -----
+    Changed 2.2: is only for single simulations.
+    Changed 2.4: takes different departure times patterns. Takes names.
+    Changed in 2.5: added N_shocks and improved the rest.
+
+    """
+    
+    name = 'Sim_v' + vers + '_' + paras['G'].name
+    name = jn(rep, name)
+    
+    in_title = list(np.unique(in_title))
+        
+    if paras['departure_times']!='zeros':
+        try:
+            in_title.remove('ACtot')
+        except ValueError:
+            pass
+        in_title.insert(1,'density')
+        in_title.insert(2,'day')
+        if paras['departure_times']=='square_waves':
+            in_title.insert(1,'Delta_t')
+            
+    if paras['N_shocks']==0 and paras['mode_M1']=='standard':
+        try:
+            in_title.remove('N_shocks')
+        except ValueError:
+            pass      
+    elif paras['N_shocks']!=0 and paras['mode_M1']=='standard':
+        in_title.insert(-1,'N_shocks')
+    elif paras['mode_M1']=='sweep':
+        in_title.insert(-1,'STS')
+    
+    in_title = np.unique(in_title)
+    
+    for p in in_title:
+        if p=='par':
+            if len(paras[p])==1 or paras['nA']==1.:
+                coin = str(float(paras[p][0][0])) + '_' + str(float(paras[p][0][1])) + '_' + str(float(paras[p][0][2]))
+            elif len(paras[p])==2:
+                coin = str(float(paras[p][0][0])) + '_' + str(float(paras[p][0][1])) + '_' + str(float(paras[p][0][2])) + '__' +str(float(paras[p][1][0])) + '_' + str(float(paras[p][1][1])) + '_' + str(float(paras[p][1][2])) 
+            else:
+                coin = '_several'
+        else:
+            coin = str(paras[p])
+        name += '_' + p + coin
+
+    return name
+
+def check_object(G):
+    """
+    Use to check if you have an old object. Used for legacy.
+    """
+    return hasattr(G, 'comments')                  
+
 def post_process_queue(queue):
     """
-    Used to post-process results. Every processes between the simulation and 
-    the plots should be here.
+    Used to post-process results. Conpute the satisfaction of each flight, the regulated flight plans,
+    the regulated flights.
+
+    Parameters
+    ----------
+    queue : list of FlightPlan objects
+
+    Returns
+    -------
+    queue : list of FlightPlan objects
+        With additional flags computed.
+
+    Notes
+    -----
+    Every processes between the simulation and the plots should be here.
     Changed in 2.4: add satisfaction, regulated flight & regulated flight plans. On level of iteration added (on par).
     Changed in 2.5: independent function.
     Changed in 2.7: best cost is not the first FP's one.
     Changed in 2.9.3: added regulated_1FP
+    
     """
 
     for f in queue:   
@@ -413,7 +521,7 @@ def post_process_queue(queue):
         if len(acceptedFPscost) != 0:
             f.satisfaction = bestcost/min(acceptedFPscost)
         else:
-            f.satisfaction = 0                    
+            f.satisfaction = 0.                    
             
         # Regulated flight plans
         f.regulated_FPs=len([FP for FP in f.FPs if not FP.accepted])
@@ -430,19 +538,61 @@ def post_process_queue(queue):
     return queue
     
 def extract_aggregate_values_on_queue(queue, types_air_companies, mets=['satisfaction', 'regulated_F', 'regulated_FPs']):
-    results={}
+    """
+    Computes some aggregated metrics on queue. The results are gathered by metrics and types 
+    of air companies. Only the average metrics are computed.
+
+    Parameters
+    ----------
+    queue : list of Flight objects
+    types_air_companies : list of tuples (float, float, float)
+        Reprenting the different types of companies in the simulations. The tuples are the 
+        parameters of the cost function of each company.
+    mets : list of string, optional
+        of attributes to extract from the Flight object in queue.
+
+    Returns:
+    --------
+    results : dict of dict
+        first levels of keys are the metrics, second levels are the types of air companies. 
+
+    Notes
+    -----
+    If some flights have a type (i.e. a tuple for cost function) which is not in types_air_companies,
+    they are ignored.
+
+    """
+
+    results = {}
     for m in mets:
-        results[m]={}
+        results[m] = {}
         for tac in types_air_companies:
-            pouet=[getattr(f,m) for f in queue if tuple(f.par)==tuple(tac)]
+            pouet = [getattr(f,m) for f in queue if tuple(f.par)==tuple(tac)]
             if pouet!=[]:
-                results[m][tuple(tac)]=np.mean(pouet)
+                results[m][tuple(tac)] = np.mean(pouet)
             else:
-                results[m][tuple(tac)]=0.
+                results[m][tuple(tac)] = 0.
         
     return results                
             
 def extract_aggregate_values_on_network(G):
+    """
+    Extract aggregated values concerning the network concerning the traffic. Right 
+    now, the load (see the definition in simAirSpaceO.Network_Manager object) and the 
+    load/capacity are computed.
+
+    TODO: Only works with the old, instantaneous definition of the load. Needs an update.
+
+    Parameters
+    ----------
+    G : hybrid network
+
+    Returns
+    -------
+    dict : dictionary
+        values are averages over all nodes and all times of the loads of the network.
+
+    """
     coin1=[]
     coin2=[]
     for n in G.nodes():
@@ -457,6 +607,10 @@ def extract_aggregate_values_on_network(G):
     return {'loads': np.mean(coin1), 'loads_norm':np.mean(coin2)}
                    
 def plot_times_departure(queue, rep='.'):
+    """
+    Small snippet to plot the depatures time pattern of flights in a queue.
+    """
+
     t_pref=[f.FPs[0].t for f in queue]
     t_real=[f.fp_selected.t for f in queue if f.fp_selected!=None]
     
@@ -468,44 +622,87 @@ def plot_times_departure(queue, rep='.'):
     plt.savefig(rep + '/departure_times.png')
     plt.show()
         
-def do_standard((paras, G, i)):
+def do_standard((paras, G)):
     """
-    Make the simulation and extract aggregate values.
-    This one is used in particular by iter_sim
+    Make the simulation and extract aggregate values. Used for automatic entry, 
+    in particular by iter_sim.
+
+    Parameters
+    ----------
+    paras : dictionary
+        containing the parameters for the simulations.
+    G : hybrid network
+
+    Returns
+    -------
+    results : dictionary
+        gathers results from extract_aggregate_values_on_queue and 
+        extract_aggregate_values_on_network.
+    
+    Notes
+    -----
     New in 2.9.2: extracted from average_sim
     Changed in 2.9.4: taken from iter_simO
+    Changed in 2.9.6: changed signature, removed integer i.
+
     """
-    results={} 
-    sim=Simulation(paras, G=G.copy(), verbose=False)
-    sim.make_simu(storymode=False)
-    sim.queue=post_process_queue(sim.queue)
     
-    results_queue=extract_aggregate_values_on_queue(sim.queue, paras['par'])
-    results_G=extract_aggregate_values_on_network(sim.G)
+    results = {} 
+    sim = Simulation(paras, G=G.copy(), verbose=False)
+    sim.make_simu(storymode=False)
+    sim.queue = post_process_queue(sim.queue)
+    
+    results_queue = extract_aggregate_values_on_queue(sim.queue, paras['par'])
+    results_G = extract_aggregate_values_on_network(sim.G)
     
     for met in results_G:
-        results[met]=results_G[met]
+        results[met] = results_G[met]
             
     for met in results_queue:
-        results[met]={tuple(p):[] for p in paras['par']}
+        results[met] = {tuple(p):[] for p in paras['par']}
         for p in paras['par']:
-            results[met][tuple(p)]=results_queue[met][tuple(p)]
+            results[met][tuple(p)] = results_queue[met][tuple(p)]
 
     del sim
     return results
 
+######################################################################################
+"""
+Functions for the Tactical Model.
+"""
+
 def write_down_capacities(G, save_file=None):
+    """
+    Write down the capacitie of all sector of network in a txt file.
+    """
     with open(save_file, 'w') as f:
-        #print >>f, "# Sectors\t Capacities"
         print ("# Sectors\t Capacities", file=f)
         for n in G.nodes():
             print (str(n+1) + '\t' + str(G.node[n]['capacity']), file=f)
 
 def add_first_last_points(trajs, secs=False):
     """
-    Add a first and a last navpoint outside of the area to each trajectory.
-    This is a requirement for the tactical abm.
+    Add a first and a last navpoint outside of the area to each trajectory, as required for 
+    the tactical model. The function computes the direction given by the first two points of
+    each trajectory and create a new point opposed to that direction with distance equal to 
+    the distance between first and second points. Then it does the same thing with the last
+    point and point before the last one.
+
+    Parameters
+    ----------
+    trajs : list
+        of trajectories. A trajectory is a list of points, with signature (x, y, z, t)
+        or (x, y, z, t, s). t is time in format [yy, mm, dd, h, m, s]
+    secs : boolean, optional
+        If true, the points will include 0 for their sector as their fifth component.
+    
+    Returns
+    -------
+    trajs : list
+        of trajectories with same signature for points. 
+
     """
+
     for i, traj in enumerate(trajs):
         pos1 = np.array((traj[0][0], traj[0][1]))
         pos2 = np.array((traj[1][0], traj[1][1]))
@@ -557,22 +754,62 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     If simple_setup is True, the function uses some default parameters suitable for 
     quick generation of traffic.
     
-    Args:
-        paras_control: dictionary of values which are externally controlled. Typically,
-            the number of flights.
-        save_file: file for saving trajectories with the abm_tactical format.
-        coordinates: return list of coordinates instead list of names of navpoints.
-        simple_setup: if False, all parameters must be informed. Otherwise some default
-            parameters are used.
-        generate_traffic: if True and paras['file_traffic'] is informed, generates 
-            synthetic altitudes. 
+    Parameters
+    ----------
+    G : hybrid network
+        on which to generate the traffic.
+    paras_file : string, optional
+        path for reading the parameters for the simulations. If None, reads paras.py.
+    save_file : string
+        file for saving trajectories with the abm_tactical format.
+    simple_setup : boolean
+        if False, all parameters must be informed. Otherwise some default parameters
+        are used.
+    starting_date : list or tuple of int, optional
+        gives the starting date for the simulations. It is used to have the right dates 
+        in output.
+    coordinates : boolean, optional
+        If True, return list of coordinates instead list of labels of navpoints.
+    generate_altitudes : boolean, optional
+        If True, generate synthetic altitudes in output. The altitudes are bootstrapped 
+        using the file_traffic file informed in the paras file.
+    put_sectors : boolean, optional
+        If True, the trajectories in ouput have a fifth element which is the sector.
+    save_file_capacities : string, optional
+        If not None, the capacities of the network are written in a txt file in a 
+        format readable by the tactical ABM.
+    record_stats_file : string, optional
+        If informed, the visual output of the funtion is written on the file.
+    remove_flights_after_midnight : boolean, optional
+        If True, remove from the trajectories all the ones which land the day after 
+        starting_date.
+    rectificate : dictionary, optional
+        If informed, the trajctories will be rectified using the function 
+        rectificate_trajectories_network_with_time with parameters given by the dictionary
+    storymode : boolean, optional
+        set the verbosity of the simulation itself.
+    paras_control : additional parameters
+        of values which are externally controlled. Typically,
+        the number of flights.
 
+    Returns
+    -------
+    trajectories_coords : list
+        of trajectories. Each point in the trajectories has the format (x, y, z, t), (x, y, z, t, s)
+        or are directly (label, z, t).
+    stats : dictionary
+        with some results about the simulation, like the number of flights rejected, etc.
+
+    Notes
+    -----
     New in 2.9.4.
     Changed in 2.9.5: Added synthetic altitudes generation.
+
     """
+    
     print ("Generating traffic on network...")
 
-    paras = read_paras(paras_file=paras_file, post_process = False)
+    paras = read_paras(paras_file=paras_file, post_process=False)
     if simple_setup:
         paras['file_net'] = None
         paras['G'] = G
@@ -596,27 +833,24 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         paras['bootstrap_mode'] = True
         paras['bootstrap_only_time'] = True
 
-    print (paras_control)
+    #print (paras_control)
     for p,v in paras_control.items():
         paras[p] = v
 
     paras = post_process_paras(paras)
 
     G = paras['G']
-    print ("Average capactity:", np.mean([paras['G'].node[n]['capacity'] for n in paras['G'].nodes()]))
+    print ("Average capacity:", np.mean([paras['G'].node[n]['capacity'] for n in paras['G'].nodes()]))
     if 'traffic' in paras.keys():
         print ("Number of flights in traffic:", len(paras['traffic']))
     
     with clock_time():
-        sim=Simulation(paras, G=G, make_dir=True, verbose=True)
+        sim=Simulation(paras, G=G, verbose=True)
         sim.make_simu(storymode=storymode)
         sim.compute_flags()
         queue=post_process_queue(sim.queue)
         M0_queue=post_process_queue(sim.M0_queue)
-        #for n in sim.G.nodes():
-            #print ("Load of sector", n, ": ", sim.G.node[n]['load'], "/", sim.G.node[n]['capacity'])
-            #print ("Airport capacity", n, ": ", sim.G.node[n]['load_airport'], "/", sim.G.node[n]['capacity'])
-
+   
     print
 
     if record_stats_file!=None:
@@ -649,14 +883,6 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
     if record_stats_file!=None:
         ff.close()
-
-    # for i in range(len(queue)):
-    #     for j in range(i+1, len(queue)):
-    #         try:
-    #             assert not queue[i] is queue[j]
-    #         except:
-    #             print("flights", i, "and", j, "point to the same object") 
-    #             raise
 
     trajectories = compute_M1_trajectories(queue, sim.starting_date)
 
@@ -698,10 +924,10 @@ if __name__=='__main__':
     GG = paras['G']#ABMvars.G
     paras = read_paras()
 
-    print (header (paras,'SimulationO', version, paras_to_display=['ACtot']))
+    print (header(paras,'SimulationO', version, paras_to_display=['ACtot']))
 
     with clock_time():
-        sim=Simulation(paras, G=GG, make_dir=True, verbose=True)
+        sim=Simulation(paras, G=GG, verbose=True)
     
         sim.make_simu(storymode=False)
     # with open(build_path(sim.paras) + '_sim.pic', 'w') as f:
@@ -710,35 +936,6 @@ if __name__=='__main__':
         queue=post_process_queue(sim.queue)
         M0_queue=post_process_queue(sim.M0_queue)
 
-    #print 'ACs:'
-    #print sim.ACs
-    #print 
-    #print
-    #print 'Global metrics for M1:'
-    #print extract_aggregate_values_on_queue(queue, paras['par'])
-    #print 'Global metrics for M0:'
-    #print extract_aggregate_values_on_queue(M0_queue, paras['par'])
-    #print
-    #print 'Number of rejected flights:', len([f for f in sim.queue if not f.accepted])
-    #print 'Number of rejected flight plans:', len([fp for f in sim.queue for fp in f.FPs if not fp.accepted]), '/', len(sim.queue)*sim.Nfp
-    ##print "Satisfaction: "
-    ##print [f.satisfaction for f in sim.queue]
-    #print
-    
-    #coin=[797, 430, 911, 792, 343, 1161, 1162, 840, 522, 1031, 1013, 596, 452, 376, 441, 736, 561, 244, 459, 69, 209, 98, 635, 926, 315, 1124, 1109, 641, 250]
-    # for f in sim.queue[:10]:
-    #     for fp in f.FPs:
-    #         #if np.array(fp.p_nav)=coin and np.array(fp.p_nav)!=reversed(coin):
-    #             ##print np.array(fp.p_nav)==coin 
-    #             #print fp.p_nav
-    #             #print fp.p
-
-    #             #print fp.accepted
-    #             ##print filter(lambda x: not x in fp.p_nav, coin)
-                
-    #     #print
-    #     #print
-    
     for n in sim.G.nodes():
         #print n, sim.G.node[n]['capacity'], sim.G.node[n]['load']
         if max(sim.G.node[n]['load']) == sim.G.node[n]['capacity']:
@@ -830,27 +1027,5 @@ if __name__=='__main__':
     #     plt.show()
         
     #sim.save()
-    
-   # #print
-   # #print
-   # for f in queue:
-   #     #print f
-   #     fp=f.FPs[0]
-   #     i=0
-   #     while not fp.accepted and i<len(f.FPs):
-   #         fp=f.FPs[i]
-   #         i+=1
-       
-   #     if i<len(f.FPs):
-   #         #print fp.p
-   #plot_times_departure(sim.queue, rep=sim.rep)
-   #  draw_network_map(sim.G, title=sim.G.name, queue=sim.queue, generated=True, rep=sim.rep)
-    
-   # #print sim.M0_queue
-   
-   # #print sim.queue
-
-    #print 'Done.'
-    
 
         

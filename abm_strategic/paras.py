@@ -13,7 +13,7 @@ from math import ceil as _ceil
 
 from utilities import Paras as _Paras
 
-version='2.9.5' # Forked from version 2.9.5 of ABMvars.
+version = '2.9.5' # Forked from version 2.9.5 of ABMvars.
 
 ##################################################################################
 ################################### Parameters ###################################
@@ -41,7 +41,7 @@ day=24.*60. 							# Total duration of the simulation in minutes.
 
 # One can specify a file to extract flows (i.e. departure times, entry exit, densities, etc.)
 # Leave None for new generation of traffic. 
-# You cqn specify ACtot even if you give a file, in which case the code will extract the distribution of 
+# You can specify ACtot even if you give a file, in which case the code will extract the distribution of 
 # flows (entry/exit + times of departure)
 
 file_traffic = None     

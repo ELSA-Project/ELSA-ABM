@@ -464,7 +464,7 @@ class Network_Manager:
 
     def deallocate_peaks(self,fp):
         """
-        Old version of previous method.
+        Old version of previous deallocate_hours. See description of initialize_load.
         """
 
         path,times=fp.p,fp.times
@@ -487,16 +487,27 @@ class Network_Manager:
         sectors are shut down at random. Flight plans crossing these sectors are deallocated. 
         Shortest paths are recomputed. Finally, deallocated flights are reallocated on the 
         new network, with the same initial order. This procedure is repeated after each sector 
-        is shut.
+        is shut down.
+        
+        Parameters
+        ----------
+        G : hybrid network
+        queue : list of Flight objects
+            initial queue before the shocks.
+        N_shocks : int
+            number of sectors to shut down.
+        tau : float
+            parameter of shift in time (TODO: should not really be here...).
+        Nsp_nav : int
+            number of navpoints shortes paths per sector path (TODO: should not here either...)
+
+        Notes
+        -----
         Changed in 2.9: updated for navpoints and can now shut down sectors containing airports.
         Transferred from simulationO.
 
-        @input G: network
-        @input queue: initial queue before the shocks.
-        @input N_shocks: number of sectors to shutdown.
-        @input tau: parameter of shit in time (should not really be here...).
-        @Nsp_nav: number of navpoints shortes paths per sector path (should not here either...)
         """
+        
         sectors_to_shut = sample(G.nodes(), N_shocks)
 
         for n in sectors_to_shut:
@@ -553,9 +564,27 @@ class Network_Manager:
 
     def M0_to_M1_quick(self, G, queue, N_shocks, tau, Nsp_nav, storymode=False, sectors_to_shut=None):
         """
-        Same method than previous one, but closes all sectors at the same time, then recomputes the shortest paths.
+        Same method than previous one, but closes all sectors at the same time, 
+        then recomputes the shortest paths.
+
+        Parameters
+        ----------
+        G : hybrid network
+        queue : list of Flight objects
+            initial queue before the shocks.
+        N_shocks : int
+            number of sectors to shut down.
+        tau : float
+            parameter of shift in time (TODO: should not really be here...).
+        Nsp_nav : int
+            number of navpoints shortes paths per sector path (TODO: should not here either...)
+
+        Notes
+        -----
         New in 2.9.7.
+        
         """
+        
         if storymode:
             print "N_shocks:", N_shocks
         if sectors_to_shut==None:

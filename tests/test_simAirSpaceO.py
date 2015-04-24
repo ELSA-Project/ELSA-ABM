@@ -9,8 +9,6 @@ from random import seed
 
 from abm_strategic.simAirSpaceO import *
 
-################### Network Manager ########################
-
 class AllocationTest(unittest.TestCase):
 	def setUp(self):
 		# Sectors
@@ -113,7 +111,6 @@ class AllocationTest(unittest.TestCase):
 			self.G.node[n]['capacity'] = 5
 		for a in self.G.airports:
 			self.G.node[a]['capacity_airport'] = 10000
-
 
 class AirCompanyTest(AllocationTest):
 	"""
@@ -308,6 +305,10 @@ class NetworkManagerTest(AllocationTest):
 			for p in self.G.node[n]['load']:
 				self.assertTrue(p==0)
 
+	def test_M0_to_M1(self):
+		#TODO
+		pass
+
 class BuildingNetTest(unittest.TestCase):
 	def setUp(self):
 		self.G = nx.Graph()
@@ -390,4 +391,5 @@ class BuildingNetTest(unittest.TestCase):
 		pass
 
 if __name__ == '__main__':
-	unittest.main(failfast=True)
+	# Put failfast=True for stopping the test as soon as one test fails.
+	unittest.main(failfast=False)

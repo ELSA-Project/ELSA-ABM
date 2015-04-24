@@ -29,8 +29,8 @@ from time import time, gmtime, strftime
 from general_tools import yes
 from utilities import read_paras_iter
 
-version='2.9.3'
-main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
+version = '2.9.4'
+main_version = split(version,'.')[0] + '.' + split(version,'.')[1]
 
 # This is for parallel computation.
 def spawn(f):
@@ -94,7 +94,7 @@ def build_path_average(paras, vers=main_version, in_title=['tau', 'par', 'ACtot'
     
     rep='../results/Sim_v' + vers + '_' + Gname
     
-    return rep, '/' + build_path_single(paras,vers=vers, only_name = True) + '_iter' + str(paras['n_iter']) + '.pic'
+    return build_path_single(paras, vers=vers, rep=rep) + '_iter' + str(paras['n_iter']) + '.pic'
     
 def loop(a, level, parass, thing_to_do=None, **args):
     """
@@ -112,26 +112,27 @@ def loop(a, level, parass, thing_to_do=None, **args):
             parass.update(level[0],i)
             loop(a, level[1:], parass, thing_to_do=thing_to_do, **args)
  
-def average_sim(paras=None, G=None, save=1, do = do_standard, build_pat = build_path_average):#, mets=['satisfaction', 'regulated_F', 'regulated_FPs']):
+def average_sim(paras=None, G=None, save=1, do=do_standard, build_pat=build_path_average):#, mets=['satisfaction', 'regulated_F', 'regulated_FPs']):
     """
     Average some simulations which have the same 
     New in 2.6: makes a certain number of iterations (given in paras) and extract the averaged mettrics.
     Change in 2.7: parallelized.
     Changed in 2.9.1: added force.
     Changed in 2.9.2: added do and build_pat kwargs. 
+    Changed in 2.9.4: removed integer i in the call of do_standard.
     """
 
     rep, name=build_pat(paras, Gname=paras['G'].name)
 
     if paras['force'] or not os.path.exists(rep + name):  
-        inputs = [(paras, G, i) for i in range(paras['n_iter'])]
+        inputs = [(paras, G) for i in range(paras['n_iter'])]
         start_time=time()
         if paras['parallel']:
             print 'Doing iterations',
             results_list = parmap(do, inputs)
         else:
             results_list=[]
-            for i,a in enumerate(inputs):
+            for i, a in enumerate(inputs):
                 #sys.stdout.write('\r' + 'Doing simulations...' + str(int(100*(i+1)/float(paras['n_iter']))) + '%')
                 #sys.stdout.flush() 
                 results_list.append(do(a))
@@ -156,7 +157,7 @@ def average_sim(paras=None, G=None, save=1, do = do_standard, build_pat = build_
     else:
         print 'Skipped this value because the file already exists and parameter force is deactivated.'
 
-def iter_sim(paras, save=1, do = do_standard, build_pat = build_path_average):#, make_plots=True):#la variabile test_airports è stata inserita al solo scopo di testare le rejections
+def iter_sim(paras, save=1, do=do_standard, build_pat=build_path_average):#, make_plots=True):#la variabile test_airports è stata inserita al solo scopo di testare le rejections
     """
     Used to loop and average the simulation. G can be passed in paras if fixnetwork is True.
     save can be 0 (no save), 1 (save agregated values) or 2 (save all queues).
@@ -181,7 +182,7 @@ def iter_sim(paras, save=1, do = do_standard, build_pat = build_path_average):#,
         G=None
         
     loop({p:paras[p + '_iter'] for p in paras['paras_to_loop']}, paras['paras_to_loop'], \
-        paras, thing_to_do=average_sim, paras=paras, G=G, do = do, build_pat = build_pat)
+        paras, thing_to_do=average_sim, paras=paras, G=G, do=do, build_pat = build_pat)
     
 if __name__=='__main__':
 
