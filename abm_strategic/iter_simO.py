@@ -187,7 +187,7 @@ def iter_sim(paras, save=1, do=do_standard, build_pat=build_path_average):#, mak
 if __name__=='__main__':
 
     if yes('Ready?'):
-        results=iter_sim(read_paras_iter())
+        results = iter_sim(read_paras_iter())
     
     print 'Done.'
     

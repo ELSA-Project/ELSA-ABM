@@ -4,7 +4,7 @@ Created on Thu May 23 11:24:00 2013
 
 @author: earendil
 
-Utilies for the ABM. TODO: use general tools?
+Utilies for the ABM.
 """
 import sys
 sys.path.insert(1, '..')
@@ -35,9 +35,18 @@ _colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRe
 
 #shuffle(_colors)
 
-def draw_network_map(G_init, title='Network map', trajectories=[], rep='./',airports=True, 
+# ============================================================================ #
+# =============================== Plotting =================================== #
+# ============================================================================ #
+
+def draw_network_map(G_init, title='Network map', trajectories=[], rep='./', airports=True, 
     load=False, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
     colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
+    """
+    Utility used to plot a network and possibly trajectories, sectors, etc.
+
+    """
+
     print "Drawing network..."
     G = deepcopy(G_init)
     polygons_copy = deepcopy(polygons)
@@ -136,15 +145,28 @@ def draw_network_map(G_init, title='Network map', trajectories=[], rep='./',airp
 
 def find_entry_exit(G_nav, f, names=False):
     """
-    Returns the first nodes (forward/backward) of flight f which belongs to G_nav.  
+    Returns the first nodes (forward/backward) of flight f which belongs to G_nav.
+    If no node of f are in G_nav, returns fisrt and last point (TODO: change this?)
+
+    Parameters
+    ----------
+    G_nav : NavpointNet object
+        must have attribute idx_nodes for mapping between index of nodes and real
+        labels used in f.
+    f : dictionary
+        Possibly coming from Distance library. Needs to have a key 'route_m1t' 
+        which is a list of tuples (label, time).
+    names : boolean, optional
+        If True, returns the labels. Otherwise, returns indices.
+    
     """
-    # Find the first node in trajectory which is in airports
+    # Find the first node in trajectory which is in G_nav
     idx_entry = 0
     while idx_entry<len(f['route_m1t']) and not G_nav.idx_nodes[f['route_m1t'][idx_entry][0]] in G_nav.nodes():
         idx_entry += 1
     if idx_entry==len(f['route_m1t']): idx_entry = 0
     
-    # Find the first node in trajectory which is in airports (backwards).
+    # Find the first node in trajectory which is in G_nav (backwards).
     idx_exit = -1
     while abs(idx_exit)<len(f['route_m1t']) and not G_nav.idx_nodes[f['route_m1t'][idx_exit][0]] in G_nav.nodes():
         idx_exit -= 1
@@ -158,15 +180,38 @@ def find_entry_exit(G_nav, f, names=False):
 
         return _entry, _exit
 
-def split_coords(G,nodes,r=0.04):
-    lines=[]
+def split_coords(G, nodes, r=0.04):
+    """
+    This is used for plotting map. It detects nodes which are too close
+    to each other in the horizontal plane and move them slightly in a
+    circle of radius r. 
+
+    Parameters
+    ----------
+    G : networkx object
+        nodes must have key 'coord' with correponding value (lat, long)
+        in minutes degree.
+    nodes : list
+        of labels of nodes to check.
+    r : float, optional
+        radius (in unit 'degree')
+
+    Returns
+    -------
+    x, y : lists of float
+        representing latitudes and longitudes in degree. Coordinates are 
+        not modified for nodes which are not too close to each other.
+    
+    """
+    
+    lines = []
     for n in G.nodes():
         if n in nodes:
-            added=False
+            added = False
             for l in lines:
                 if sqrt((G.node[n]['coord'][0] - G.node[l[0]]['coord'][0])**2 + (G.node[n]['coord'][1] - G.node[l[0]]['coord'][1])**2)<1.: #nodes closer than 0.1 degree
                     l.append(n)
-                    added=True
+                    added = True
             if not added:
                 lines.append([n])
     
@@ -174,62 +219,80 @@ def split_coords(G,nodes,r=0.04):
         if len(l)==1:
             lines.remove(l)
 
-    pouet={}
+    pouet = {}
     for l in lines:
         for n in l:
-            pouet[n]=l
-    x,y=[],[]
+            pouet[n] = l
+    x, y = [], []
     for n in nodes:
         if not n in pouet.keys():
             x.append(G.node[n]['coord'][0]/60.)
             y.append(G.node[n]['coord'][1]/60.)
         else:
-            l=pouet[n]
-            theta=2.*pi*float(l.index(n))/float(len(l))
+            l = pouet[n]
+            theta = 2.*pi*float(l.index(n))/float(len(l))
             x.append(G.node[n]['coord'][0]/60. + r*cos(theta))
             y.append(G.node[n]['coord'][1]/60. + r*sin(theta))
-    return x,y
+    return x, y
     
-def draw_zonemap(x_min,y_min,x_max,y_max,res):
-    m = Basemap(projection='gall',lon_0=0.,llcrnrlon=y_min,llcrnrlat=x_min,urcrnrlon=y_max,urcrnrlat=x_max,resolution=res)
+def draw_zonemap(x_min, y_min, x_max, y_max, res):
+    """
+    Wrapper to use basemap easily.
+
+    Parameters
+    ----------
+    x_min, y_min, x_max, y_max : floats
+        min and max latitudes and longitudes of the map in degree
+    res : string
+        resolution of the map. Use 'i' for medium resolution.
+
+    Returns
+    -------
+    m : Basemap object
+        which can be used for converting coordinates in the projection chosen 
+        (gall-peters.)
+
+    """ 
+
+    m = Basemap(projection='gall', lon_0=0., llcrnrlon=y_min, llcrnrlat=x_min, urcrnrlon=y_max, urcrnrlat=x_max, resolution=res)
     m.drawmapboundary(fill_color='white') #set a background colour
-    m.fillcontinents(color='white',lake_color='white')  # #85A6D9')
+    m.fillcontinents(color='white', lake_color='white')  # #85A6D9')
     m.drawcoastlines(color='#6D5F47', linewidth=0.8)
     m.drawcountries(color='#6D5F47', linewidth=0.8)
     m.drawmeridians(np.arange(-180, 180, 5), color='#bbbbbb')
     m.drawparallels(np.arange(-90, 90, 5), color='#bbbbbb')
-    return 
+    return m
 
-def restrict_to_connected_components(G):
-    """
-    Remove all nodes which are not in the biggest
-    connected component.
-    """
-    CC=nx.connected_component_subgraphs(G)[0]
-    removed = []
-    for n in G.nodes()[:]:
-        if not n in CC.nodes():
-            G.remove_node(n)
-            removed.append(n)
-    return G, removed
-
-def clean_network(G):
-    """
-    Remove all nodes with degree 0 from a networkx object.
-    """
-    removed=[]
-    for n in G.nodes()[:]:
-        if G.degree(n)==0:
-            G.remove_node(n)
-            removed.append(n)
-    return G, removed
+# ============================================================================ #
+# =============================== Parameters ================================= #
+# ============================================================================ #
 
 class Paras(dict):
     """
     Class Paras
-    =========
+    ===========
     Custom dictionnary used to update parameters in a controlled way.
+    This class is useful in case of multiple iterations of simulations
+    with sweeping parameters and more or less complex interdependances
+    between variables.
+    In case of simple utilisation with a single iteration or no sweeping,
+    a simple dictionary is enough.
+
+    The update process is based on the attribute 'update_priority', 'to_update'.
+
+    The first one is a list of keys. First entries should be updated before updating 
+    later ones.
+
+    The second is a dictionary. Each value is a tuple (f, args) where f is function
+    and args is a list of keys that the function takes as arguments. The function
+    returns the value of the corresponding key. 
+
+    Notes
+    -----
+    'update_priority' and 'to_update' could be merged in an sorted dictionary.
+
     """
+    
     def __init__(self, dic):
         for k,v in dic.items():
             self[k]=v
@@ -237,199 +300,55 @@ class Paras(dict):
 
     def update(self, name_para, new_value):
         """
+        Updates the value with key name_para to new_value.
+
+        Parameters
+        ----------
+        name_para : string
+            label of the parameter to be updated
+        new_value : object
+            new value of entry name_para of the dictionary.
+
+        Notes
+        -----
         Changed in 2.9.4: self.update_priority instead of update_priority.
+
         """
-        self[name_para]=new_value
+        
+        self[name_para] = new_value
         # Everything before level_of_priority_required should not be updated, given the para being updated.
         lvl = self.levels.get(name_para, len(self.update_priority)) #level_of_priority_required
         #print name_para, 'being updated'
         #print 'level of priority:', lvl, (lvl==len(update_priority))*'(no update)'
         for j in range(lvl, len(self.update_priority)):
             k = self.update_priority[j]
-            (f, args)=self.to_update[k]
-            vals=[self[a] for a in args] 
-            self[k]=f(*vals)
+            (f, args) = self.to_update[k]
+            vals = [self[a] for a in args] 
+            self[k] = f(*vals)
 
     def analyse_dependance(self):
         """
         Detect the first level of priority hit by a dependance in each parameter.
         Those who don't need any kind of update are not in the dictionnary.
+
+        This should be used once when the 'update_priority' and 'to_update' are 
+        finished.
+
+        It computes the attribute 'levels', which is a dictionnary, whose values are 
+        the parameters. The values are indices relative to update_priority at which 
+        the update should begin when the parameter corresponding to key is changed. 
+
         """
-        print 'Analysing dependances of the parameter with priorities', self.update_priority
+
+        # print 'Analysing dependances of the parameter with priorities', self.update_priority
         self.levels = {}
         for i, k in enumerate(self.update_priority):
-            (f,args)=self.to_update[k]
+            (f, args) = self.to_update[k]
             for arg in args:
                 if arg not in self.levels.keys():
                     self.levels[arg] = i
  
-def network_whose_name_is(name):
-    with open(name + '.pic') as _f:
-        B=pickle.load(_f)
-    return B
-
-def date_abm_tactic(date):
-    """
-    Transform a list [year, month, day, hours, minutes, seconds] in 
-    YYYY-MM-DD H:mm:s:0
-    """
-    year, month, day, hours, minutes, seconds = tuple(date)
-    month = str(month) if month>=10 else "0" + str(month)
-    day = str(day) if day>=10 else "0" + str(day)
-
-    date_abm = date_human([str(year), month, day, str(hours), str(minutes), str(seconds)]) + ':0'
-    pouet = split(date_abm,'_')# replace _ by a space
-    date_abm = pouet[0] + ' ' + pouet[1]
-    return date_abm
-
-def compute_M1_trajectories(queue, starting_date):
-    """
-    Returns some trajectories (navpoint names) based on the given queue. 
-    All altitudes are set to 0.
-    """
-    trajectories_nav=[]
-
-    for f in queue:
-        try:
-            # Find the accepted flight plan, select the trajectory in navpoints.
-            accepted_FP = f.FPs[[fpp.accepted for fpp in f.FPs].index(True)]
-            trajectories_nav.append((accepted_FP.p_nav, date_st(accepted_FP.t*60., starting_date=starting_date))) 
-        except ValueError:
-            pass
-
-    return trajectories_nav
-
-def convert_trajectories(G, trajectories, fmt_in='(n), t', **kwargs):
-
-    if fmt_in=='(n), t':
-        return convert_trajectories_no_alt(G, trajectories, **kwargs)
-    elif fmt_in=='(n, z), t':
-        return convert_trajectories_alt(G, trajectories, **kwargs)
-    else:
-        raise Exception("format", fmt, "is not implemented")
-
-def convert_trajectories_no_alt(G, trajectories, put_sectors=False, input_minutes=False,
-    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
-    """
-    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
-
-    trajectories signature in input:
-    (n), t
-    trajectories signature in output:
-    (x, y, z, t) or (x, y, z, t, s)
-    """ 
-    trajectories_coords = []
-    for i, (trajectory, d_t) in enumerate(trajectories):
-        traj_coords = []
-        for j, n in enumerate(trajectory):
-            if not input_minutes:
-                x = G.node[n]['coord'][0]
-                y = G.node[n]['coord'][1]
-            else:
-                x = G.node[n]['coord'][0]/60.
-                y = G.node[n]['coord'][1]/60.
-            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1]]['weight'])
-            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
-                break
-            if not put_sectors:
-                traj_coords.append([x, y, 0., t])
-            else:
-                traj_coords.append([x, y, 0., t, G.node[n]['sec']])
-        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
-            trajectories_coords.append(traj_coords)
-
-    if remove_flights_after_midnight:
-        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
-    return trajectories_coords
-
-def convert_trajectories_alt(G, trajectories, put_sectors=False, input_minutes=False,
-    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
-    """
-    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
-    
-    trajectories signature in input:
-    (n, z), t
-    trajectories signature in output:
-    (x, y, z, t) or (x, y, z, t, s)
-    """ 
-    trajectories_coords = []
-    for i, (trajectory, d_t) in enumerate(trajectories):
-        traj_coords = []
-        for j, (n, z) in enumerate(trajectory):
-            if not input_minutes:
-                x = G.node[n]['coord'][0]
-                y = G.node[n]['coord'][1]
-            else:
-                x = G.node[n]['coord'][0]/60.
-                y = G.node[n]['coord'][1]/60.
-            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1][0]]['weight'])
-            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
-                break
-            if not put_sectors:
-                traj_coords.append([x, y, z, t])
-            else:
-                if 'sec' in G.node[n].keys():
-                    sec = G.node[n]['sec']
-                else:
-                    sec = 0
-                traj_coords.append([x, y, z, t, sec])
-        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
-            trajectories_coords.append(traj_coords)
-
-    if remove_flights_after_midnight:
-        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
-    return trajectories_coords
-
-def convert_distance_trajectories(G_nav, flights):
-    """
-    Convert trajectories from Distance library into trajectories for strategic model. 
-    Use integers for navpoints.
-    """
-
-    return [[G_nav.idx_nodes[nav] for nav, alt in flight['route_m1']] for flight in flights]
-
-def convert_distance_trajectories_coords(G_nav, flights, put_sectors=False):
-    """
-    Convert trajectories from Distance library into trajectories based on coordinates. 
-    Preserve the altitude and the times.
-    """
-    trajectories = []
-    for flight in flights:
-        traj = []
-        for i, (nav, alt) in enumerate(flight['route_m1']):
-            x, y = tuple(G_nav.node[G_nav.idx_nodes[nav]]['coord'])
-            t = flight['route_m1t'][i][0] # TODO: Check this.
-            if put_sectors:
-                traj.append((x, y, alt, t, G_nav.node[G_nav.idx_nodes[nav]]['sec']))
-            else:
-                traj.append((x, y, alt, t))
-        trajectories.append(traj)
-
-    return trajectories
-
-def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat'):
-    """
-    Write a set of trajectories in the format for abm_tactical.
-    Note: counts begin at 1 to comply with older trajectories.
-    Signature trajectories:
-    (x, y, z, t) or (x, y, z, t, s)
-    """ 
-    os.system("mkdir -p " + os.path.dirname(fil))
-    with open(fil, 'w') as f:
-        print >>f, str(len(trajectories)) + "\tNflights"
-        for i,trajectory in enumerate(trajectories):
-            print >>f, str(i+1) + "\t" + str(len(trajectory)) + '\t',
-            if len(trajectory[0])==4:
-                for x, y, z, t in trajectory:
-                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + '\t',
-            else:
-                for x, y, z, t, sec in trajectory:
-                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + ',' + str(sec) + '\t',
-            print >>f, ''
-
-    print "Trajectories saved in", fil  
-
-def read_paras(paras_file = None, post_process = True):
+def read_paras(paras_file=None, post_process=True):
     if paras_file==None:
         import paras as paras_mod
     else:
@@ -611,16 +530,422 @@ def post_process_paras(paras):
 
     return paras
 
-def select_interesting_navpoints(G, OD=None, N_per_sector=1, metric="centrality"):
+# ============================================================================ #
+
+"""
+Functions of dependance between variables.
+"""
+def _func_density_vs_ACtot_na_day(ACtot, na, day):
     """
-    Select N_per_sector interesting navpoints per sector.
-    Shall we compute the metric on the subnetwork?
+    Used to compute density when ACtot, na or day are variables.
+    """
+    return ACtot*na/float(day)
+
+def _func_density_vs_ACsperwave_Np_na_day(ACsperwave, Np, ACtot, na, day):
+    ACtot = _func_ACtot_vs_ACsperwave_Np(ACsperwave, Np)
+    return _func_density_vs_ACtot_na_day(ACtot, na, day)
+
+def _func_ACtot_vs_ACsperwave_Np(ACsperwave, Np):
+    """
+    Used to compute ACtot when ACsperwave or Np are variables.
+    """
+    return int(ACsperwave*Np)
+
+def _func_ACsperwave_vs_density_day_Np(density, day, Np):
+    """
+    Used to compute ACsperwave when density, day or Np are variables.
+    """
+    return int(float(density*day/unit)/float(Np))
+
+def _func_ACtot_vs_density_day_na(density, day, na):
+    """
+    Used to compute ACtot when density, day or na are variables.
+    """
+    return int(density*day/float(na))
+
+def _func_Np(day, width_peak, Delta_t):
+    """
+    Used to compute Np based on width of waves, duration of day and 
+    time between the end of a wave and the beginning of the nesx wave.
+    """
+    return int(_ceil(day/float(width_peak+Delta_t)))
+
+# ============================================================================ #
+# ============================== Trajectories ================================ #
+# ============================================================================ #
+
+"""
+All the following functions are used to manipulate the trajectories in different
+formats. To represent the different formats, we use x for latitude (or first 
+coordinate), y for longitude (or second coordinate), z for altitude (or third
+coordinate), t for time (see different formats of times thereafter), s for the 
+label of the sector in which the point lies, n for the label of the point.
+
+The formats can essentially be:
+ -- (x, y, z, t) : trajectories are made of 4-tuples with lat, lon, altitude and 
+time
+ -- (x, y, z, t, s) : same with sector as fifth element.
+ -- (n), t : trajectories are made ONE 2-tuple. The first one is a list of labels
+of nodes, the second one is the time of entrance, i.e. the time of the first 
+point
+ -- (n, z), t : same with altitude attached to each point.
+
+The format of time can be either:
+ -- a float representing the number of minutes elapsed since the beginning of 
+the day (which is stored somewhere else). This format is denoted t.
+ -- a list of tuple [yy, mm, dd, h, m , s]. This format is denoted tt.
+
+"""
+
+def compute_M1_trajectories(queue, starting_date):
+    """
+    Returns some trajectories (navpoint names) based on the given queue. 
+    All altitudes are set to 0.
+
+    Parameters
+    ----------
+    queue : list of Flight objects.
+    starting_date : tuple or list of ints.
+        Format should be [yy, mm, dd, h, m , s]
+
+    Returns
+    -------
+    trajectories_nav : list
+        with output format (n), tt
+
+    Notes
+    -----
+    TODO: there might be a mistake here, because date_st has at least one bug. 
+    datetime should be used instead.
+
+    """
+    
+    trajectories_nav=[]
+
+    for f in queue:
+        try:
+            # Find the accepted flight plan, select the trajectory in navpoints.
+            accepted_FP = f.FPs[[fpp.accepted for fpp in f.FPs].index(True)]
+            trajectories_nav.append((accepted_FP.p_nav, date_st(accepted_FP.t*60., starting_date=starting_date))) 
+        except ValueError:
+            # If no flight plan has been accepted for this flight, skip it.
+            pass
+
+    return trajectories_nav
+
+def convert_trajectories(G, trajectories, fmt_in='(n), t', **kwargs):
+    """
+    General converter of format of trajectories. The output is meant to be 
+    compliant with the tactical ABM, i.e either (x, y, z, t) or (x, y, z, t, s).
+
+    Parameters
+    ----------
+    G : Net object
+        Needed in order to compute travel times between nodes.
+    trajectories : list
+        of trajectories in diverse format
+    fmt_in : string
+        Format of input.
+    kwargs : additional parameters
+        passed to other methods.
+
+    Returns
+    -------
+    trajectories : list
+        of converted trajectories.
+
+    Notes
+    -----
+    Needs expansion to support other conversion. Maybe make a class.
+    Needs to specify format of output.
+
+    """
+    
+    if fmt_in=='(n), t':
+        return convert_trajectories_no_alt(G, trajectories, **kwargs)
+    elif fmt_in=='(n, z), t':
+        return convert_trajectories_alt(G, trajectories, **kwargs)
+    else:
+        raise Exception("format", fmt, "is not implemented")
+
+def convert_trajectories_no_alt(G, trajectories, put_sectors=False, input_minutes=False,
+    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
+    """
+    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+
+    trajectories signature in input:
+    (n), t
+    trajectories signature in output:
+    (x, y, z, t) or (x, y, z, t, s)
+
+    Altitudes in output are all set to 0.
+
+    Parameters
+    ----------
+    G : Net object
+        Used to have the coordinates of points and the travel times between nodes.
+    trajectories : list
+    put_sectors : boolean, optional
+        If True, output format is (x, y, z, t, s)
+    input_minutes : boolean, optional
+        Used to cope with the fact that the coordinates stored in the network can be in 
+        degree or minutes of degree.
+    remove_flights_after_midnight : boolean, True
+        if True, remove from the list all flights landing ther day after starting_date
+    starting_date : list of tuple 
+        of format [yy, mm, dd, h, m , s]
+
+    Returns
+    -------
+    trajectories_coords : list
+        of trajectories with format (x, y, z, t) or (x, y, z, t, s)
+    
+    """ 
+
+    trajectories_coords = []
+    for i, (trajectory, d_t) in enumerate(trajectories):
+        traj_coords = []
+        for j, n in enumerate(trajectory):
+            if not input_minutes:
+                x = G.node[n]['coord'][0]
+                y = G.node[n]['coord'][1]
+            else:
+                x = G.node[n]['coord'][0]/60.
+                y = G.node[n]['coord'][1]/60.
+            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1]]['weight'])
+            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
+                break
+            if not put_sectors:
+                traj_coords.append([x, y, 0., t])
+            else:
+                traj_coords.append([x, y, 0., t, G.node[n]['sec']])
+        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
+            trajectories_coords.append(traj_coords)
+
+    if remove_flights_after_midnight:
+        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
+    return trajectories_coords
+
+def convert_trajectories_alt(G, trajectories, put_sectors=False, input_minutes=False,
+    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
+    """
+    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+    
+    trajectories signature in input:
+    (n, z), t
+    trajectories signature in output:
+    (x, y, z, t) or (x, y, z, t, s)
+
+    Parameters
+    ----------
+    G : Net object
+        Used to have the coordinates of points and the travel times between nodes.
+    trajectories : list
+    put_sectors : boolean, optional
+        If True, output format is (x, y, z, t, s)
+    input_minutes : boolean, optional
+        Used to cope with the fact that the coordinates stored in the network can be in 
+        degree or minutes of degree.
+    remove_flights_after_midnight : boolean, True
+        if True, remove from the list all flights landing ther day after starting_date
+    starting_date : list of tuple 
+        of format [yy, mm, dd, h, m , s]
+
+    Returns
+    -------
+    trajectories_coords : list
+        of trajectories with format (x, y, z, t) or (x, y, z, t, s)
+
+    """ 
+
+    trajectories_coords = []
+    for i, (trajectory, d_t) in enumerate(trajectories):
+        traj_coords = []
+        for j, (n, z) in enumerate(trajectory):
+            if not input_minutes:
+                x = G.node[n]['coord'][0]
+                y = G.node[n]['coord'][1]
+            else:
+                x = G.node[n]['coord'][0]/60.
+                y = G.node[n]['coord'][1]/60.
+            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1][0]]['weight'])
+            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
+                break
+            if not put_sectors:
+                traj_coords.append([x, y, z, t])
+            else:
+                if 'sec' in G.node[n].keys():
+                    sec = G.node[n]['sec']
+                else:
+                    sec = 0
+                traj_coords.append([x, y, z, t, sec])
+        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
+            trajectories_coords.append(traj_coords)
+
+    if remove_flights_after_midnight:
+        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
+    return trajectories_coords
+
+def convert_distance_trajectories(G_nav, flights):
+    """
+    Convert trajectories from Distance library into trajectories for strategic model. 
+    Use integers for navpoints.
+
+    Parameters
+    ----------
+    G_nav : NavpointNet object
+    flights : list 
+        of dictionnary having the 'route_m1' key. 
+
+    Returns
+    -------
+    list of trajectories with format 
     """
 
-    try:
-        assert hasattr(G, "G_nav")
-    except AssertionError:
-        raise Exception("Need an hybrid network (sectors+navpoints) in input.")
+    return [[G_nav.idx_nodes[nav] for nav, alt in flight['route_m1']] for flight in flights]
+
+def convert_distance_trajectories_coords(G_nav, flights, put_sectors=False):
+    """
+    Convert trajectories from Distance library into trajectories based on coordinates. 
+    Preserve the altitude and the times.
+    """
+    trajectories = []
+    for flight in flights:
+        traj = []
+        for i, (nav, alt) in enumerate(flight['route_m1']):
+            x, y = tuple(G_nav.node[G_nav.idx_nodes[nav]]['coord'])
+            t = flight['route_m1t'][i][0] # TODO: Check this.
+            if put_sectors:
+                traj.append((x, y, alt, t, G_nav.node[G_nav.idx_nodes[nav]]['sec']))
+            else:
+                traj.append((x, y, alt, t))
+        trajectories.append(traj)
+
+    return trajectories
+
+def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.dat'):
+    """
+    Write a set of trajectories in the format for abm_tactical.
+    Note: counts begin at 1 to comply with older trajectories.
+    Signature trajectories:
+    (x, y, z, t) or (x, y, z, t, s)
+    """ 
+    os.system("mkdir -p " + os.path.dirname(fil))
+    with open(fil, 'w') as f:
+        print >>f, str(len(trajectories)) + "\tNflights"
+        for i,trajectory in enumerate(trajectories):
+            print >>f, str(i+1) + "\t" + str(len(trajectory)) + '\t',
+            if len(trajectory[0])==4:
+                for x, y, z, t in trajectory:
+                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + '\t',
+            else:
+                for x, y, z, t, sec in trajectory:
+                    print >>f, str(x) + "," + str(y) + "," + str(int(z)) + "," + date_abm_tactic(t) + ',' + str(sec) + '\t',
+            print >>f, ''
+
+    print "Trajectories saved in", fil  
+
+def date_abm_tactic(date):
+    """
+    Transform a list [year, month, day, hours, minutes, seconds] in 
+    YYYY-MM-DD H:mm:s:0
+    """
+    year, month, day, hours, minutes, seconds = tuple(date)
+    month = str(month) if month>=10 else "0" + str(month)
+    day = str(day) if day>=10 else "0" + str(day)
+
+    date_abm = date_human([str(year), month, day, str(hours), str(minutes), str(seconds)]) + ':0'
+    pouet = split(date_abm,'_')# replace _ by a space
+    date_abm = pouet[0] + ' ' + pouet[1]
+    return date_abm
+
+# ============================================================================ #
+# ============================ Complexity Utilities ========================== #
+# ============================================================================ #
+
+def restrict_to_connected_components(G):
+    """
+    Remove all nodes which are not in the biggest
+    connected component.
+
+    Parameters
+    ----------
+    G : networkx Graph of DiGraph
+
+    Returns
+    -------
+    G : networkx Graph of DiGraph
+        with removed nodes
+    removed : list
+        of labels of removed nodes.
+
+    """
+
+    CC = nx.connected_component_subgraphs(G)[0]
+    removed = []
+    for n in G.nodes()[:]:
+        if not n in CC.nodes():
+            G.remove_node(n)
+            removed.append(n)
+    return G, removed
+
+def clean_network(G):
+    """
+    Remove all nodes with degree 0 from a networkx object.
+
+    Parameters
+    ----------
+    G : networkx Graph of DiGraph
+
+    Returns
+    -------
+    G : networkx Graph of DiGraph
+        with removed nodes
+    removed : list
+        of labels of removed nodes
+
+    """
+
+    removed = []
+    for n in G.nodes()[:]:
+        if G.degree(n)==0:
+            G.remove_node(n)
+            removed.append(n)
+    return G, removed
+
+def select_interesting_navpoints(G, OD=None, N_per_sector=1, metric="centrality"):
+    """
+    Select N_per_sector "interesting" navpoints per sector, according to
+    the metric given as input. The function selects the N_per_sector nodes 
+    which have the higher metric within each sector.
+
+    Parameters
+    ----------
+    G : hybrid network
+    OD : list of 2-tuples, optional
+        list of origin-destination nodes to use to compute the betweenness
+        centrality. If None is given, the betweenness is computed on all
+        possible pairs.
+    N_per_sector : int, optional
+        Number of interesting points to select per sector.
+    metric : string, optional
+        For now, only centrality is implemented.
+
+    Raises
+    ------
+    Exception
+        If an unknown metric is given as input.
+
+    Returns
+    -------
+    n_best : dictionary
+        Keys are labels of sec-node and values are lists of labels of nav-nodes.
+
+    Notes
+    -----
+    Shall we compute the metric on the subnetwork of the sector?
+ 
+    """
 
     if metric=="centrality":
         print "Computing betweenness centrality (between", len(OD), "pairs) ..."
@@ -635,7 +960,31 @@ def select_interesting_navpoints(G, OD=None, N_per_sector=1, metric="centrality"
 
 def select_interesting_navpoints_per_trajectory(trajs, G, OD=None, N_per_sec_per_traj=1, metric="centrality"):
     """
-    Select N_per_sec_per_traj interesting napvoint per trajectory.
+    Equivalent of select_interesting_navpoints for trajectories.
+    Select N_per_sec_per_traj interesting napvoint per trajectory and per sector.
+
+    Parameters
+    ----------
+    G : hybrid network
+    OD : list of 2-tuples, optional
+        list of origin-destination nodes to use to compute the betweenness
+        centrality. If None is given, the betweenness is computed on all
+        possible pairs.
+    N_per_sector : int, optional
+        Number of interesting points to select per sector.
+    metric : string, optional
+        For now, only centrality is implemented.
+
+    Raises
+    ------
+    Exception
+        If an unknown metric is given as input.
+
+    Returns
+    -------
+    n_best : dictionary
+        Keys are labels of sec-node and values are lists of labels of nav-nodes.
+
     """
 
     try:
@@ -676,25 +1025,36 @@ def select_interesting_navpoints_per_trajectory(trajs, G, OD=None, N_per_sec_per
 def OD(trajectories):
     """
     Return the Origin-Destination pairs based on the trajectories.
-    TODO: indirected version
+
+    Format of input: (x, y, *)
+
+    TODO: check this. How come that we use t[1] instead of t[-1]?
     """
     
+    raise Warning("This function (OD) has not been tested properly.")
+
     return set([(t[0], t[1]) for t in trajectories])
 
-#def insert_altitudes(trajectories, sample_trajectories):
-    """
-    To use after convert_trajectories to generate altitude based on given sample.
-    Generate constant altitudes for now. TODO: generate non-constant altitudes.
-    """
-    for traj in trajectories:
-        alt = choice(sample_trajectories) # NO!
-        for i, (x, y, z, t) in enumerate(traj):
-            traj[i] = (x, y, alt, t)
+# def insert_altitudes(trajectories, sample_trajectories):
+#     """
+#     To use after convert_trajectories to generate altitude based on given sample.
+#     Generate constant altitudes for now. TODO: generate non-constant altitudes.
+#     """
+#     for traj in trajectories:
+#         alt = choice(sample_trajectories) # NO!
+#         for i, (x, y, z, t) in enumerate(traj):
+#             traj[i] = (x, y, alt, t)
 
 def select_heigths(th):
     """
     Sorts the altitude th increasingly, decreasingly or half/half at random.
+
+    Parameters
+    ----------
+    th : list of floats.
+
     """
+    
     coin=choice(['up','down','both'])
     if coin=='up' : th.sort()
     if coin=='down': th.sort(reverse=True)
@@ -706,11 +1066,28 @@ def select_heigths(th):
         th=a+b
     return th
 
-def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
+def insert_altitudes(trajectories, sample_trajectories, min_FL=240.):
     """
     Insert altitudes in trajectories based on distribution extracted from sample_trajectories.
     The vertical trajectories can be of three kinds: increasing, decreasing, or increasing then decreasing.
+
+    Parameters
+    ----------
+    trajectories : list
+        of trajectories with signature (x, y, z, t) or (x, y, z, t, s)
+    sample_trajectories : list
+        of trajectories with signature (x, y, z, t) or (x, y, z, t, s)
+    min_FL : float, optional
+        cutoff for trajectories. All point below this will be discarded.
+
+    Returns
+    -------
+    trajectories : list
+        mofified list with injected bootstrapped altitudes.
+
     """
+
+    # Detect if the trajectories have a fifth component corresponding to sector.
     sectors = len(trajectories[0][0]) == 5
     # Angles of real flights with respect to horizontal (between -pi and +pi).
     entry_exit = [(t[0], t[-1]) for t in trajectories]
@@ -742,6 +1119,7 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL = 240.):
 def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
     """
     Used to iterate a partial_rectification without recomputing the best nodes each time.
+    Working but probematic from a theoretical point of view.
     """
     trajectories_copy = deepcopy(trajectories)
     G_copy = deepcopy(G)
@@ -776,6 +1154,7 @@ def partial_rectification(trajectories, eff_target, G, metric='centrality', N_pe
     """
     High level function for rectification. Fix completely N_per_sector points with 
     highest metric value per sector.
+    Working but probematic from a theoretical point of view.
     """
     # Make groups
     #n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector
@@ -834,43 +1213,11 @@ def check_nav_paths2(ACs):
                         print "Nav paths of flight plans", fp1, "and", fp2, "of", f1, "and", f2, "point to the same object"
                         raise     
 
-##################################################################################
-"""
-Functions of dependance between variables.
-"""
-def _func_density_vs_ACtot_na_day(ACtot, na, day):
-    """
-    Used to compute density when ACtot, na or day are variables.
-    """
-    return ACtot*na/float(day)
+# ============================================================================ #
+# ================================== Misc. =================================== #
+# ============================================================================ #
 
-def _func_density_vs_ACsperwave_Np_na_day(ACsperwave, Np, ACtot, na, day):
-    ACtot = _func_ACtot_vs_ACsperwave_Np(ACsperwave, Np)
-    return _func_density_vs_ACtot_na_day(ACtot, na, day)
-
-def _func_ACtot_vs_ACsperwave_Np(ACsperwave, Np):
-    """
-    Used to compute ACtot when ACsperwave or Np are variables.
-    """
-    return int(ACsperwave*Np)
-
-def _func_ACsperwave_vs_density_day_Np(density, day, Np):
-    """
-    Used to compute ACsperwave when density, day or Np are variables.
-    """
-    return int(float(density*day/unit)/float(Np))
-
-def _func_ACtot_vs_density_day_na(density, day, na):
-    """
-    Used to compute ACtot when density, day or na are variables.
-    """
-    return int(density*day/float(na))
-
-def _func_Np(day, width_peak, Delta_t):
-    """
-    Used to compute Np based on width of waves, duration of day and 
-    time between the end of a wave and the beginning of the nesx wave.
-    """
-    return int(_ceil(day/float(width_peak+Delta_t)))
-
-##################################################################################
+def network_whose_name_is(name):
+    with open(name + '.pic') as _f:
+        B = pickle.load(_f)
+    return B

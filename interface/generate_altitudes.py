@@ -3,6 +3,8 @@
 Generation of altitudes for flights given a distribution of flight levels.
 
 @author: earendil
+
+TODO: to remove?
 """
 import sys
 sys.path.insert(1,'../abm_strategic')

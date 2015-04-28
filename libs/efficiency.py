@@ -1,5 +1,10 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+"""
+Gathers utilities used for studying and changing the efficiency of trajectories.
+The effciency is the ratio between the length of the trajectory and the corresponding
+ideal trajectory, i.e. the staight line (or grand circle).
+"""
 
 import sys
 sys.path.insert(1, '..')
@@ -16,11 +21,12 @@ from datetime import datetime, timedelta
 
 #from igraph import *
 
-#from utilities import select_interesting_navpoints, OD, select_interesting_navpoints_per_trajectory
-
 from libs.tools_airports import build_long_2d
 from libs.general_tools import insert_list_in_list
 
+__version__ = "1.4"
+
+# Several handy functions.
 gall = lambda x: [6371000.*pl.pi*x[1]/(180.*pl.sqrt(2)), 6371000.*pl.sqrt(2)*pl.sin(pl.pi*(x[0]/180.))]
 invgall = lambda x: [(180./pl.pi)*pl.arcsin(x[1]/(6371000.*pl.sqrt(2))) , x[0]*180*pl.sqrt(2)/(6371000.*pl.pi)]
 to_str = lambda x: str(x[0][0])+' '+str(x[0][1])
@@ -33,31 +39,79 @@ to_OD2 = lambda z: to_str([z[0]])+','+to_str([z[1]])
 to_OD_inv  = lambda z: to_str([invgall(z[0])])+','+to_str([invgall(z[-1])])
 tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
 
-__version__ = "1.4"
 
-def compute_efficiency(trajectories, dist_func = dist):
+def compute_efficiency(trajectories, dist_func=dist):
 	"""
-	Compute the efficiency of a set of trajectories.
+	Compute the efficiency of a set of trajectories. In general, the efficiency is the ratio
+	between the length of the trajectories and the ideal corresponding trajectory, i.e. the 
+	straight line or the grand circle distance. Here the function computes the ratio between 
+	the sum of the length of all trajectories and the sum of the ideal length.
+
+	Parameters
+	----------
+	trajectories : list
+		of trajectories with signature (x, y)
+	dist_func : function, optional
+		used to compute the distance between two points. by default it is the euclidean distance.
+
+	Returns
+	-------
+	float, float : the efficiency and the sum of the lengths ideal trajectories.
+
 	"""
 
 	L = [sum([dist_func([trajectories[f][p-1],trajectories[f][p]]) for p in range(1, len(trajectories[f]))]) for f in range(len(trajectories))]
 	S = [dist_func([trajectories[f][0],trajectories[f][-1]]) for f in range(len(trajectories))]
-	#L=[g.shortest_paths(source=to_str2(a[0]), target=to_str2(a[1]), weights=g.es["weight"])[0][0] for a in Aps]
-	#S=[dist([gall(a[0]),gall(a[1])]) for a in Aps]
 
 	return sum(S)/sum(L), sum(S)
 
 def find_group(element, groups):
 	"""
+	Find which group element belongs to. If element belongs to several groups,
+	returns only one of them (randomly if groups is not an sorted dict).
+
+	Parameters
+	----------
+	element : object
+	group : dictionnary
+		where keys are labels of groups and values are list of objects.
+
+	Returns
+	-------
+	group : label
+		group whose element belongs to.
+
+	Notes
+	-----
+	Not used at the moment.
 	Beware: use b = {c:g for g in a.keys() for c in a[g]}
+
 	"""
+
 	for g, els in groups.items():
 		for el in els:
 			if el == element:
-		#if el == element: break
 				return g
 
 def return_linear_interpolation_altitude_func(long_dis_cul, alt):
+	"""
+	Build an simple linear interpolation function for the altitudes. 
+
+	Parameters
+	----------
+	long_dis_cul : list of float
+		list of linear distances between each navpoint of a trajectory.
+	alt : list of float
+		list of altitudes reached at each navpoint.
+
+	Returns
+	-------
+	f : function 
+		to a float x representing a linear distance from the beginning of
+		a trajectory, returns the interpolated altitude at this point. 
+	
+	"""
+
 	def f(x):
 		if x>0.:
 			coin = list(long_dis_cul<x) 
@@ -71,11 +125,37 @@ def return_linear_interpolation_altitude_func(long_dis_cul, alt):
 			return alt[0]
 	return f
 
-def rectificate_trajectories_network_with_time_and_alt(trajs_w_t, eff_target, G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
+def rectificate_trajectories_network_with_time_and_alt(trajs_w_t, eff_target, G, remove_nodes=False, 
+	resample_trajectories=True, **kwargs_rectificate):
 	"""
 	Same than rectificate_trajectories_network_with_time, but recomputes altitudes with linear interpolation.
-	Signature:
-	([(navpoint, alt), (navpoint, alt)...], starting_date)
+
+	Parameters
+	----------
+	trajs_w_t : list 
+		of trajectories with signatures (n, z), t
+	eff_target : float
+		target efficiency.
+	G : networkx Graph or DiGraph.
+	remove_nodes : boolean, optional
+		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
+	resample_trajectories : boolean, optional
+		If True and remove_nodes is True, the function will recreate navpoint on the trajectories after the 
+		rectification procedure so as to have the same number of navpoints than in the original trajectory. 
+		The napvoints are equally spaced along the trajectory.
+	kwargs_rectificate : additional parameters passed to rectificate_trajectories.
+
+	Returns
+	--------
+	trajs : list 
+		of modified trajectories with signature (n, z), t
+	eff : float
+		corresponding efficiency.
+	G : networkx graph
+		with added or removed nodes.
+	groups : dictionnary
+		the final groups.
+
 	"""
 
 	# Compute geometrical trajectories (with altitudes)
@@ -115,9 +195,33 @@ def rectificate_trajectories_network_with_time_and_alt(trajs_w_t, eff_target, G,
 def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_nodes=False, resample_trajectories=True, **kwargs_rectificate):
 	"""
 	Same than rectificate_trajectories_network for trajectories including a starting date.
-	Signature for one trajectory:
-	([napvoint, navpoint..., napvoint], starting_date)
-	The time format is a tuple (year, month, day, hour, minute, second).
+
+	Parameters
+	----------
+	trajs_w_t : list 
+		of trajectories with signatures (n), t
+	eff_target : float
+		target efficiency.
+	G : networkx Graph or DiGraph.
+	remove_nodes : boolean, optional
+		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
+	resample_trajectories : boolean, optional
+		If True and remove_nodes is True, the function will recreate navpoint on the trajectories after the 
+		rectification procedure so as to have the same number of navpoints than in the original trajectory. 
+		The napvoints are equally spaced along the trajectory.
+	kwargs_rectificate : additional parameters passed to rectificate_trajectories.
+
+	Returns
+	--------
+	trajs : list 
+		of modified trajectories with signature (n), t
+	eff : float
+		corresponding efficiency.
+	G : networkx graph
+		with added or removed nodes.
+	groups : dictionnary
+		the final groups.
+
 	"""
 
 	# Compute geometrical trajectories
@@ -137,10 +241,37 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 	Wrapper of rectificate_trajectories to use efficiently with a networkx object. 
 	Provide default functions to add nodes to network. Resample also the trajectories in the case
 	where the 'remove_nodes' mode is chosen. Propagates the kwargs for the rectification.
-	Signature of each trajectory in trajs:
-	[navpoint, navpoint ...]
+	Signature of each the trajectories : (n).
+
+	Parameters
+	----------
+	trajs : list 
+		of trajectories with signatures (n).
+	eff_target : float
+		target efficiency.
+	G : networkx Graph or DiGraph.
+	remove_nodes : boolean, optional
+		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
+	resample_trajectories : boolean, optional
+		If True and remove_nodes is True, the function will recreate navpoint on the trajectories after the 
+		rectification procedure so as to have the same number of navpoints than in the original trajectory. 
+		The napvoints are equally spaced along the trajectory.
+	kwargs_rectificate : additional parameters passed to rectificate_trajectories.
+	
+	Returns
+	--------
+	trajs : list 
+		of modified trajectories.
+	eff : float
+		corresponding efficiency.
+	G : networkx graph
+		with added or removed nodes.
+	groups : dictionnary
+		the final groups.
+	
 	"""
 
+	# Function to get the coordinates of the nodes on the network.
 	def get_coords(nvp):
 		try:
 			pouet = G.node[nvp]['coord']
@@ -156,6 +287,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 		p2 = get_coords(n2)
 		return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
+	# Function to get add a node to the network.
 	def add_node(trajs, G, coords, f, p):
 		new_node = max(G.nodes())+1
 		G.add_node(new_node, coord=coords, sec=G.node[trajs[f][p-1]]['sec'])
@@ -250,37 +382,56 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 	chosen in this group, and finally a flight which crosses the navpoint is chosen. This goes on until the 
 	target efficiency is met or or the stop criteria are met.
 
-	Args:
-		trajs: list of trajectories: list of nodes of network G if specified, or list of coordinates (x,y).
-		eff_target: target for efficiency
-
-	Kwargs:
-		add_node_func: function which encode how to add the new nodes. 
-			Signature: trajectories, network, coordinates of the new point, index of flight, index of p in trajectory of flight
-		dist_func: function which associates a distance to a couple of points.
-			Signature: 2-tuple of points from trajectories.
-		coords_func: function which associates some coordinates to a point in a trajectory.
-			Signature: point from a trajectory.
-		n_iter_max: maximum number of iteration to reach target efficiency.
-		G: network object which could contain coordinates of points.
-		groups: grouping of nodes which don't have the same probability of being rectified.
-		probabilities: dictionnary with the groups as keys and the probabilities of all points of being rectified as values.
-		remove_nodes: if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
-		hard_fixed: if False, groups having 0 probability of being chose with switch to non-zero probablity once every other 
-					groups are empty. Other wise, exit the function when all groups are empty or with zero probability.
-		inplace: if True, modifies trajs, G and groups. Otherwise return a copy of the objects.
+	Parameters
+	-----------
+	trajs : list of trajectories
+		list of nodes (n) of network G if G is specified, or list of coordinates (x,y).
+	eff_target : float
+		target for efficiency.
+	add_node_func : function, optional 
+		encodes how to add the new nodes. 
+		Signature: trajectories, network, coordinates of the new point, index of flight, index of p in trajectory of flight
+	dist_func : function, optional
+		associates a distance to a couple of points.
+		Signature: 2-tuple of points from trajectories.
+	coords_func: function, optional
+		associates some coordinates to a point in a trajectory.
+		Signature: point from a trajectory.
+	n_iter_max : int, optional
+		maximum number of iteration to reach target efficiency.
+	G : networkx object, optional
+		which could contain coordinates of points. If None, all trajectories should be coordinates-based.
+	groups : dictionnary, optional
+		Groups of nodes which don't have the same probability of being rectified. Keys are labels of groups, values 
+		are lists of the nodes.
+	probabilities : dictionnary, optional
+		with the labels of groups as keys and the probabilities of all points of being rectified as values.
+	remove_nodes : boolean, optional
+		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
+	hard_fixed : boolean, optional
+		if False, groups having 0 probability of being chosen will switch to non-zero probablity once every other 
+		groups are empty. If True, the function exits when all groups are empty or with zero probability.
+	inplace: boolean, optional
+		if True, modifies trajs, G and groups. Otherwise return a copy of the objects.
  
-	Return:
-		trajs: modified trajectories.
-		eff: corresponding efficiency.
-		G: networkx graph with added or removed nodes.
-		groups: the final groups.
+	Returns
+	--------
+	trajs : list 
+		of modified trajectories.
+	eff : float
+		corresponding efficiency.
+	G : networkx graph
+		with added or removed nodes.
+	groups : dictionnary
+		the final groups.
 
-	Changed in 1.1: efficiency is computed internally. Stop criteria on efficiency is < instead of <=.
-		Added kwarg dist_func.
+	Notes
+	-----
+	Changed in 1.1: efficiency is computed internally. Stop criteria on efficiency is < instead of <=. Added kwarg dist_func.
 	Changed in 1.2: added dist_func, coords_func, n_iter_max, add_node_func, G.
-	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based trajectories. Added groups, remove_nodes, hard_fixed.
-	#Changed in 1.4: added stop_criteria.
+	Changed in 1.3: added probabilities. Broken the legacy with coordinates-based trajectories.
+	Added groups, remove_nodes, hard_fixed.
+
 	"""
 
 	if not inplace:
@@ -433,6 +584,8 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 	print "New efficiency (cumul):", eff
 	print "New efficiency:", compute_efficiency(trajs_rec, dist_func=dist_func)[0]
 	return trajs_rec, eff, G, groups_rec
+
+# ==================== Obsolete ====================== #
 
 def select_heigths(th):
 	"""
