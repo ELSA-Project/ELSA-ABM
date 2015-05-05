@@ -1,15 +1,18 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ABMvars import paras
-#from performance_plots import get_results
-from iter_simO import build_path_average
-from iter_simO_shocks import build_path
+import sys
+sys.path.insert(1,'..')
 import os
 import matplotlib.pyplot as plt
 from descartes.patch import PolygonPatch
-from general_tools import flip_polygon
 import pickle
+
+from utilities import read_paras
+from iter_simO import build_path_average
+from iter_simO_shocks import build_path
+
+from libs.general_tools import flip_polygon
 
 """
 ========================================================
@@ -77,6 +80,9 @@ def loop(a, level, parass, results, vers='2.9'):
     return results
 
 if __name__=='__main__':
+
+	paras = read_paras()
+	
 	G = paras['G']
 	results = get_results(paras, vers='2.9')
 

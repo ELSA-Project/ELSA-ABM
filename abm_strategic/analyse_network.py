@@ -1,21 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#import sys
-#sys.path.insert(1,'../Distance')
-from tools_airports import get_paras, extract_flows_from_data
-from utilitiesO import network_and_trajectories_of_real_traffic, network_and_trajectories_of_simulated_traffic, compare_networks as compare_networks_dist
+"""
+========================================================
+This file gathers several functions for plotting and 
+analysis relevant results of the simulations and or of 
+the network.
+TODO: update, tests and documentation.
+========================================================
+"""
 
-#import networkx as nx
+import sys
+sys.path.insert(1,'..')
 import matplotlib.pyplot as plt
 from simulationO import build_path, Simulation
-import ABMvars
 import pickle
 import numpy as np
 import os
-from general_tools import write_on_file, plot_scatter, plot_quantiles, plot_hist, logged
-from prepare_navpoint_network import extract_capacity_from_traffic, extract_old_capacity_from_traffic
 import csv
+
+from prepare_navpoint_network import extract_capacity_from_traffic, extract_old_capacity_from_traffic
+#from utilities import network_and_trajectories_of_real_traffic, network_and_trajectories_of_simulated_traffic,\
+# compare_networks as compare_networks_dist, read_paras
+
+from libs.tools_airports import get_paras, extract_flows_from_data
+from libs.general_tools import write_on_file, plot_scatter, plot_quantiles, plot_hist, logged
 
 version = '2.9.1'
 
@@ -44,6 +53,10 @@ version = '2.9.1'
 
 @logged
 def compare_capacities(paras, rep = '', save_to_csv = True):
+	"""
+	Compare new and old definition of capacities.
+	"""	
+
 	G = paras['G']
 	paras_real = G.paras_real
 	capacities_new = extract_capacity_from_traffic(G, paras_real)
@@ -68,17 +81,18 @@ def compare_capacities(paras, rep = '', save_to_csv = True):
 
 	os.system('mkdir -p ' + rep)
 
-	plot_scatter(capacities_old, capacities_new, rep = rep, suffix = 'capacities', xlabel = 'Old capacities', ylabel = 'New capacities')
-	plot_scatter(areas, capacities_new, rep = rep, suffix = 'area_new_capacities', xlabel = 'area', ylabel = 'New capacities')
-	plot_quantiles(capacities_old, capacities_new, rep = rep, suffix = 'capacities', xlabel = 'Old capacities', ylabel = 'New capacities')
-	plot_quantiles(areas, capacities_new, rep = rep, suffix = 'area_new_capacities', xlabel = 'area', ylabel = 'New capacities')
+	plot_scatter(capacities_old, capacities_new, rep=rep, suffix='capacities', xlabel='Old capacities', ylabel='New capacities')
+	plot_scatter(areas, capacities_new, rep=rep, suffix='area_new_capacities', xlabel='area', ylabel='New capacities')
+	plot_quantiles(capacities_old, capacities_new, rep=rep, suffix='capacities', xlabel='Old capacities', ylabel='New capacities')
+	plot_quantiles(areas, capacities_new, rep=rep, suffix='area_new_capacities', xlabel='area', ylabel='New capacities')
 
-	plot_hist(capacities_new, rep =rep, suffix = 'capacities_new', xlabel = 'capacities_new')
+	plot_hist(capacities_new, rep=rep, suffix='capacities_new', xlabel='capacities_new')
 	#plt.show()
 
 @logged
-def compute_basic_stats(paras, rep = '', save_to_csv = False):
+def compute_basic_stats(paras, rep='', save_to_csv=False):
 	"""
+	Simple statistics.
 	Beware! Here the weights are not given by the traffic. They are the time of crossing!
 	"""
 	G = paras['G'].G_nav
@@ -133,7 +147,7 @@ def compute_basic_stats(paras, rep = '', save_to_csv = False):
 	print 'Min/Mean/Std/Max weight:', min(wei), np.mean(wei), np.std(wei), max(wei)
 	print 'Total weight:', sum(wei)
 
-	plot_hist(wei, xlabel = 'Time of travel between navpoints', title = '', bins = bins, rep= rep, suffix = 'wei')
+	plot_hist(wei, xlabel='Time of travel between navpoints', title='', bins=bins, rep=rep, suffix='wei')
 
 
 """
@@ -144,8 +158,10 @@ simulations
 """
 
 @logged
-def compare_networks(paras, rep = ''):
-	
+def compare_networks(paras, rep=''):
+	"""
+	Comparing real network with simulated one.
+	"""
 	with open(build_path(paras) + '/sim.pic', 'r') as f:
 		sim = pickle.load(f)
 
@@ -267,10 +283,8 @@ def compare_networks(paras, rep = ''):
 	#plt.show()
 
 if __name__=='__main__':
-	paras = ABMvars.paras.copy()
-
 	#compare_networks(paras, rep = build_path(paras) + '/analysis')
-	compare_capacities(paras, rep = paras['G'].name + '/compare_capacities')
+	compare_capacities(read_paras(), rep=paras['G'].name+'/compare_capacities')
 	#compute_basic_stats(paras, rep= paras['G'].name + '/basic_stats', save_to_csv = True)
 
 	#plt.show()

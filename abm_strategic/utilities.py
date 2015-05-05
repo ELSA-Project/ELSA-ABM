@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu May 23 11:24:00 2013
-
-@author: earendil
-
 Utilies for the ABM.
 """
 import sys
 sys.path.insert(1, '..')
 import os
 from mpl_toolkits.basemap import Basemap
-from math import sqrt, cos, sin, pi, atan2
+from math import sqrt, cos, sin, pi, atan2, ceil
 import numpy as np
 import matplotlib.gridspec as gridspec
 from descartes import PolygonPatch
@@ -349,8 +345,11 @@ class Paras(dict):
                     self.levels[arg] = i
  
 def read_paras(paras_file=None, post_process=True):
+    """
+    Reads parameter file for a single simulation.
+    """
     if paras_file==None:
-        import paras as paras_mod
+        import my_paras as paras_mod
     else:
         paras_mod = imp.load_source("paras", paras_file)
     paras = paras_mod.paras
@@ -360,9 +359,12 @@ def read_paras(paras_file=None, post_process=True):
 
     return paras
 
-def read_paras_iter(paras_file = 'paras.py'):
+def read_paras_iter(paras_file=None):
+    """
+    Reads parameter file for a iterated simulations.
+    """
     if paras_file==None:
-        import paras_iter as paras_mod
+        import my_paras_iter as paras_mod
     else:
         paras_mod = imp.load_source("paras_iter", paras_file)
     paras = paras_mod.paras
@@ -417,12 +419,7 @@ def post_process_paras(paras):
                 idx_exit = -1
                 _entry = f['route_m1t'][idx_entry][0]
                 _exit = f['route_m1t'][idx_exit][0]
-            #assert 333 in paras['G'].G_nav.nodes()
-            # try:
-            #     assert (_entry, _exit) in paras['G'].G_nav.connections()
-            # except:
-            #     print "entry/exit", _entry, _exit , "are not in the connections."
-            #     raise
+
             paras['flows'][(_entry, _exit)] = paras['flows'].get((_entry, _exit),[]) + [f['route_m1t'][0][1]]
 
         if not paras['bootstrap_mode']:
@@ -460,18 +457,18 @@ def post_process_paras(paras):
             assert paras['departure_times'] in ['zeros','from_data','uniform','square_waves']
 
             if paras['departure_times']=='square_waves':
-                Np = _func_Np(paras['day'], width_peak, Delta_t)
+                paras['Np'] = _func_Np(paras['day'], paras['width_peak'], paras['Delta_t'])
                 to_update['Np']=(_func_Np,('day', 'width_peak', 'Delta_t'))
                 update_priority.append('Np')
 
-                if control_ACsperwave:
+                if paras['control_ACsperwave']:
                     # density/ACtot based on ACsperwave
-                    paras['density'] = _func_density_vs_ACsperwave_Np_na_day(paras['ACsperwave'], Np, paras['ACtot'], paras['na'], paras['day'])
+                    paras['density'] = _func_density_vs_ACsperwave_Np_na_day(paras['ACsperwave'], paras['Np'], paras['ACtot'], paras['na'], paras['day'])
                     to_update['density']=(_func_density_vs_ACsperwave_Np_na_day,('ACsperwave', 'Np', 'ACtot', 'na', 'day'))
                     update_priority.append('density')   
                 else:
                     # ACperwave based on density/ACtot
-                    paras['ACsperwave']=_func_ACsperwave_vs_density_day_Np(paras['density'], paras['day'], Np)
+                    paras['ACsperwave']=_func_ACsperwave_vs_density_day_Np(paras['density'], paras['day'], paras['Np'])
                     to_update['ACsperwave']=(_func_ACsperwave_vs_density_day_Np,('density', 'day','Np'))
                     update_priority.append('ACsperwave')
 
@@ -568,7 +565,7 @@ def _func_Np(day, width_peak, Delta_t):
     Used to compute Np based on width of waves, duration of day and 
     time between the end of a wave and the beginning of the nesx wave.
     """
-    return int(_ceil(day/float(width_peak+Delta_t)))
+    return int(ceil(day/float(width_peak+Delta_t)))
 
 # ============================================================================ #
 # ============================== Trajectories ================================ #

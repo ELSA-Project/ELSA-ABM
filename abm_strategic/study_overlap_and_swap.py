@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 
 """
 This file is used to study the relationship between the mean overlap between shortest path 
-and the relative advantage of different types of companies.
+and the relative advantage of different types of companies in the strategic ABM.
+UNTESTED.
 """
 
+import sys
+sys.path.insert(1,'..')
 import pickle
-from ABMvars import paras
-from performance_plots import get_results
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
@@ -17,15 +17,19 @@ from scipy.optimize import curve_fit
 from scipy.stats.mstats import mquantiles
 from math import sqrt
 import os
-from general_tools import save_fig
+
+from libs.general_tools import save_fig
+
+from utilities import read_paras
+from performance_plots import get_results
 
 dirr = 'study_overlap'
 
-version='2.9.1'
+version = '2.9.1'
 
-def reduce_span(a,b,xmin=-1, xmax=1):
-	aa=[p for p in a if xmin<=p<=xmax]
-	bb=[p for i,p in enumerate(b) if xmin<=a[i]<=xmax]
+def reduce_span(a, b, xmin=-1, xmax=1):
+	aa = [p for p in a if xmin<=p<=xmax]
+	bb = [p for i,p in enumerate(b) if xmin<=a[i]<=xmax]
 	return aa, bb
 
 def unique_sectors(paths):
@@ -185,6 +189,8 @@ def proba_swap(overlap, swap, n_quantiles=10):
 if __name__=='__main__':
 	#name = 'DEL_C_65_22'
 	#name = 'DELNEW1000_C_spatial'
+
+	paras = read_paras()
 
 	#name = 'DEL29_C5_65_20_v2'
 	name = 'DEL29_C5_65_20_v2'

@@ -192,13 +192,13 @@ class Simulation:
     
         self.ACs={}
         k=0
-        assert len(self.t0sp)==sum(self.AC)
         shuffle(self.t0sp)
         for i,par in enumerate(self.pars):
             for j in range(self.AC[i]):
                 self.ACs[k]=AirCompany(k, self.Nfp, self.na, self.G.G_nav.connections(), par)
                 self.ACs[k].fill_FPs(self.t0sp[k], self.tau, self.G)
                 k+=1
+
 
     def build_ACs_from_flows(self): 
         """
@@ -431,6 +431,8 @@ def build_path(paras, vers=main_version, in_title=['Nfp', 'tau', 'par', 'ACtot',
 
     Returns
     -------
+    name : string
+        full path if rep is different from '', only name of the file otherwise.
 
     Notes
     -----
@@ -919,76 +921,68 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
 
 if __name__=='__main__': 
     """
-    Manual single simulation used for "story mode" and debugging.
+    ===========================================================================
+    Manual single simulation
+    ===========================================================================
     """
-    GG = paras['G']#ABMvars.G
-    paras = read_paras()
+    paras_file = None if len(sys.argv)==1 else sys.argv[1]
+    paras = read_paras(paras_file=paras_file)
+
+    GG = paras['G'] #ABMvars.G
 
     print (header(paras,'SimulationO', version, paras_to_display=['ACtot']))
 
     with clock_time():
-        sim=Simulation(paras, G=GG, verbose=True)
-    
+        sim = Simulation(paras, G=GG, verbose=True)
         sim.make_simu(storymode=False)
-    # with open(build_path(sim.paras) + '_sim.pic', 'w') as f:
-    #     pickle.dump(sim, f)
         sim.compute_flags()
-        queue=post_process_queue(sim.queue)
-        M0_queue=post_process_queue(sim.M0_queue)
+        queue = post_process_queue(sim.queue)
+        M0_queue = post_process_queue(sim.M0_queue)
 
-    for n in sim.G.nodes():
-        #print n, sim.G.node[n]['capacity'], sim.G.node[n]['load']
-        if max(sim.G.node[n]['load']) == sim.G.node[n]['capacity']:
-            #print "Capacity's reached for sector:", n
-            pass
-        if max(sim.G.node[n]['load']) > sim.G.node[n]['capacity']:
-            #print "Capacity overreached for sector:", n, '!'
-            pass
-    #draw_network_map(sim.G.G_nav, title=sim.G.G_nav.name, load=False, generated=True,\
-    #        airports=True, stack=True, nav=True, queue=sim.queue)
-    
-    trajectories=[]
-    trajectories_nav=[]
-    for f in sim.queue:
-        try:
-            trajectories.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p) 
-            trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
-        except ValueError:
-            pass
-
-    #  Real trajectories
-    trajectories_real = []
-    #print len(sim.G.flights_selected)
-    for f in sim.G.flights_selected:
-        navpoints = set([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
-        if navpoints.issubset(set(sim.G.G_nav.nodes())) and (sim.G.G_nav.idx_nodes[f['route_m1'][0][0]], sim.G.G_nav.idx_nodes[f['route_m1'][-1][0]]) in sim.G.G_nav.short.keys():
-            trajectories_real.append([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
-    # real_flights = extract_flows_from_data(sim.G.paras_real, [sim.G.G_nav.node[n]['name'] for n in sim.G.G_nav.nodes()])[2]
-
-    #print len(trajectories_real)
-
-    # trajectories_real = []
-    # for f in real_flights:
-    #     navpoints = set([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
-    #     #edges = set([(sim.G.G_nav.idx_nodes[f['route_m1'][i][0]], sim.G.G_nav.idx_nodes[f['route_m1'][i+1][0]]) for i in range(len(f['route_m1'])-1)])
-        
-    # # #print len(trajectories_real)
-    
-    draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_nav', flip_axes=True, trajectories=trajectories_nav, trajectories_type='navpoints', rep = sim.rep)
-
-    #draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_real', flip_axes=True, trajectories=trajectories_real, trajectories_type='navpoints', save = True, rep = build_path(sim.paras), dpi = 500)
-
-
+    """
+    ===========================================================================
+    Some snippets to view the results.
+    ===========================================================================
+    """
+    if 0:
+        for n in sim.G.nodes():
+            #print n, sim.G.node[n]['capacity'], sim.G.node[n]['load']
+            if max(sim.G.node[n]['load']) == sim.G.node[n]['capacity']:
+                #print "Capacity's reached for sector:", n
+                pass
+            if max(sim.G.node[n]['load']) > sim.G.node[n]['capacity']:
+                #print "Capacity overreached for sector:", n, '!'
+                pass
+        #draw_network_map(sim.G.G_nav, title=sim.G.G_nav.name, load=False, generated=True,\
+        #        airports=True, stack=True, nav=True, queue=sim.queue)
 
     if 0:
-        sim.save(rep = build_path(sim.paras))
+        trajectories=[]
+        trajectories_nav=[]
+        for f in sim.queue:
+            try:
+                trajectories.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p) 
+                trajectories_nav.append(f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p_nav) 
+            except ValueError:
+                pass
+
+    if 0:
+        #  Real trajectories
+        trajectories_real = []
+        for f in sim.G.flights_selected:
+            navpoints = set([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
+            if navpoints.issubset(set(sim.G.G_nav.nodes())) and (sim.G.G_nav.idx_nodes[f['route_m1'][0][0]], sim.G.G_nav.idx_nodes[f['route_m1'][-1][0]]) in sim.G.G_nav.short.keys():
+                trajectories_real.append([sim.G.G_nav.idx_nodes[p[0]] for p in f['route_m1']])
+
+        draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_nav', flip_axes=True, trajectories=trajectories_nav, trajectories_type='navpoints', rep = sim.rep)
+        #draw_network_and_patches(sim.G, sim.G.G_nav, sim.G.polygons, name='trajectories_real', flip_axes=True, trajectories=trajectories_real, trajectories_type='navpoints', save = True, rep = build_path(sim.paras), dpi = 500)
 
     if 0:
         #draw_network_and_patches(sim.G,sim.G.G_nav,sim.G.polygons, name='network_small_beta', flip_axes=True, trajectories=trajectories_nav, trajectories_type='navpoints')
-        p0=20
-        p1=65
+        p0 = 20
+        p1 = 65
         #all_possible_trajectories=sorted([path for paths in sim.G.short_nav[(p0,p1)].values() for path in paths], key= lambda p: sim.G.G_nav.weight_path(p))
-        possible_trajectories=[p for p in sim.G.G_nav.short[(p0,p1)]]
+        possible_trajectories = [p for p in sim.G.G_nav.short[(p0,p1)]]
         if 0:
             #print 'All possible trajectories:'
             for path in all_possible_trajectories:
@@ -1028,4 +1022,5 @@ if __name__=='__main__':
         
     #sim.save()
 
-        
+
+            

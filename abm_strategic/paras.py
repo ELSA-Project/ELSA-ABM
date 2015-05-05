@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Mar  7 15:15:30 2013
-
-@author: earendil
-
-Parameter file for the a single simulation.
+Template for parameter file for the a single simulation. The Paras object in output should
+be always processed by post_process_paras in utilities file.
+TODO: fix parallel computation.
 """
 
 import pickle as _pickle
@@ -15,9 +13,9 @@ from utilities import Paras as _Paras
 
 version = '2.9.5' # Forked from version 2.9.5 of ABMvars.
 
-##################################################################################
-################################### Parameters ###################################
-##################################################################################
+# ============================================================================ #
+# =============================== Parameters ================================= #
+# ============================================================================ #
 
 # Unit of time
 unit = 20. # used to translate times (from instance tau) in minutes.
@@ -48,15 +46,15 @@ file_traffic = None
 if file_traffic==None:
 	# These variables are not fully independent and might be overwritten depending on
 	# the type of control you choose.
-	ACtot=100 							# Relevant for choosing the total number of ACss.
-	density=20          				# Relevant for choosing an overall density of flights
+	ACtot = 100 							# Relevant for choosing the total number of ACss.
+	density = 20          				# Relevant for choosing an overall density of flights
 	control_density = True				# If you want to set the density rather than the number of flights.
 	
-	departure_times='square_waves' #departing time for each flight, for each AC
+	departure_times = 'square_waves' #departing time for each flight, for each AC
 
 	#One can also specifiy a file only for times of departures.
 	file_times = None
-	if file_times == None:
+	if file_times==None:
 		if departure_times=='square_waves':
 			width_peak = unit 			# Duration of a wave
 			Delta_t = unit*1      		# Time between the end of a wave and the beginning of the next one.
@@ -76,26 +74,26 @@ else:
 noise = 0. 								# noise on departures in minutes.
 
 # ------------------ Behavioral parameters ---------------- #
-nA=1.                        			# percentage of Flights of the first population.
-par=[[1.,0.,0.001], [1.,0.,1000.]]		# Parameters of the utility function for each population.
+nA = 1.                        			# percentage of Flights of the first population.
+par = [[1.,0.,0.001], [1.,0.,1000.]]	# Parameters of the utility function for each population.
 
 # ------------------- From M0 to M1 ----------------------- #
 mode_M1 = 'standard' # sweep or standard
 if mode_M1 == 'standard':
 	# In this mode, the N_shocks network are shut down. 
-	N_shocks=0  						# Total number of sectors to shut
+	N_shocks = 0  						# Total number of sectors to shut
 else: 
 	# In this mode, only one sector is shut down (used principally for iterations over shocks)
-	STS = None  #Sector to Shut
+	STS = None  #Sectors to Shut
 	
 
 # --------------------System parameters -------------------- #
-parallel=False							# Parallel computation or not
+parallel = False							# Parallel computation or not
 old_style_allocation = False			# Don't remember what this is. Computation of load?
 force = False							# force overwrite of already existing simulation (based on name of file).
 
 
-##############################################################
+# ============================================================================ #
 
 # ---------------- Building paras dictionary --------------- #
 # Do not modify.

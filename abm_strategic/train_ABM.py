@@ -6,31 +6,33 @@ This file is used to calibrate, or train, the ABM. It sweeps some parameter and
 computes the distance between distributions od degree, strength, betweenness, 
 and weights. The default distance is the kolmogorov distance. The sweep is a 
 brute force sweep and returns the best value of the parameter for each distribution.
+UNTESTED.
 """
 
 import sys
-sys.path.insert(1,'../Distance')
-#from analyse_network import network_and_trajectories_of_real_traffic, network_and_trajectories_of_simulated_traffic
+#sys.path.insert(1,'../Distance')
+sys.path.insert(1,'..')
+
 from sklearn import metrics
-from utilitiesO import compare_networks
-#from scipy.integrate import quad
-from simulationO import Simulation, post_process_queue
-import ABMvars
-from iter_simO import build_path_average
-from performance_plots import build_path
 from time import time, gmtime, strftime
 import numpy as np
 import os
 import pickle
 import matplotlib.pyplot as plt
 from string import split
-from general_tools import loading
+
+from utilities import read_paras
+from analyse_network import compare_networks
+from iter_simO import build_path_average
+from performance_plots import build_path
+from simulationO import Simulation, post_process_queue
+
+from libs.general_tools import loading
 
 version = '2.9.0'
-main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
+main_version = split(version,'.')[0] + '.' + split(version,'.')[1]
 
-loc={'ur':1, 'ul':2, 'll':3, 'lr':4, 'r':5, 'cl':6, 'cr':7, 'lc':8, 'uc':9, 'c':10}
-
+loc = {'ur':1, 'ul':2, 'll':3, 'lr':4, 'r':5, 'cl':6, 'cr':7, 'lc':8, 'uc':9, 'c':10}
 
 def loop(a, level, parass, results, thing_to_do=None, **args):
     """
@@ -47,7 +49,7 @@ def loop(a, level, parass, results, thing_to_do=None, **args):
 
     return results
 
-def average_sim(paras=None, G=None, save=1, suffix = '', stat_distance = 'common_area'):
+def average_sim(paras=None, G=None, save=1, suffix='', stat_distance='common_area'):
 	"""
 	New in 2.6: makes a certain number of iterations (given in paras) and extract the averaged mettrics.
 	Change in 2.7: parallelized.
@@ -113,7 +115,7 @@ def find_best(results, target):
 	return x[np.argmax(y)]
 
 @loading
-def compute_distance(paras, rep, G, stat_distance = 'kolmogorov', force = False):
+def compute_distance(paras, rep, G, stat_distance='kolmogorov', force=False):
 	results = loop({p:paras[p + '_iter'] for p in paras['paras_to_loop']}, paras['paras_to_loop'],\
  		paras, {}, thing_to_do=average_sim, paras=paras, G=G, suffix = stat_distance, stat_distance = stat_distance)
 	return results
@@ -152,7 +154,7 @@ def calibrate_ABM(paras):
 	# for k, v in results.items():
 	# 	paras[paras_to_loop]
 
-def plot_all_targets(results, rep, paras, targets = ['deg', 'str', 'len', 'wei'], loc = 1):
+def plot_all_targets(results, rep, paras, targets=['deg', 'str', 'len', 'wei'], loc=1):
 	labely = 'Similarity'
 	labelx = paras['paras_to_loop']
 
@@ -173,7 +175,7 @@ def plot_all_targets(results, rep, paras, targets = ['deg', 'str', 'len', 'wei']
 	plt.ylabel(labely)
 	plt.savefig(rep + '/calibration_all_targets.png')
 
-def plot_target(results, rep, paras, target = 'deg'):
+def plot_target(results, rep, paras, target='deg'):
 	x = sorted(results.keys())
 	y = [results[xx][target]['avg'] for xx in x]
 	ey = [results[xx][target]['std'] for xx in x]
@@ -190,7 +192,8 @@ def plot_target(results, rep, paras, target = 'deg'):
 
 
 if __name__ == '__main__':
-	paras = ABMvars.paras
+
+	paras = read_paras()
 
 	# a = range(6)
 	# f_p = [0., 1., 0., 0., 0.]

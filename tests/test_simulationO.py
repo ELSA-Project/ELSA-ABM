@@ -3,6 +3,7 @@
 import sys
 sys.path.insert(1, '..')
 import unittest
+import os
 
 from abm_strategic.simAirSpaceO import Net, NavpointNet, Flight
 from abm_strategic.simulationO import *
@@ -334,5 +335,11 @@ class SimulationFlows(SimulationTest):
 
 
 if __name__ == '__main__':
+	# Manual tests
+	os.system('../abm_strategic/simulationO.py paras_test.py')
+
+	os.system('../abm_strategic/iter_simO.py paras_iter_test.py')
+
 	# Put failfast=True for stopping the test as soon as one test fails.
 	unittest.main(failfast=True)
+

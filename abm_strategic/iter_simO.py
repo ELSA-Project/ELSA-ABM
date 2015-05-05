@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec 17 14:38:09 2012
-
-@author: earendil
-
 ===========================================================================
 This is the main interface to the model. The main functions are 
  - average_sim, which makes several iterations of the model with the same
@@ -14,20 +10,25 @@ parameters,
 ===========================================================================
 """
 
-from simulationO import do_standard, build_path as build_path_single
+import sys
+sys.path.insert(1,'..')
+
+from os.path import join as jn
 import pickle
-#import ABMvars
 import os
 from string import split
 import numpy as np
 import sys
-
 from multiprocessing import Process, Pipe
 from itertools import izip
 from time import time, gmtime, strftime
 
-from general_tools import yes
+from simulationO import do_standard, build_path as build_path_single
 from utilities import read_paras_iter
+
+from libs.general_tools import yes
+from libs.paths import result_dir
+
 
 version = '2.9.4'
 main_version = split(version,'.')[0] + '.' + split(version,'.')[1]
@@ -92,7 +93,7 @@ def build_path_average(paras, vers=main_version, in_title=['tau', 'par', 'ACtot'
     if Gname==None:
         Gname=paras['G'].name
     
-    rep='../results/Sim_v' + vers + '_' + Gname
+    rep = jn(result_dir, 'Sim_v' + vers + '_' + Gname)
     
     return build_path_single(paras, vers=vers, rep=rep) + '_iter' + str(paras['n_iter']) + '.pic'
     
@@ -119,12 +120,12 @@ def average_sim(paras=None, G=None, save=1, do=do_standard, build_pat=build_path
     Change in 2.7: parallelized.
     Changed in 2.9.1: added force.
     Changed in 2.9.2: added do and build_pat kwargs. 
-    Changed in 2.9.4: removed integer i in the call of do_standard.
+    Changed in 2.9.4: removed integer i in the call of do_standard. Updated build_pat output.
     """
 
-    rep, name=build_pat(paras, Gname=paras['G'].name)
+    rep = build_pat(paras, Gname=paras['G'].name)
 
-    if paras['force'] or not os.path.exists(rep + name):  
+    if paras['force'] or not os.path.exists(rep):  
         inputs = [(paras, G) for i in range(paras['n_iter'])]
         start_time=time()
         if paras['parallel']:
@@ -150,9 +151,9 @@ def average_sim(paras=None, G=None, save=1, do=do_standard, build_pat=build_path
                     results[met][company]={'avg':np.mean([v[met][company] for v in results_list]), 'std':np.std([v[met][company] for v in results_list])}
                     
         if save>0:
-            rep, name=build_pat(paras, Gname=G.name)
-            os.system('mkdir -p ' + rep)
-            with open(rep + name,'w') as f:
+            # rep = build_pat(paras, Gname=G.name)
+            # os.system('mkdir -p ' + rep)
+            with open(rep,'w') as f:
                 pickle.dump(results, f)
     else:
         print 'Skipped this value because the file already exists and parameter force is deactivated.'
@@ -166,28 +167,28 @@ def iter_sim(paras, save=1, do=do_standard, build_pat=build_path_average):#, mak
 
     # Used for debugging.
     # if 0:
-    #     f=open('state.pic','w')
-    #     pickle.dump(getstate(),f)
-    #     f.close()
+    #     with open('state.pic','w') as f:
+    #         pickle.dump(getstate(),f)
     # else:
-    #     f=open('state.pic','r')
-    #     setstate(pickle.load(f))
-    #     f.close()
-
+    #     with open('state.pic','r') as f:
+    #         setstate(pickle.load(f))
+    
     print header(paras)
     
     if paras['fixnetwork']:
-        G=paras['G']        
+        G = paras['G']        
     else:
-        G=None
+        G = None
         
     loop({p:paras[p + '_iter'] for p in paras['paras_to_loop']}, paras['paras_to_loop'], \
-        paras, thing_to_do=average_sim, paras=paras, G=G, do=do, build_pat = build_pat)
+        paras, thing_to_do=average_sim, paras=paras, G=G, do=do, build_pat=build_pat, save=save)
     
 if __name__=='__main__':
+    paras_file = None if len(sys.argv)==1 else sys.argv[1]
+    paras = read_paras_iter(paras_file=paras_file)
 
     if yes('Ready?'):
-        results = iter_sim(read_paras_iter())
+        results = iter_sim(paras, save=1)
     
     print 'Done.'
     

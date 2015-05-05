@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 """
-@author: earendil
-
 ===========================================================================
 This file is used to build a navpoint network with superimposed sector 
 network. The main function is prepare_hybrid_network, with which the 
@@ -456,7 +454,7 @@ def compute_navpoints_borders(borders_coordinates, shape, lin_dens=10, only_oute
     Parameters
     ----------
     borders_coordinates : list of segments
-        Segments must 2-tuple of 2-tuples containinf the coordinates.
+        Segments must 2-tuple of 2-tuples containing the coordinates.
     shape : shapely Polygon
         representing the union of all sectors. Only used to check if the 
         new navpoints are in the global shape (which should be the case).
@@ -792,7 +790,7 @@ def extract_weights_from_traffic(G, flights):
         print 'Warning! Some edges do not have a weight!'
     return weights
 
-def extract_capacity_from_traffic(G, flights, date = [2010, 5, 6, 0, 0, 0]):
+def extract_capacity_from_traffic(G, flights, date=[2010, 5, 6, 0, 0, 0]):
     """
     New in 2.9.3: Extract the "capacity", the maximum number of flight per hour, based on the traffic.
     Changed in 2.9.4: added paras_real.

@@ -127,7 +127,7 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 
 	# Get navpoint network
 	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
-	seth = get_set(paras_nav, force = False)
+	seth = get_set(paras_nav, force=False)
 	G_nav, flights_nav = seth.G, seth.flights
 	#print "Number of navpoints with degree 0:", len([n for n in G_nav.nodes() if G_nav.degree(n)])
 	#print "Number of flights:", len(flights_nav)
@@ -195,7 +195,7 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 	# 		raise Exception("Some airports are missing in the network's nodes.")
 
 	# Make network
-	G = prepare_hybrid_network(paras_G, rep = "../networks", show=show)
+	G = prepare_hybrid_network(paras_G, rep="../networks", show=show)
 
 	return G
 

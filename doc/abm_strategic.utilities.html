@@ -10,11 +10,7 @@
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>utilities</strong></big></big></font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/utilities.py">/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/utilities.py</a></font></td></tr></table>
-    <p><tt>Created&nbsp;on&nbsp;Thu&nbsp;May&nbsp;23&nbsp;11:24:00&nbsp;2013<br>
-&nbsp;<br>
-@author:&nbsp;earendil<br>
-&nbsp;<br>
-Utilies&nbsp;for&nbsp;the&nbsp;ABM.</tt></p>
+    <p><tt>Utilies&nbsp;for&nbsp;the&nbsp;ABM.</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
@@ -207,6 +203,10 @@ TODO:&nbsp;check&nbsp;this.&nbsp;How&nbsp;come&nbsp;that&nbsp;we&nbsp;use&nbsp;t
 &nbsp;<br>
 Return&nbsp;the&nbsp;arc&nbsp;tangent&nbsp;(measured&nbsp;in&nbsp;radians)&nbsp;of&nbsp;y/x.<br>
 Unlike&nbsp;atan(y/x),&nbsp;the&nbsp;signs&nbsp;of&nbsp;both&nbsp;x&nbsp;and&nbsp;y&nbsp;are&nbsp;considered.</tt></dd></dl>
+ <dl><dt><a name="-ceil"><strong>ceil</strong></a>(...)</dt><dd><tt><a href="#-ceil">ceil</a>(x)<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;ceiling&nbsp;of&nbsp;x&nbsp;as&nbsp;a&nbsp;float.<br>
+This&nbsp;is&nbsp;the&nbsp;smallest&nbsp;integral&nbsp;value&nbsp;&gt;=&nbsp;x.</tt></dd></dl>
  <dl><dt><a name="-check_nav_paths"><strong>check_nav_paths</strong></a>(queue)</dt></dl>
  <dl><dt><a name="-check_nav_paths2"><strong>check_nav_paths2</strong></a>(ACs)</dt></dl>
  <dl><dt><a name="-clean_network"><strong>clean_network</strong></a>(G)</dt><dd><tt>Remove&nbsp;all&nbsp;nodes&nbsp;with&nbsp;degree&nbsp;0&nbsp;from&nbsp;a&nbsp;networkx&nbsp;object.<br>
@@ -386,8 +386,8 @@ Working&nbsp;but&nbsp;probematic&nbsp;from&nbsp;a&nbsp;theoretical&nbsp;point&nb
 highest&nbsp;metric&nbsp;value&nbsp;per&nbsp;sector.<br>
 Working&nbsp;but&nbsp;probematic&nbsp;from&nbsp;a&nbsp;theoretical&nbsp;point&nbsp;of&nbsp;view.</tt></dd></dl>
  <dl><dt><a name="-post_process_paras"><strong>post_process_paras</strong></a>(paras)</dt></dl>
- <dl><dt><a name="-read_paras"><strong>read_paras</strong></a>(paras_file<font color="#909090">=None</font>, post_process<font color="#909090">=True</font>)</dt></dl>
- <dl><dt><a name="-read_paras_iter"><strong>read_paras_iter</strong></a>(paras_file<font color="#909090">='paras.py'</font>)</dt></dl>
+ <dl><dt><a name="-read_paras"><strong>read_paras</strong></a>(paras_file<font color="#909090">=None</font>, post_process<font color="#909090">=True</font>)</dt><dd><tt>Reads&nbsp;parameter&nbsp;file&nbsp;for&nbsp;a&nbsp;single&nbsp;simulation.</tt></dd></dl>
+ <dl><dt><a name="-read_paras_iter"><strong>read_paras_iter</strong></a>(paras_file<font color="#909090">=None</font>)</dt><dd><tt>Reads&nbsp;parameter&nbsp;file&nbsp;for&nbsp;a&nbsp;iterated&nbsp;simulations.</tt></dd></dl>
  <dl><dt><a name="-restrict_to_connected_components"><strong>restrict_to_connected_components</strong></a>(G)</dt><dd><tt>Remove&nbsp;all&nbsp;nodes&nbsp;which&nbsp;are&nbsp;not&nbsp;in&nbsp;the&nbsp;biggest<br>
 connected&nbsp;component.<br>
 &nbsp;<br>

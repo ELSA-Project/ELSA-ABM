@@ -1,35 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr 30 13:53:44 2013
-
-@author: luca
-
 ===========================================================================
 Advanced plots displaying different metrics against each other.
 ===========================================================================
 """
 
-#import os
+import sys
+sys.path.insert(1,'..')
 import pickle
 from math import sqrt
-from ABMvars import paras
 import matplotlib.pyplot as plt
-from iter_simO import build_path_average
-from simulationO import build_path as build_path_single
 import numpy as np
 from string import split
 import os
 from matplotlib import rc
 
+from utilities import read_paras
+from iter_simO import build_path_average
+from simulationO import build_path as build_path_single
+
 #rc('text', usetex=True)
 #rc('font', family='serif')
 
-version='2.9.0'
-main_version=split(version,'.')[0] + '.' + split(version,'.')[1]
-loc={'ur':1, 'ul':2, 'll':3, 'lr':4, 'r':5, 'cl':6, 'cr':7, 'lc':8, 'uc':9, 'c':10}
+version = '2.9.0'
+main_version = split(version,'.')[0] + '.' + split(version,'.')[1]
+loc = {'ur':1, 'ul':2, 'll':3, 'lr':4, 'r':5, 'cl':6, 'cr':7, 'lc':8, 'uc':9, 'c':10}
 
-colors=('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed')
+colors = ('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed')
 
 def rename_variable(var):
     if var=='nA':
@@ -513,8 +511,10 @@ def overlap_network(G,typ='site',n_shortest_paths=1):
 #def take_several_graphs()
 
 if __name__=='__main__':
-    results_list=[]
-    vers='2.9' 
+    paras = read_paras()
+
+    results_list = []
+    vers = '2.9' 
     if 0:
         a=paras['paras_to_loop'][0]
         paras['paras_to_loop'][0]=paras['paras_to_loop'][1]
