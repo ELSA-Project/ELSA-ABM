@@ -69,7 +69,7 @@ int generate_temporary_point(CONF_t *config){
 	*/
 
 	if((*config).tmp_from_file){
-		printf("Attention! read temporary nvp from file\n");
+		//printf("Attention! read temporary nvp from file\n");
 		int i;
 		char c[500];
 

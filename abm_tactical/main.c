@@ -29,7 +29,7 @@ int simulation(char **args){
 	
 	
 	
-	printf("Finished Initialization\n");
+	//printf("Finished Initialization\n");
 	int i;
 	/* run nsim simulation with the same M1 file*/
 	for(i=0;i<config.nsim;i++) {
@@ -44,9 +44,8 @@ int simulation(char **args){
 			i--;
 			continue;
 		}
-		;
 		
-		printf("Sim %d\n",i+1);
+		//printf("Sim %d\n",i+1);
 		/*create and save the ouptput file*/
 		add_nsim_output(output_ABM_nsim,output_ABM,i);
 		save_m3(flight,Nflight,Flight,output_ABM_nsim);

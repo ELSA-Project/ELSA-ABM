@@ -278,6 +278,8 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).d_thr = (int) _find_value_string(config_file,"d_thr");
 	(*config).f_lvl[0] = _find_value_string(config_file, "shock_f_lvl_min");
 	(*config).f_lvl[1] = _find_value_string(config_file, "shock_f_lvl_max");
+	(*config).x_capacity = _find_value_string(config_file, "x_capacity");
+	
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
@@ -293,7 +295,8 @@ int get_configuration(char *config_file,CONF_t *config){
 	
 	(*config).start_datetime = _find_value_datetime(config_file, "start_datetime");
 	(*config).end_datetime = _find_value_datetime(config_file, "end_datetime");
-
+	(*config).noise_d_thr = _find_value_string(config_file,"noise_d_thr");
+	
 	return 1;
 }
 

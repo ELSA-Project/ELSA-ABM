@@ -17,6 +17,9 @@
 #define MU 0.0071942
 #define B_LP 0.034241
 
+//#define LS 600
+//#define LS 1500
+#define LS 100
 
 /*Maximum distance for a temporary 
  point from the starting point*/
