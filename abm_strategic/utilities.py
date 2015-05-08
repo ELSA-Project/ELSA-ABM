@@ -617,7 +617,7 @@ def compute_M1_trajectories(queue, starting_date):
 
     """
     
-    trajectories_nav=[]
+    trajectories_nav = []
 
     for f in queue:
         try:
@@ -649,8 +649,7 @@ def convert_trajectories(G, trajectories, fmt_in='(n), t', **kwargs):
     Returns
     -------
     trajectories : list
-        of converted trajectories.
-
+        of converted trajectories with signature (x, y, z, t) or (x, y, z, t, s)
     Notes
     -----
     Needs expansion to support other conversion. Maybe make a class.
@@ -673,7 +672,7 @@ def convert_trajectories_no_alt(G, trajectories, put_sectors=False, input_minute
     trajectories signature in input:
     (n), t
     trajectories signature in output:
-    (x, y, z, t) or (x, y, z, t, s)
+    (x, y, 0, t) or (x, y, 0, t, s)
 
     Altitudes in output are all set to 0.
 
@@ -683,7 +682,7 @@ def convert_trajectories_no_alt(G, trajectories, put_sectors=False, input_minute
         Used to have the coordinates of points and the travel times between nodes.
     trajectories : list
     put_sectors : boolean, optional
-        If True, output format is (x, y, z, t, s)
+        If True, output format is (x, y, 0, t, s)
     input_minutes : boolean, optional
         Used to cope with the fact that the coordinates stored in the network can be in 
         degree or minutes of degree.
@@ -695,7 +694,7 @@ def convert_trajectories_no_alt(G, trajectories, put_sectors=False, input_minute
     Returns
     -------
     trajectories_coords : list
-        of trajectories with format (x, y, z, t) or (x, y, z, t, s)
+        of trajectories with format (x, y, 0, t) or (x, y, 0, t, s)
     
     """ 
 

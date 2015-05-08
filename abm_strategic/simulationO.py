@@ -847,11 +847,11 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         print ("Number of flights in traffic:", len(paras['traffic']))
     
     with clock_time():
-        sim=Simulation(paras, G=G, verbose=True)
+        sim = Simulation(paras, G=G, verbose=True)
         sim.make_simu(storymode=storymode)
         sim.compute_flags()
-        queue=post_process_queue(sim.queue)
-        M0_queue=post_process_queue(sim.M0_queue)
+        queue = post_process_queue(sim.queue)
+        M0_queue = post_process_queue(sim.M0_queue)
    
     print
 
@@ -886,20 +886,24 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     if record_stats_file!=None:
         ff.close()
 
+
     trajectories = compute_M1_trajectories(queue, sim.starting_date)
+    #signature at this point: (n), tt
 
     if rectificate!=None:
         eff_target = rectificate['eff_target']
         del rectificate['eff_target']
         trajectories, eff, G.G_nav, groups_rec = rectificate_trajectories_network_with_time(trajectories, eff_target, deepcopy(G.G_nav), **rectificate)
+        # signature at this point : (n), tt
 
     if save_file_capacities!=None:
         write_down_capacities(G, save_file=save_file_capacities)
     
     if coordinates:
-        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, 
+        trajectories_coords = convert_trajectories(G, trajectories, put_sectors=put_sectors, 
                                                                           remove_flights_after_midnight=remove_flights_after_midnight,
                                                                           starting_date=starting_date)
+        #signature at this point: (x, y, 0, tt) or (x, y, 0, tt, s)
         if generate_altitudes and paras['file_traffic']!=None: 
             print ("Generating synthetic altitudes...")
             # Insert synthetic altitudes in trajectories based on a sampling of file_traffic
@@ -909,6 +913,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             sample_trajectories = convert_distance_trajectories_coords(G.G_nav, small_sample, put_sectors=put_sectors)
             
             trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
+            #signature at this point: (x, y, z, tt) or (x, y, z, tt, s)
 
             trajectories_coords = add_first_last_points(trajectories_coords, secs=put_sectors)
 

@@ -15,7 +15,7 @@ import random as rd
 import numpy as np
 from numpy.random import choice, seed
 import math as mt
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
 from copy import deepcopy
 from datetime import datetime, timedelta
 
@@ -93,6 +93,27 @@ def find_group(element, groups):
 			if el == element:
 				return g
 
+def find_sector(navpoint, G):
+	"""
+	Finds to which sector belongs the navpoint based on geometrical boundaries of navpoints.
+
+	Parameters
+	----------
+	navpoint : label
+	G : Hybrid network
+		must have the sectors stored in the 'shapes' attribute as Shapely Polygons.
+
+	Returns
+	-------
+	sector : label
+		Returns None if the navpoint does no belong to any sector.
+
+	"""
+
+	for sec, pol in G.polygons.items():
+		if pol.contains(Point(G.G_nav.node[navpoint]['coord'])):
+			return sec
+
 def return_linear_interpolation_altitude_func(long_dis_cul, alt):
 	"""
 	Build an simple linear interpolation function for the altitudes. 
@@ -137,6 +158,7 @@ def rectificate_trajectories_network_with_time_and_alt(trajs_w_t, eff_target, G,
 	eff_target : float
 		target efficiency.
 	G : networkx Graph or DiGraph.
+		Navpoint network.
 	remove_nodes : boolean, optional
 		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
 	resample_trajectories : boolean, optional
@@ -199,10 +221,11 @@ def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_
 	Parameters
 	----------
 	trajs_w_t : list 
-		of trajectories with signatures (n), t
+		of trajectories with signatures (n), tt or (n), t
 	eff_target : float
 		target efficiency.
 	G : networkx Graph or DiGraph.
+		navpoint network.
 	remove_nodes : boolean, optional
 		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
 	resample_trajectories : boolean, optional
@@ -214,7 +237,7 @@ def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_
 	Returns
 	--------
 	trajs : list 
-		of modified trajectories with signature (n), t
+		of modified trajectories with signature (n), tt or (n), t
 	eff : float
 		corresponding efficiency.
 	G : networkx graph
@@ -241,7 +264,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 	Wrapper of rectificate_trajectories to use efficiently with a networkx object. 
 	Provide default functions to add nodes to network. Resample also the trajectories in the case
 	where the 'remove_nodes' mode is chosen. Propagates the kwargs for the rectification.
-	Signature of each the trajectories : (n).
+	Signature of each trajectory : (n).
 
 	Parameters
 	----------
@@ -249,7 +272,8 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 		of trajectories with signatures (n).
 	eff_target : float
 		target efficiency.
-	G : networkx Graph or DiGraph.
+	G : hybrid network
+		The label of the navpoints must be integers.
 	remove_nodes : boolean, optional
 		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
 	resample_trajectories : boolean, optional
@@ -269,18 +293,26 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 	groups : dictionnary
 		the final groups.
 	
+	Notes
+	-----
+	TODO: test for DiGraph.
+	Remark: The nodes are never removed from the network, only from the trajectories.
+	Changed in 1.4: fixed sector allocations of new nodes. Using an hybrid netwrok instead of a navpoint network.
+
 	"""
+
+	assert not -10000 in [G.G_nav.node[n]['sec'] for n in G.G_nav.nodes()]
 
 	# Function to get the coordinates of the nodes on the network.
 	def get_coords(nvp):
 		try:
-			pouet = G.node[nvp]['coord']
+			pouet = G.G_nav.node[nvp]['coord']
 		except:
 			print
 			print nvp
-			print G.node[nvp]
+			print G.G_nav.node[nvp]
 			raise
-		return G.node[nvp]['coord']
+		return G.G_nav.node[nvp]['coord']
 		
 	def d((n1, n2)):
 		p1 = get_coords(n1)
@@ -289,8 +321,10 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 
 	# Function to get add a node to the network.
 	def add_node(trajs, G, coords, f, p):
+		# G here is the navpoint network.
 		new_node = max(G.nodes())+1
-		G.add_node(new_node, coord=coords, sec=G.node[trajs[f][p-1]]['sec'])
+		#G.add_node(new_node, coord=coords, sec=G.node[trajs[f][p-1]]['sec'])
+		G.add_node(new_node, coord=coords, sec=-10000)
 
 		weight = G[trajs[f][p-1]][trajs[f][p]]['weight'] * d((trajs[f][p-1], new_node))/d((trajs[f][p-1], trajs[f][p]))
 		G.add_edge(trajs[f][p-1], new_node, weight=weight)
@@ -300,12 +334,13 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 
 		return new_node, trajs, G
 
+	old_max_label = max(G.G_nav.nodes())
 	trajs_old = deepcopy(trajs)
-	trajs_rec, eff, G, groups_rec = rectificate_trajectories(trajs, eff_target, 
+	trajs_rec, eff, G.G_nav, groups_rec = rectificate_trajectories(trajs, eff_target, 
 																add_node_func=add_node, 
 																dist_func=d, 
 																coords_func=get_coords,
-																G=G, 
+																G=G.G_nav, 
 																#inplace=True,
 																remove_nodes=remove_nodes, 
 																**kwargs_rectificate)
@@ -317,7 +352,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 			n_gen = n_old - n_new
 
 			# Compute linear distance after each point.
-			long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in traj]) 
+			long_dis, long_dis_cul = build_long_2d([G.G_nav.node[n]['coord'] for n in traj]) 
 			long_dis, long_dis_cul = np.array(long_dis), np.array(long_dis_cul)
 
 			# Equally spaced points along the trajectory.
@@ -334,7 +369,7 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 				new_point_indices.append(point_before)
 
 			# Names (indices) of new navpoint in the network
-			names = [max(G.nodes()) + 1 + j for j in range(len(new_point_indices))]
+			names = [max(G.G_nav.nodes()) + 1 + j for j in range(len(new_point_indices))]
 
 			traj_rec_without_new_points = deepcopy(trajs_rec[i])
 			trajs_rec[i] = insert_list_in_list(trajs_rec[i], names, new_point_indices)
@@ -342,33 +377,40 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 			# First add all new nodes to network
 			for j, name in enumerate(names):
 				# TODO: do this more carefully.
-				if 'sec' in G.node[traj_rec_without_new_points[new_point_indices[j]]].keys():
-					sec = G.node[traj_rec_without_new_points[new_point_indices[j]]]['sec']
-				else:
-					sec = 0	
-				G.add_node(name, coord=new_point_coords[j], sec=sec)
+				# if 'sec' in G.G_nav.node[traj_rec_without_new_points[new_point_indices[j]]].keys():
+				#	sec = G.G_nav.node[traj_rec_without_new_points[new_point_indices[j]]]['sec']
+				#else:
+				#	sec = 0	
+				G.G_nav.add_node(name, coord=new_point_coords[j], sec=-10000)
 
 			# Then add all edges
 			for j in range(len(trajs_rec[i])-1):
-				if not trajs_rec[i][j+1] in G.neighbors(trajs_rec[i][j]):
+				if not trajs_rec[i][j+1] in G.G_nav.neighbors(trajs_rec[i][j]):
 					# TODO: improve this?
 					ref_point_bef = trajs_old[i][0]
 					ref_point_aft = trajs_old[i][1]
-					scale_weight = G[ref_point_bef][ref_point_aft]['weight']/d((ref_point_bef, ref_point_aft))
+					scale_weight = G.G_nav[ref_point_bef][ref_point_aft]['weight']/d((ref_point_bef, ref_point_aft))
 
 					name_pt_bef = trajs_rec[i][j]
 
 
 					weight = scale_weight * d((trajs_rec[i][j], trajs_rec[i][j+1]))
-					G.add_edge(trajs_rec[i][j], trajs_rec[i][j+1], weight=weight)
+					G.G_nav.add_edge(trajs_rec[i][j], trajs_rec[i][j+1], weight=weight)
 
 			# Check that all consecutive points of the trajectory are neighbors in the network
 			for j in range(len(trajs_rec[i])-1):
 				try:
-					assert trajs_rec[i][j+1] in G.neighbors(trajs_rec[i][j])
+					assert trajs_rec[i][j+1] in G.G_nav.neighbors(trajs_rec[i][j])
 				except AssertionError:
 					print trajs_rec[i][j], trajs_rec[i][j+1]
 					raise
+
+	# Find the sector containing the new nodes
+	for n in G.G_nav.nodes():
+		if n>old_max_label:
+			sec = find_sector(n, G)
+			G.G_nav.node[n]['sec'] = sec
+			G.node[sec]['navs'].append(n)
 
 	return trajs_rec, eff, G, groups_rec
 
@@ -394,7 +436,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 	dist_func : function, optional
 		associates a distance to a couple of points.
 		Signature: 2-tuple of points from trajectories.
-	coords_func: function, optional
+	coords_func : function, optional
 		associates some coordinates to a point in a trajectory.
 		Signature: point from a trajectory.
 	n_iter_max : int, optional
@@ -411,7 +453,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 	hard_fixed : boolean, optional
 		if False, groups having 0 probability of being chosen will switch to non-zero probablity once every other 
 		groups are empty. If True, the function exits when all groups are empty or with zero probability.
-	inplace: boolean, optional
+	inplace : boolean, optional
 		if True, modifies trajs, G and groups. Otherwise return a copy of the objects.
  
 	Returns
@@ -553,7 +595,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
  			#n = trajs_rec[f][p]
 			#g = find_group(n, groups)
 			if len(dict_nodes_traj[n])>1:
-				# Reomve the flight from the flights which cross the old point n.
+				# Remove the flight from the flights which cross the old point n.
 				dict_nodes_traj[n].remove(f)
 			else:
 				# If it was the last flight of the list, delete the list and remove node from 
@@ -573,7 +615,7 @@ def rectificate_trajectories(trajs, eff_target, G=None, groups={}, add_node_func
 			
 			# Change the efficiency based on the new length of the trajectory.
 			eff_prev = eff
-			eff=S/(S/eff+ (new-old))
+			eff = S/(S/eff+ (new-old))
 
 	#		print "eff=", eff
 

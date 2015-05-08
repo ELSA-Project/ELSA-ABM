@@ -1,6 +1,13 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+========================================================
+Draw a map of the critical sectors
+UNTESTED
+========================================================
+"""
+
 import sys
 sys.path.insert(1,'..')
 import os
@@ -14,11 +21,6 @@ from iter_simO_shocks import build_path
 
 from libs.general_tools import flip_polygon
 
-"""
-========================================================
-Draw a map of the critical sectors
-========================================================
-"""
 
 def linear_mapping(sat, min_sat, max_sat):
 	return ((max_sat - sat)/(max_sat - min_sat), 0., 0.)
