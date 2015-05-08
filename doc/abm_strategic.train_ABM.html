@@ -1,0 +1,70 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module train_ABM</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>train_ABM</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/train_ABM.py">/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/train_ABM.py</a></font></td></tr></table>
+    <p><tt>This&nbsp;file&nbsp;is&nbsp;used&nbsp;to&nbsp;calibrate,&nbsp;or&nbsp;train,&nbsp;the&nbsp;ABM.&nbsp;It&nbsp;sweeps&nbsp;some&nbsp;parameter&nbsp;and&nbsp;<br>
+computes&nbsp;the&nbsp;distance&nbsp;between&nbsp;distributions&nbsp;od&nbsp;degree,&nbsp;strength,&nbsp;betweenness,&nbsp;<br>
+and&nbsp;weights.&nbsp;The&nbsp;default&nbsp;distance&nbsp;is&nbsp;the&nbsp;kolmogorov&nbsp;distance.&nbsp;The&nbsp;sweep&nbsp;is&nbsp;a&nbsp;<br>
+brute&nbsp;force&nbsp;sweep&nbsp;and&nbsp;returns&nbsp;the&nbsp;best&nbsp;value&nbsp;of&nbsp;the&nbsp;parameter&nbsp;for&nbsp;each&nbsp;distribution.<br>
+UNTESTED.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="sklearn.metrics.html">sklearn.metrics</a><br>
+<a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="pickle.html">pickle</a><br>
+</td><td width="25%" valign=top><a href="matplotlib.pyplot.html">matplotlib.pyplot</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-average_sim"><strong>average_sim</strong></a>(paras<font color="#909090">=None</font>, G<font color="#909090">=None</font>, save<font color="#909090">=1</font>, suffix<font color="#909090">=''</font>, stat_distance<font color="#909090">='common_area'</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.6:&nbsp;makes&nbsp;a&nbsp;certain&nbsp;number&nbsp;of&nbsp;iterations&nbsp;(given&nbsp;in&nbsp;paras)&nbsp;and&nbsp;extract&nbsp;the&nbsp;averaged&nbsp;mettrics.<br>
+Change&nbsp;in&nbsp;2.7:&nbsp;parallelized.<br>
+Changed&nbsp;in&nbsp;2.9.1:&nbsp;added&nbsp;force</tt></dd></dl>
+ <dl><dt><a name="-calibrate_ABM"><strong>calibrate_ABM</strong></a>(paras)</dt></dl>
+ <dl><dt><a name="-find_best"><strong>find_best</strong></a>(results, target)</dt></dl>
+ <dl><dt><a name="-gmtime"><strong>gmtime</strong></a>(...)</dt><dd><tt><a href="#-gmtime">gmtime</a>([seconds])&nbsp;-&gt;&nbsp;(tm_year,&nbsp;tm_mon,&nbsp;tm_mday,&nbsp;tm_hour,&nbsp;tm_min,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tm_sec,&nbsp;tm_wday,&nbsp;tm_yday,&nbsp;tm_isdst)<br>
+&nbsp;<br>
+Convert&nbsp;seconds&nbsp;since&nbsp;the&nbsp;Epoch&nbsp;to&nbsp;a&nbsp;time&nbsp;tuple&nbsp;expressing&nbsp;UTC&nbsp;(a.k.a.<br>
+GMT).&nbsp;&nbsp;When&nbsp;'seconds'&nbsp;is&nbsp;not&nbsp;passed&nbsp;in,&nbsp;convert&nbsp;the&nbsp;current&nbsp;time&nbsp;instead.</tt></dd></dl>
+ <dl><dt><a name="-loop"><strong>loop</strong></a>(a, level, parass, results, thing_to_do<font color="#909090">=None</font>, **args)</dt></dl>
+ <dl><dt><a name="-plot_all_targets"><strong>plot_all_targets</strong></a>(results, rep, paras, targets<font color="#909090">=['deg', 'str', 'len', 'wei']</font>, loc<font color="#909090">=1</font>)</dt></dl>
+ <dl><dt><a name="-plot_target"><strong>plot_target</strong></a>(results, rep, paras, target<font color="#909090">='deg'</font>)</dt></dl>
+ <dl><dt><a name="-strftime"><strong>strftime</strong></a>(...)</dt><dd><tt><a href="#-strftime">strftime</a>(format[,&nbsp;tuple])&nbsp;-&gt;&nbsp;string<br>
+&nbsp;<br>
+Convert&nbsp;a&nbsp;time&nbsp;tuple&nbsp;to&nbsp;a&nbsp;string&nbsp;according&nbsp;to&nbsp;a&nbsp;format&nbsp;specification.<br>
+See&nbsp;the&nbsp;library&nbsp;reference&nbsp;manual&nbsp;for&nbsp;formatting&nbsp;codes.&nbsp;When&nbsp;the&nbsp;time&nbsp;tuple<br>
+is&nbsp;not&nbsp;present,&nbsp;current&nbsp;time&nbsp;as&nbsp;returned&nbsp;by&nbsp;localtime()&nbsp;is&nbsp;used.</tt></dd></dl>
+ <dl><dt><a name="-time"><strong>time</strong></a>(...)</dt><dd><tt><a href="#-time">time</a>()&nbsp;-&gt;&nbsp;floating&nbsp;point&nbsp;number<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;current&nbsp;time&nbsp;in&nbsp;seconds&nbsp;since&nbsp;the&nbsp;Epoch.<br>
+Fractions&nbsp;of&nbsp;a&nbsp;second&nbsp;may&nbsp;be&nbsp;present&nbsp;if&nbsp;the&nbsp;system&nbsp;clock&nbsp;provides&nbsp;them.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>loc</strong> = {'c': 10, 'cl': 6, 'cr': 7, 'lc': 8, 'll': 3, 'lr': 4, 'r': 5, 'uc': 9, 'ul': 2, 'ur': 1}<br>
+<strong>main_version</strong> = '2.9'<br>
+<strong>version</strong> = '2.9.0'</td></tr></table>
+</body></html>

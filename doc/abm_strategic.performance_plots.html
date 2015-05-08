@@ -1,0 +1,67 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module performance_plots</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>performance_plots</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/performance_plots.py">/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_strategic/performance_plots.py</a></font></td></tr></table>
+    <p><tt>===========================================================================<br>
+Advanced&nbsp;plots&nbsp;displaying&nbsp;different&nbsp;metrics&nbsp;against&nbsp;each&nbsp;other.<br>
+===========================================================================</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="os.html">os</a><br>
+</td><td width="25%" valign=top><a href="pickle.html">pickle</a><br>
+<a href="matplotlib.pyplot.html">matplotlib.pyplot</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-AC_met_vs_main_loop"><strong>AC_met_vs_main_loop</strong></a>(results, paras, met<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, AC<font color="#909090">=[]</font>, labelx<font color="#909090">=''</font>, labely<font color="#909090">=''</font>, err<font color="#909090">='big'</font>)</dt><dd><tt>To&nbsp;have&nbsp;the&nbsp;metric&nbsp;'met'&nbsp;per&nbsp;AC&nbsp;vs&nbsp;the&nbsp;par&nbsp;on&nbsp;which&nbsp;you&nbsp;loop.</tt></dd></dl>
+ <dl><dt><a name="-AC_met_vs_par"><strong>AC_met_vs_par</strong></a>(list_results_r, paras, met<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, AC<font color="#909090">=[]</font>, labelx<font color="#909090">=''</font>, labely<font color="#909090">=''</font>, loc<font color="#909090">=3</font>)</dt><dd><tt>To&nbsp;have&nbsp;the&nbsp;metric&nbsp;'met'&nbsp;per&nbsp;AC&nbsp;vs&nbsp;the&nbsp;par&nbsp;on&nbsp;which&nbsp;you&nbsp;loop.&nbsp;Gives&nbsp;several&nbsp;plots,&nbsp;corresponding&nbsp;to&nbsp;the&nbsp;outer&nbsp;loop.</tt></dd></dl>
+ <dl><dt><a name="-build_path"><strong>build_path</strong></a>(paras, vers<font color="#909090">='2.9'</font>)</dt></dl>
+ <dl><dt><a name="-difference_AC_met_vs_par"><strong>difference_AC_met_vs_par</strong></a>(list_results_r, paras, met<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, AC<font color="#909090">=[]</font>, labelx<font color="#909090">=''</font>, labely<font color="#909090">=''</font>, loc<font color="#909090">=3</font>, norm<font color="#909090">=False</font>)</dt><dd><tt>To&nbsp;have&nbsp;the&nbsp;metric&nbsp;'met'&nbsp;per&nbsp;AC&nbsp;vs&nbsp;the&nbsp;par&nbsp;on&nbsp;which&nbsp;you&nbsp;loop.&nbsp;Gives&nbsp;several&nbsp;plots,&nbsp;corresponding&nbsp;to&nbsp;the&nbsp;outer&nbsp;loop.</tt></dd></dl>
+ <dl><dt><a name="-get_results"><strong>get_results</strong></a>(paras, vers<font color="#909090">='2.9'</font>)</dt></dl>
+ <dl><dt><a name="-global_met1_VS_met2"><strong>global_met1_VS_met2</strong></a>(results, paras, met1<font color="#909090">='regulated_FPs'</font>, met2<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, labelx<font color="#909090">=''</font>, labely<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, loc<font color="#909090">=3</font>)</dt><dd><tt>To&nbsp;have&nbsp;a&nbsp;global&nbsp;metric&nbsp;'met2'&nbsp;vs&nbsp;'met1'.&nbsp;Gives&nbsp;several&nbsp;plots,&nbsp;corresponding&nbsp;to&nbsp;the&nbsp;outer&nbsp;loop.</tt></dd></dl>
+ <dl><dt><a name="-global_met_vs_par"><strong>global_met_vs_par</strong></a>(results, paras, met<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, labelx<font color="#909090">=''</font>, labely<font color="#909090">=''</font>, loc<font color="#909090">=3</font>, norm_pairs_of_airports<font color="#909090">=False</font>, norm_initial_values<font color="#909090">=False</font>)</dt><dd><tt>To&nbsp;have&nbsp;a&nbsp;global&nbsp;metric&nbsp;'met'&nbsp;vs&nbsp;the&nbsp;par&nbsp;on&nbsp;which&nbsp;you&nbsp;loop.&nbsp;Gives&nbsp;several&nbsp;plots,&nbsp;corresponding&nbsp;to&nbsp;the&nbsp;outer&nbsp;loop.</tt></dd></dl>
+ <dl><dt><a name="-global_vs_main_loop"><strong>global_vs_main_loop</strong></a>(results, paras, met<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, err<font color="#909090">='big'</font>)</dt></dl>
+ <dl><dt><a name="-just_legend"><strong>just_legend</strong></a>(list_results_r, paras, met<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>)</dt></dl>
+ <dl><dt><a name="-loads_vs_par"><strong>loads_vs_par</strong></a>(results, paras, norm<font color="#909090">=False</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, labelx<font color="#909090">=''</font>, labely<font color="#909090">=''</font>)</dt><dd><tt>Average&nbsp;loads&nbsp;and&nbsp;normalized&nbsp;loads&nbsp;of&nbsp;the&nbsp;sectors.<br>
+NEED&nbsp;AN&nbsp;UPDATE.</tt></dd></dl>
+ <dl><dt><a name="-loop"><strong>loop</strong></a>(a, level, parass, results, results_global, vers<font color="#909090">='2.9.0'</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.6:&nbsp;Makes&nbsp;an&nbsp;arbitrary&nbsp;number&nbsp;of&nbsp;loops<br>
+a:&nbsp;dictionnary,&nbsp;with&nbsp;keys&nbsp;as&nbsp;parameters&nbsp;to&nbsp;loop&nbsp;on&nbsp;and&nbsp;values&nbsp;as&nbsp;the&nbsp;values&nbsp;on&nbsp;which&nbsp;to&nbsp;loop.<br>
+level:&nbsp;list&nbsp;of&nbsp;parameters&nbsp;on&nbsp;which&nbsp;to&nbsp;loop.&nbsp;The&nbsp;first&nbsp;one&nbsp;is&nbsp;the&nbsp;most&nbsp;outer&nbsp;loop,&nbsp;the&nbsp;last&nbsp;one&nbsp;is&nbsp;the&nbsp;most&nbsp;inner&nbsp;loop.</tt></dd></dl>
+ <dl><dt><a name="-normalized_met_vs_par"><strong>normalized_met_vs_par</strong></a>(results, paras, met<font color="#909090">='satisfaction'</font>, name<font color="#909090">=''</font>, rep<font color="#909090">='.'</font>, labelx<font color="#909090">=''</font>, labely<font color="#909090">=''</font>, loc<font color="#909090">=3</font>)</dt><dd><tt>Same&nbsp;as&nbsp;previous&nbsp;one,&nbsp;for&nbsp;normalized&nbsp;satisfaction.</tt></dd></dl>
+ <dl><dt><a name="-overlap_network"><strong>overlap_network</strong></a>(G, typ<font color="#909090">='site'</font>, n_shortest_paths<font color="#909090">=1</font>)</dt></dl>
+ <dl><dt><a name="-overlap_paths"><strong>overlap_paths</strong></a>(path1, path2, typ<font color="#909090">='site'</font>)</dt></dl>
+ <dl><dt><a name="-rename_variable"><strong>rename_variable</strong></a>(var)</dt></dl>
+ <dl><dt><a name="-sqrt"><strong>sqrt</strong></a>(...)</dt><dd><tt><a href="#-sqrt">sqrt</a>(x)<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;square&nbsp;root&nbsp;of&nbsp;x.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>colors</strong> = ('Blue', 'BlueViolet', 'Brown', 'CadetBlue', 'Crimson', 'DarkMagenta', 'DarkRed', 'DeepPink', 'Gold', 'Green', 'OrangeRed')<br>
+<strong>loc</strong> = {'c': 10, 'cl': 6, 'cr': 7, 'lc': 8, 'll': 3, 'lr': 4, 'r': 5, 'uc': 9, 'ul': 2, 'ur': 1}<br>
+<strong>main_version</strong> = '2.9'<br>
+<strong>version</strong> = '2.9.0'</td></tr></table>
+</body></html>
