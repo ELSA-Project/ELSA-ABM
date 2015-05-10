@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-@author: earendil
-
 Used for interface with Distance library.
 """
+
 import sys
 sys.path.insert(1, '..')
 import pickle

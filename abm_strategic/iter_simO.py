@@ -86,14 +86,14 @@ def header(paras, paras_to_display=['departure_times','par','nA', 'ACtot', 'dens
     head += trait + '\n'
     return head
     
-def build_path_average(paras, vers=main_version, in_title=['tau', 'par', 'ACtot', 'nA'], Gname=None):
+def build_path_average(paras, vers=main_version, in_title=['tau', 'par', 'ACtot', 'nA'], Gname=None, rep=result_dir):
     """
     Build the path for results.
     """
     if Gname==None:
         Gname=paras['G'].name
     
-    rep = jn(result_dir, 'Sim_v' + vers + '_' + Gname)
+    rep = jn(rep, 'Sim_v' + vers + '_' + Gname)
     
     return build_path_single(paras, vers=vers, rep=rep) + '_iter' + str(paras['n_iter']) + '.pic'
     
@@ -113,7 +113,7 @@ def loop(a, level, parass, thing_to_do=None, **args):
             parass.update(level[0],i)
             loop(a, level[1:], parass, thing_to_do=thing_to_do, **args)
  
-def average_sim(paras=None, G=None, save=1, do=do_standard, build_pat=build_path_average):#, mets=['satisfaction', 'regulated_F', 'regulated_FPs']):
+def average_sim(paras=None, G=None, save=1, do=do_standard, build_pat=build_path_average, rep=result_dir):#, mets=['satisfaction', 'regulated_F', 'regulated_FPs']):
     """
     Average some simulations which have the same 
     New in 2.6: makes a certain number of iterations (given in paras) and extract the averaged mettrics.
@@ -123,8 +123,7 @@ def average_sim(paras=None, G=None, save=1, do=do_standard, build_pat=build_path
     Changed in 2.9.4: removed integer i in the call of do_standard. Updated build_pat output.
     """
 
-    rep = build_pat(paras, Gname=paras['G'].name)
-
+    rep = build_pat(paras, Gname=paras['G'].name, rep=rep)
     if paras['force'] or not os.path.exists(rep):  
         inputs = [(paras, G) for i in range(paras['n_iter'])]
         start_time=time()
@@ -151,14 +150,13 @@ def average_sim(paras=None, G=None, save=1, do=do_standard, build_pat=build_path
                     results[met][company]={'avg':np.mean([v[met][company] for v in results_list]), 'std':np.std([v[met][company] for v in results_list])}
                     
         if save>0:
-            # rep = build_pat(paras, Gname=G.name)
-            # os.system('mkdir -p ' + rep)
-            with open(rep,'w') as f:
+            os.system('mkdir -p ' + os.path.dirname(rep))
+            with open(rep, 'w') as f:
                 pickle.dump(results, f)
     else:
         print 'Skipped this value because the file already exists and parameter force is deactivated.'
 
-def iter_sim(paras, save=1, do=do_standard, build_pat=build_path_average):#, make_plots=True):#la variabile test_airports è stata inserita al solo scopo di testare le rejections
+def iter_sim(paras, save=1, do=do_standard, build_pat=build_path_average, rep=result_dir):#, make_plots=True):#la variabile test_airports è stata inserita al solo scopo di testare le rejections
     """
     Used to loop and average the simulation. G can be passed in paras if fixnetwork is True.
     save can be 0 (no save), 1 (save agregated values) or 2 (save all queues).
@@ -181,9 +179,12 @@ def iter_sim(paras, save=1, do=do_standard, build_pat=build_path_average):#, mak
         G = None
         
     loop({p:paras[p + '_iter'] for p in paras['paras_to_loop']}, paras['paras_to_loop'], \
-        paras, thing_to_do=average_sim, paras=paras, G=G, do=do, build_pat=build_pat, save=save)
+        paras, thing_to_do=average_sim, paras=paras, G=G, do=do, build_pat=build_pat, save=save, rep=rep)
     
 if __name__=='__main__':
+    """
+    Manual entry
+    """
     paras_file = None if len(sys.argv)==1 else sys.argv[1]
     paras = read_paras_iter(paras_file=paras_file)
 

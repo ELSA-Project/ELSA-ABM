@@ -233,20 +233,6 @@ if __name__=='__main__':
 	del all_paras['args']
 
 	# Sweep parameters
-	print
-	# for f in all_paras['input_files']:
-	# 	print "Input file:", f
-	# 	args[2] = f
-
-	# def d2(a):
-	# 	return a**2
-
-	# p = Pool(1)
-	# #coin =  p.map(do, input_files)
-	# coin =  p.map(d2, list(range(10)))
-	# print coin
-	# p.close()
-
 	files, logs = sweep_paras_shocks(*args, dryrun = True, **all_paras)
 	#	print
 

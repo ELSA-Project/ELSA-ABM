@@ -1,18 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+This is parameter file useable when one wants to make several simulations of the tactical ABM,
+sweeping some parameters, or using several strategic simulations as entry.
+
+"""
+
 import sys as _sys
 import os as _os
 _sys.path.insert(1, '..')
+main_dir = _os.path.abspath(__file__)
+main_dir = _os.path.split(_os.path.dirname(main_dir))[0]
+_sys.path.insert(1, main_dir)
 
 import libs
 from interface.abm_interface import ParasTact
 import numpy as _np
 from sweep_paras_tactical_shocks import lifetime_func, Nm_shock_func
 from abm_strategic.interface_distance import produce_M1_trajs_from_data as _produce_M1_trajs_from_data
-
-main_dir = _os.path.abspath(__file__)
-main_dir = _os.path.split(_os.path.dirname(main_dir))[0]
 
 _result_dir = libs.paths.result_dir
 
@@ -47,7 +53,6 @@ paras.to_update['Nm_shock'] = (Nm_shock_func, ('f_shocks', 't_w', 't_r', 't_i', 
 paras.update_priority = ['lifetime', 'Nm_shock']
 
 paras.analyse_dependance()
-#paras.initialize_paras()
 
 #input_file=main_dir + '/trajectories/M1/trajs_' + zone + '_real_data.dat'
 _n_strat = 10

@@ -37,7 +37,7 @@ pday = lambda x:  datetime.strftime(x,"%Y-%m-%d")
 to_OD = lambda z: to_str([z[0]])+','+to_str([z[-1]])
 to_OD2 = lambda z: to_str([z[0]])+','+to_str([z[1]])
 to_OD_inv  = lambda z: to_str([invgall(z[0])])+','+to_str([invgall(z[-1])])
-tf_time= lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
+tf_time = lambda z: datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') +timedelta(seconds=((int((z - datetime.strptime("2010-06-02 0:0:0:0",'%Y-%m-%d %H:%M:%S:%f') ).total_seconds()) /4)*4))
 
 
 def compute_efficiency(trajectories, dist_func=dist):

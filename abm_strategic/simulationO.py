@@ -746,8 +746,8 @@ def add_first_last_points(trajs, secs=False):
     return trajs
 
 def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, starting_date=[2010, 5, 6, 0, 0, 0],\
-     coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, 
-     record_stats_file=None, remove_flights_after_midnight=False, rectificate=None, storymode=False, **paras_control):
+    coordinates=True, generate_altitudes=True, put_sectors=False, save_file_capacities=None, 
+    record_stats_file=None, remove_flights_after_midnight=False, rectificate=None, storymode=False, **paras_control):
     """
     High level function to create traffic on a given network with given parameters. 
     It is not really intented to use as a simulation by itself, but only to generate 

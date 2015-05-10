@@ -270,8 +270,7 @@ kwargs&nbsp;:&nbsp;additional&nbsp;parameters<br>
 Returns<br>
 -------<br>
 trajectories&nbsp;:&nbsp;list<br>
-&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;converted&nbsp;trajectories.<br>
-&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;converted&nbsp;trajectories&nbsp;with&nbsp;signature&nbsp;(x,&nbsp;y,&nbsp;z,&nbsp;t)&nbsp;or&nbsp;(x,&nbsp;y,&nbsp;z,&nbsp;t,&nbsp;s)<br>
 Notes<br>
 -----<br>
 Needs&nbsp;expansion&nbsp;to&nbsp;support&nbsp;other&nbsp;conversion.&nbsp;Maybe&nbsp;make&nbsp;a&nbsp;class.<br>
@@ -307,7 +306,7 @@ trajectories_coords&nbsp;:&nbsp;list<br>
 trajectories&nbsp;signature&nbsp;in&nbsp;input:<br>
 (n),&nbsp;t<br>
 trajectories&nbsp;signature&nbsp;in&nbsp;output:<br>
-(x,&nbsp;y,&nbsp;z,&nbsp;t)&nbsp;or&nbsp;(x,&nbsp;y,&nbsp;z,&nbsp;t,&nbsp;s)<br>
+(x,&nbsp;y,&nbsp;0,&nbsp;t)&nbsp;or&nbsp;(x,&nbsp;y,&nbsp;0,&nbsp;t,&nbsp;s)<br>
 &nbsp;<br>
 Altitudes&nbsp;in&nbsp;output&nbsp;are&nbsp;all&nbsp;set&nbsp;to&nbsp;0.<br>
 &nbsp;<br>
@@ -317,7 +316,7 @@ G&nbsp;:&nbsp;Net&nbsp;object<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Used&nbsp;to&nbsp;have&nbsp;the&nbsp;coordinates&nbsp;of&nbsp;points&nbsp;and&nbsp;the&nbsp;travel&nbsp;times&nbsp;between&nbsp;nodes.<br>
 trajectories&nbsp;:&nbsp;list<br>
 put_sectors&nbsp;:&nbsp;boolean,&nbsp;optional<br>
-&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;True,&nbsp;output&nbsp;format&nbsp;is&nbsp;(x,&nbsp;y,&nbsp;z,&nbsp;t,&nbsp;s)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;True,&nbsp;output&nbsp;format&nbsp;is&nbsp;(x,&nbsp;y,&nbsp;0,&nbsp;t,&nbsp;s)<br>
 input_minutes&nbsp;:&nbsp;boolean,&nbsp;optional<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Used&nbsp;to&nbsp;cope&nbsp;with&nbsp;the&nbsp;fact&nbsp;that&nbsp;the&nbsp;coordinates&nbsp;stored&nbsp;in&nbsp;the&nbsp;network&nbsp;can&nbsp;be&nbsp;in&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;degree&nbsp;or&nbsp;minutes&nbsp;of&nbsp;degree.<br>
@@ -329,7 +328,7 @@ starting_date&nbsp;:&nbsp;list&nbsp;of&nbsp;tuple&nbsp;<br>
 Returns<br>
 -------<br>
 trajectories_coords&nbsp;:&nbsp;list<br>
-&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;trajectories&nbsp;with&nbsp;format&nbsp;(x,&nbsp;y,&nbsp;z,&nbsp;t)&nbsp;or&nbsp;(x,&nbsp;y,&nbsp;z,&nbsp;t,&nbsp;s)</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;trajectories&nbsp;with&nbsp;format&nbsp;(x,&nbsp;y,&nbsp;0,&nbsp;t)&nbsp;or&nbsp;(x,&nbsp;y,&nbsp;0,&nbsp;t,&nbsp;s)</tt></dd></dl>
  <dl><dt><a name="-cos"><strong>cos</strong></a>(...)</dt><dd><tt><a href="#-cos">cos</a>(x)<br>
 &nbsp;<br>
 Return&nbsp;the&nbsp;cosine&nbsp;of&nbsp;x&nbsp;(measured&nbsp;in&nbsp;radians).</tt></dd></dl>
