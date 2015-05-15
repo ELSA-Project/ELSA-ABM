@@ -337,12 +337,14 @@ Notes<br>
 Changed&nbsp;in&nbsp;2.9.8:&nbsp;changed&nbsp;name&nbsp;to&nbsp;add_airports.&nbsp;Now&nbsp;the&nbsp;airports&nbsp;are&nbsp;added<br>
 to&nbsp;the&nbsp;existing&nbsp;airports&nbsp;instead&nbsp;of&nbsp;overwriting&nbsp;the&nbsp;list.</tt></dd></dl>
 
-<dl><dt><a name="NavpointNet-basic_statistics"><strong>basic_statistics</strong></a>(self, rep<font color="#909090">='.'</font>)</dt><dd><tt>Computes&nbsp;basic&nbsp;stats&nbsp;on&nbsp;degree,&nbsp;weights&nbsp;and&nbsp;capacities.&nbsp;<br>
+<dl><dt><a name="NavpointNet-basic_statistics"><strong>basic_statistics</strong></a>(self, rep<font color="#909090">='.'</font>, name<font color="#909090">=None</font>)</dt><dd><tt>Computes&nbsp;basic&nbsp;stats&nbsp;on&nbsp;degree,&nbsp;weights&nbsp;and&nbsp;capacities.&nbsp;<br>
 &nbsp;<br>
 Parameters<br>
 ----------<br>
-rep&nbsp;:&nbsp;string<br>
+rep&nbsp;:&nbsp;string,&nbsp;optional<br>
 &nbsp;&nbsp;&nbsp;&nbsp;directory&nbsp;in&nbsp;which&nbsp;the&nbsp;stats&nbsp;are&nbsp;saved.<br>
+name&nbsp;:&nbsp;string,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;of&nbsp;the&nbsp;file&nbsp;(without&nbsp;extension).<br>
 &nbsp;<br>
 Notes<br>
 -----<br>
@@ -408,7 +410,7 @@ Changed&nbsp;in&nbsp;2.9.10:&nbsp;repetitive&nbsp;shortest&nbsp;paths&nbsp;in&nb
 Obsolete&nbsp;?&nbsp;TODO</tt></dd></dl>
 
 <dl><dt><a name="NavpointNet-compute_shortest_paths"><strong>compute_shortest_paths</strong></a>(self, Nfp, repetitions<font color="#909090">=True</font>, use_sector_path<font color="#909090">=False</font>, old<font color="#909090">=False</font>, pairs<font color="#909090">=[]</font>, verb<font color="#909090">=1</font>, delete_pairs<font color="#909090">=True</font>)</dt><dd><tt>Pre-Build&nbsp;Nfp&nbsp;weighted&nbsp;shortest&nbsp;paths&nbsp;between&nbsp;each&nbsp;pair&nbsp;of&nbsp;airports.&nbsp;<br>
-If&nbsp;the&nbsp;function&nbsp;do&nbsp;not&nbsp;find&nbsp;enough&nbsp;paths,&nbsp;the&nbsp;corresponding&nbsp;source/destination&nbsp;pair&nbsp;is&nbsp;deleted.<br>
+If&nbsp;the&nbsp;function&nbsp;dooes&nbsp;not&nbsp;find&nbsp;enough&nbsp;paths,&nbsp;the&nbsp;corresponding&nbsp;source/destination&nbsp;pair&nbsp;can&nbsp;be&nbsp;deleted.<br>
 &nbsp;<br>
 Parameters<br>
 ----------<br>
@@ -1859,12 +1861,14 @@ Notes<br>
 Changed&nbsp;in&nbsp;2.9.8:&nbsp;changed&nbsp;name&nbsp;to&nbsp;add_airports.&nbsp;Now&nbsp;the&nbsp;airports&nbsp;are&nbsp;added<br>
 to&nbsp;the&nbsp;existing&nbsp;airports&nbsp;instead&nbsp;of&nbsp;overwriting&nbsp;the&nbsp;list.</tt></dd></dl>
 
-<dl><dt><a name="Net-basic_statistics"><strong>basic_statistics</strong></a>(self, rep<font color="#909090">='.'</font>)</dt><dd><tt>Computes&nbsp;basic&nbsp;stats&nbsp;on&nbsp;degree,&nbsp;weights&nbsp;and&nbsp;capacities.&nbsp;<br>
+<dl><dt><a name="Net-basic_statistics"><strong>basic_statistics</strong></a>(self, rep<font color="#909090">='.'</font>, name<font color="#909090">=None</font>)</dt><dd><tt>Computes&nbsp;basic&nbsp;stats&nbsp;on&nbsp;degree,&nbsp;weights&nbsp;and&nbsp;capacities.&nbsp;<br>
 &nbsp;<br>
 Parameters<br>
 ----------<br>
-rep&nbsp;:&nbsp;string<br>
+rep&nbsp;:&nbsp;string,&nbsp;optional<br>
 &nbsp;&nbsp;&nbsp;&nbsp;directory&nbsp;in&nbsp;which&nbsp;the&nbsp;stats&nbsp;are&nbsp;saved.<br>
+name&nbsp;:&nbsp;string,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;of&nbsp;the&nbsp;file&nbsp;(without&nbsp;extension).<br>
 &nbsp;<br>
 Notes<br>
 -----<br>
@@ -1969,7 +1973,7 @@ Changed&nbsp;in&nbsp;2.9.10:&nbsp;repetitive&nbsp;shortest&nbsp;paths&nbsp;in&nb
 Obsolete&nbsp;?&nbsp;TODO</tt></dd></dl>
 
 <dl><dt><a name="Net-compute_shortest_paths"><strong>compute_shortest_paths</strong></a>(self, Nfp, repetitions<font color="#909090">=True</font>, use_sector_path<font color="#909090">=False</font>, old<font color="#909090">=False</font>, pairs<font color="#909090">=[]</font>, verb<font color="#909090">=1</font>, delete_pairs<font color="#909090">=True</font>)</dt><dd><tt>Pre-Build&nbsp;Nfp&nbsp;weighted&nbsp;shortest&nbsp;paths&nbsp;between&nbsp;each&nbsp;pair&nbsp;of&nbsp;airports.&nbsp;<br>
-If&nbsp;the&nbsp;function&nbsp;do&nbsp;not&nbsp;find&nbsp;enough&nbsp;paths,&nbsp;the&nbsp;corresponding&nbsp;source/destination&nbsp;pair&nbsp;is&nbsp;deleted.<br>
+If&nbsp;the&nbsp;function&nbsp;dooes&nbsp;not&nbsp;find&nbsp;enough&nbsp;paths,&nbsp;the&nbsp;corresponding&nbsp;source/destination&nbsp;pair&nbsp;can&nbsp;be&nbsp;deleted.<br>
 &nbsp;<br>
 Parameters<br>
 ----------<br>

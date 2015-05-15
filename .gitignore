@@ -24,3 +24,7 @@ scripts/paras_sweep_*
 scripts/.sync
 .sync
 scripts/strategic_simulations*
+doc/*.synctex.gz
+doc/*.toc
+doc/*.log
+doc/*.aux

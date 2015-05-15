@@ -1337,7 +1337,7 @@ class Net(nx.Graph):
 
         """
 
-        assert hasattr(self.G, G_nav)
+        assert hasattr(self, 'G_nav')
         pairs = []
         for (p1,p2) in self.G_nav.short.keys():
             s1 = self.G_nav.node[p1]['sec']
@@ -1375,7 +1375,7 @@ class Net(nx.Graph):
         verb=1, delete_pairs=True):
         """
         Pre-Build Nfp weighted shortest paths between each pair of airports. 
-        If the function do not find enough paths, the corresponding source/destination pair is deleted.
+        If the function dooes not find enough paths, the corresponding source/destination pair can be deleted.
         
         Parameters
         ----------
@@ -1437,32 +1437,39 @@ class Net(nx.Graph):
         else:
             if not use_sector_path:
                 for it, (a,b) in enumerate(pairs):
+                    #print "Shortest path for", (a, b)
                     #if verb:
                     #    counter(it, len(pairs), message='Computing shortest paths...')
                     if a!=b:
-                        enough_paths=False
-                        Nfp_init=Nfp
+                        enough_paths = False
+                        Nfp_init = Nfp
                         while not enough_paths:
-                            enough_paths=True
+                            enough_paths = True
                             paths = self.kshortestPath(a, b, Nfp, old=old) #Initial set of paths
-                            previous_duplicates=1
-                            duplicates=[]
+                            previous_duplicates = 1
+                            duplicates = []
                             n_tries = 0
                             while len(duplicates)!=previous_duplicates and n_tries<50:
-                                previous_duplicates=len(duplicates)
-                                duplicates=[]
+                                previous_duplicates = len(duplicates)
+                                duplicates = []
                                 for sp in paths:
                                     if len(np.unique(sp))<len(sp): # Detect if some sectors are duplicated within sp
                                         duplicates.append(sp)
 
                                 if len(duplicates)!=previous_duplicates: # If the number of duplicates has changed, compute some more paths.
                                     paths = self.kshortestPath(a, b, Nfp+len(duplicates), old=old)
-                                n_tries+=1
+                                n_tries += 1
 
                             for path in duplicates:
                                 paths.remove(path)
 
                             try:
+                                try:
+                                    assert n_tries<50
+                                except AssertionError:
+                                    print "I hit the maximum number of iterations."
+                                    raise
+
                                 assert len(paths)==Nfp and len(duplicates)==previous_duplicates
                                 enough_paths=True
                                 paths = [list(vvv) for vvv in set([tuple(vv) for vv in paths])][:Nfp_init]
@@ -1472,7 +1479,7 @@ class Net(nx.Graph):
                                 Nfp += 1
                             except AssertionError:
                                 #print 'a:', a, 'b:', b, 'len(self.short[(a,b)]):', len(self.short[(a,b)])
-                                print "kspyen can't find enough paths (only " + str(len(paths)) + ')', "for the pair", a, b,
+                                print "WARNING: kspyen can't find enough paths (only " + str(len(paths)) + ')', "for the pair", a, b,
                                 #print 'Number of duplicates:', len(duplicates)
                                 #print 'Number of duplicates:', len(duplicates)
                                 #print 'Number of paths with duplicates:', len(paths_init)
@@ -1483,14 +1490,20 @@ class Net(nx.Graph):
                                     break
                                 else:
                                     print
+                                    print "I don't take any action and keep in memory the shortest paths,"
+                                    print "but you should not use the network with this Nfp. Try to run it"
+                                    print "again with a smaller Nfp."
 
                         Nfp = Nfp_init
                         if self.short.has_key((a,b)):
                             self.short[(a,b)] = paths[:]      
 
                         if not delete_pairs:
-                            if  len(self.short[(a,b)])<Nfp:
+                            if len(self.short[(a,b)])<Nfp:
                                 print  "Pair", (a,b), "do not have enough path, I duplicate the last one..."
+                            if len(self.short[(a,b)])>Nfp:
+                                # Should only happen when the maximum number of iteration has been hit
+                                self.short[(a,b)] = self.short[(a,b)][:10]
                             while len(self.short[(a,b)])<Nfp:
                                 self.short[(a,b)].append(self.short[(a,b)][-1])
                             assert len(self.short[(a,b)])==Nfp
@@ -1597,7 +1610,7 @@ class Net(nx.Graph):
         """
 
         if not hasattr(self, 'short_nav'):
-            self.short_nav={}
+            self.short_nav = {}
 
         if pairs ==[]:
             pairs = self.G_nav.short.keys()[:]
@@ -1605,25 +1618,26 @@ class Net(nx.Graph):
             pairs = [p for p in pairs if p in self.G_nav.short.keys()]
 
         for idx,(p0,p1) in enumerate(pairs):
-            #print "Computing restricted paths for pair", (p0, p1)
+            # print "Computing restricted paths for pair", (p0, p1)
             #counter(idx, len(pairs), message='Computing shortest paths (navpoints)...')
             s0,s1 = self.G_nav.node[p0]['sec'], self.G_nav.node[p1]['sec']
             self.G_nav.short[(p0,p1)] = []
             self.short_nav[(p0,p1)] = {}
             try:
-                assert len(self.short[(s0,s1)]) == self.Nfp
-            except:
+                assert len(self.short[(s0,s1)])==self.Nfp
+            except AssertionError:
+                print "This couple of sec-OD do not have Nfp=", self.Nfp, "shortest sec-paths."
                 print "s0, s1:", s0, s1
                 print "len(self.short[(s0,s1)]), self.Nfp", len(self.short[(s0,s1)]), self.Nfp
                 raise
 
             try:
-                assert len(self.short[(s0, s1)]) == self.Nfp
+                assert len(self.short[(s0, s1)])==self.Nfp
                 for idx_sp, sp in enumerate(self.short[(s0,s1)]): # Compute the network of navpoint restricted of each shortest paths.
-                    H_nav=NavpointNet()
+                    H_nav = NavpointNet()
                     with silence(silent):
                         #print 'Shortest path in sectors:', sp
-                        HH=nx.Graph()
+                        HH = nx.Graph()
                         # Add every nodes in the sectors of the shortest paths.
                         for n in self.G_nav.nodes(): 
                             if self.G_nav.node[n]['sec'] in sp:
@@ -1644,65 +1658,24 @@ class Net(nx.Graph):
                         H_nav.import_from(HH)
                         if len(H_nav.nodes())!=0:
                             try:
-                                # Cette partie est psychédélique... Ces deux boucles semblent etre des checks seulement.
-                                # for i in range(len(sp)-1):
-                                #     found=False
-                                #     ss1, ss2=sp[i], sp[i+1]
-                                #     for n1, n2 in self.G_nav.edges():
-                                #         if (self.G_nav.node[n1]['sec']==ss1 and self.G_nav.node[n2]['sec']==ss2) or (self.G_nav.node[n1]['sec']==ss2 and self.G_nav.node[n2]['sec']==ss1):
-                                #             found=True
-                                            # if ss1==0 and ss2==31:
-                                            #     print n1, n2, self.G_nav.node[n1]['sec'], self.G_nav.node[n2]['sec'], H_nav.has_node(n1), H_nav.has_node(n1), H_nav.has_edge(n1,n2)
-                                    # if found==False:
-                                    #     print 'Problem: sectors', ss1, 'and', ss2, 'are not adjacent in terms of navpoints.'
-                                    # else:
-                                    #     print 'sectors', ss1 , 'and', ss2, 'are adjacent.'
-                                # for i in range(len(sp)-1):
-                                #     found=False
-                                #     ss1, ss2=sp[i], sp[i+1]
-                                #     for n1, n2 in H_nav.edges():
-                                #         if (self.G_nav.node[n1]['sec']==ss1 and self.G_nav.node[n2]['sec']==ss2) or (self.G_nav.node[n1]['sec']==ss2 and self.G_nav.node[n2]['sec']==ss1):
-                                #             found=True
-                                    # if found==False:
-                                    #     print 'Problem: sectors', ss1, 'and', ss2, 'are not adjacent in terms of navpoints (H).'
-                                    # else:
-                                    #     print 'sectors', ss1 , 'and', ss2, 'are adjacent (H).'
-
-                                # Compute shortest paths on restrictied network.
+                                # Compute shortest paths on restricted network.
                                 H_nav.fix_airports([p0,p1], 0.)
                                 H_nav.build_H()
                                 try:
                                     H_nav.compute_shortest_paths(Nfp, repetitions=False, use_sector_path=True, old=False, verb = 0, delete_pairs=delete_pairs)
                                 except AssertionError:
                                     raise NoShortH('')
-                                # try:
-                                #     for v in H_nav.short.values():
-                                #         assert len(v) == Nfp
-                                # except AssertionError:
-                                #     print len(v), Nfp
-                                #     raise
-                                # except:
-                                #     raise
 
-                                # for k, p in enumerate(H_nav.short[(p0,p1)]):
-                                #     if self.convert_path(p)!=sp:
-                                #         print 'Alert: discrepancy between theoretical path of sectors and final one!'
-                                #         print 'Path number', k
-                                #         print 'Theoretical one:', sp, self.weight_path(sp)
-                                #         print 'Actual one:',  self.convert_path(p), self.weight_path(self.convert_path(p))        
-                                #         raise Exception("Problem")                        
-
-
-                                shorts=[p for p in  H_nav.short[(p0,p1)] if self.convert_path(p)==sp]
+                                shorts = [p for p in  H_nav.short[(p0,p1)] if self.convert_path(p)==sp]
                                 assert len(shorts)==self.Nfp
-                                #self.G_nav.short[(p0,p1)] = self.G_nav.short.get((p0,p1),[]) + shorts
                                 # This list stores all nav-shortest paths, organized by sec-shortest paths.
                                 # So it should have Nfp entries of length Nfp.
                                 self.short_nav[(p0,p1)][tuple(sp)] = shorts 
+                                self.G_nav.short[(p0,p1)] = shorts
                                 assert len(self.short_nav[(p0,p1)][tuple(sp)])==self.Nfp
                             except nx.NetworkXNoPath:
-                                print 'No restricted shortest path between' ,p0, 'and', p1
-                                cc=nx.connected_components(H_nav)
+                                print 'No restricted shortest path between', p0, 'and', p1
+                                cc = nx.connected_components(H_nav)
                                 print 'Composition of connected components (sectors):'
                                 for c in cc:
                                     print np.unique([self.G_nav.node[n]['sec'] for n in c])
@@ -1716,8 +1689,7 @@ class Net(nx.Graph):
                 #    print "len(self.short_nav[(p0, p1)]), self.Nfp", len(self.short_nav[(p0, p1)]), self.Nfp
                 #    raise
             except AssertionError:
-                print 'There is a problem with the number of shortest paths.'
-                raise
+                raise Exception('There is a problem with the number of shortest paths.')
             except NoShortH:
                 #self.G_nav.short[(p0,p1)]
                 print "I can't find enough paths for this pair", 
@@ -1728,36 +1700,6 @@ class Net(nx.Graph):
                 else:
                     print
 
-
-            # try:
-            #     assert len(self.short_nav[(p0,p1)]) == self.Nfp
-            # except:
-            #     print len(self.short_nav[(p0,p1)])
-            #     raise
-            # if self.G_nav.short.has_key((p0,p1)):
-            #     self.G_nav.short[(p0,p1)] = sorted(list(set([tuple(o) for o in G.G_nav.short[(p0,p1)]])), key= lambda p: G.G_nav.weight_path(p))[:Nfp]
- 
-        #for p in pairs:
-        #    if self.G_nav.short.has_key(p) and self.G_nav.short[p]==[]:
-        #        del self.G_nav.short[p]
-        #        print 'I deleted pair', p ,'because no path was computed.'
-            #elif self.G_nav.short[p] < Nfp and not delete_pairs:
-            #    print  "Pair", p, "do not have enough path, I duplicate the last one."
-            #    while len(self.G_nav.short[p])<Nfp:
-            #        self.G_nav.short[p].append(self.short[p][-1])  
-
-        #for p in self.G_nav.short.keys():
-        #    if self.G_nav.short[p] < Nfp and not delete_pairs:
-        
-                # print  "Pair", p, "do not have enough path, I duplicate the last one."
-                # while len(self.G_nav.short[p])<Nfp:
-                #     self.G_nav.short[p].append(self.short[p][-1])
-            # try:
-            #     assert len(self.G_nav.short[p])==Nfp    
-            # except:
-            #     print len(self.G_nav.short[p]), Nfp
-            #     raise     
-                   
     def compute_all_shortest_paths(self, Nsp_nav, perform_checks = False, sec_pairs_to_compute = [], nav_pairs_to_compute = [], verb = True):
         """
         Gather several methods to ensure a consistency between navpoints and sectors.
@@ -1892,22 +1834,28 @@ class Net(nx.Graph):
                 sec = self.G_nav.node[path[j]]['sec']
         return path_sec
             
-    def basic_statistics(self, rep='.'):
+    def basic_statistics(self, rep='.', name=None):
         """
         Computes basic stats on degree, weights and capacities. 
 
         Parameters
         ----------
-        rep : string
+        rep : string, optional
             directory in which the stats are saved.
+        name : string, optional
+            name of the file (without extension).
 
         Notes
         -----
         TODO: expand this.
 
         """
+        if name==None:
+            name = self.name
+
         os.system('mkdir -p ' + rep)
-        with open(join(rep, 'basic_stats_net.txt'),'w') as f:
+        print 'basic_statistics', join(rep, name + '_basic_stats_net.txt')
+        with open(join(rep, name + '_basic_stats_net.txt'), 'w') as f:
             print >>f, 'Mean/std degree:', np.mean([self.degree(n) for n in self.nodes()]), np.std([self.degree(n) for n in self.nodes()])
             print >>f, 'Mean/std weight:', np.mean([self[e[0]][e[1]]['weight'] for e in self.edges()]), np.std([self[e[0]][e[1]]['weight'] for e in self.edges()])
             print >>f, 'Mean/std capacity:', np.mean([self.node[n]['capacity'] for n in self.nodes() if not n in self.airports]),\
@@ -2182,7 +2130,8 @@ class NavpointNet(Net):
                 self.add_node(j, coord=cc)
                 j+=1
        
-    def build(self, N, nairports, min_dis, generation_of_airports=True, Gtype='D', sigma=1., mean_degree=6, sector_list=[], navpoints_borders=[], shortcut=0.):
+    def build(self, N, nairports, min_dis, generation_of_airports=True, Gtype='D', sigma=1., mean_degree=6, 
+        sector_list=[], navpoints_borders=[], shortcut=0.):
         """
         Build a graph of the given type. Build also the corresponding graph used for ksp_yen.
         
@@ -2214,7 +2163,7 @@ class NavpointNet(Net):
         #self.weighted=sigma==0.
         
         if Gtype=='D' or Gtype=='E':
-            self.build_nodes(N, sector_list=sector_list,navpoints_borders=navpoints_borders, shortcut=shortcut)
+            self.build_nodes(N, sector_list=sector_list,navpoints_borders=navpoints_borders)
             self.build_net(Gtype=Gtype, mean_degree=mean_degree)
             
         elif Gtype=='T':

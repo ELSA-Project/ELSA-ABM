@@ -10,7 +10,11 @@
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>abm_interface</strong></big></big></font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/earendil/Documents/ELSA/ABM/ABM_FINAL/interface/abm_interface.py">/home/earendil/Documents/ELSA/ABM/ABM_FINAL/interface/abm_interface.py</a></font></td></tr></table>
-    <p><tt>#&nbsp;-*-&nbsp;coding:&nbsp;utf-8&nbsp;-*-</tt></p>
+    <p><tt>====================================================================<br>
+---------------------------&nbsp;Interface&nbsp;------------------------------<br>
+====================================================================<br>
+This&nbsp;file&nbsp;provides&nbsp;python&nbsp;functions&nbsp;to&nbsp;easily&nbsp;use&nbsp;the&nbsp;tactical&nbsp;abm<br>
+within&nbsp;a&nbsp;python&nbsp;script.</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
@@ -51,7 +55,13 @@
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#000000" face="helvetica, arial"><a name="ParasTact">class <strong>ParasTact</strong></a>(<a href="abm_strategic.utilities.html#Paras">abm_strategic.utilities.Paras</a>)</font></td></tr>
     
-<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class<br>
+=====<br>
+This&nbsp;is&nbsp;class&nbsp;used&nbsp;to&nbsp;handle&nbsp;a&nbsp;config&nbsp;file&nbsp;of&nbsp;the&nbsp;tactical&nbsp;ABM.&nbsp;It&nbsp;is&nbsp;used&nbsp;<br>
+to&nbsp;update&nbsp;the&nbsp;value&nbsp;of&nbsp;some&nbsp;parameters.&nbsp;The&nbsp;method&nbsp;initialize_paras&nbsp;must&nbsp;be&nbsp;called&nbsp;once&nbsp;<br>
+before&nbsp;the&nbsp;beginning&nbsp;of&nbsp;the&nbsp;simulations.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
 <td width="100%"><dl><dt>Method resolution order:</dt>
 <dd><a href="abm_interface.html#ParasTact">ParasTact</a></dd>
 <dd><a href="abm_strategic.utilities.html#Paras">abm_strategic.utilities.Paras</a></dd>
@@ -60,12 +70,12 @@
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="ParasTact-initialize_paras"><strong>initialize_paras</strong></a>(self, config_file<font color="#909090">=None</font>)</dt><dd><tt>This&nbsp;is&nbsp;here&nbsp;only&nbsp;because&nbsp;the&nbsp;update&nbsp;procedure&nbsp;does&nbsp;not<br>
+<dl><dt><a name="ParasTact-initialize_paras"><strong>initialize_paras</strong></a>(self, config_file<font color="#909090">=None</font>)</dt><dd><tt>This&nbsp;is&nbsp;here&nbsp;only&nbsp;because&nbsp;the&nbsp;update&nbsp;procedure&nbsp;es&nbsp;not<br>
 compute&nbsp;the&nbsp;paras&nbsp;derived&nbsp;from&nbsp;other&nbsp;paras&nbsp;(via&nbsp;to_update)<br>
 if&nbsp;the&nbsp;arguments&nbsp;of&nbsp;the&nbsp;functions&nbsp;have&nbsp;not&nbsp;changed.&nbsp;This&nbsp;is<br>
 problematic&nbsp;for&nbsp;initialization&nbsp;because&nbsp;the&nbsp;derived&nbsp;paras<br>
-might&nbsp;not&nbsp;be&nbsp;present&nbsp;in&nbsp;the&nbsp;dictionnary&nbsp;until&nbsp;one&nbsp;their&nbsp;<br>
-argument&nbsp;has&nbsp;changed.</tt></dd></dl>
+might&nbsp;not&nbsp;be&nbsp;present&nbsp;in&nbsp;the&nbsp;dictionnary&nbsp;until&nbsp;one&nbsp;of&nbsp;their&nbsp;<br>
+arguments&nbsp;has&nbsp;changed.</tt></dd></dl>
 
 <dl><dt><a name="ParasTact-update"><strong>update</strong></a>(self, name_para, value_para, config_file<font color="#909090">=None</font>)</dt></dl>
 
@@ -176,10 +186,40 @@ Data and other attributes inherited from <a href="__builtin__.html#dict">__built
     
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><dl><dt><a name="-choose_paras"><strong>choose_paras</strong></a>(name_para, new_value, fil<font color="#909090">='../abm_tactical/config/config.cfg'</font>)</dt><dd><tt>Function&nbsp;to&nbsp;modify&nbsp;a&nbsp;config&nbsp;file&nbsp;for&nbsp;the&nbsp;tactical&nbsp;ABM.&nbsp;If&nbsp;the&nbsp;given&nbsp;parameters&nbsp;does&nbsp;not&nbsp;<br>
-exist&nbsp;in&nbsp;the&nbsp;config&nbsp;file,&nbsp;the&nbsp;function&nbsp;does&nbsp;not&nbsp;modify&nbsp;anything&nbsp;and&nbsp;exit&nbsp;silently.</tt></dd></dl>
- <dl><dt><a name="-do_ABM_tactical"><strong>do_ABM_tactical</strong></a>(input_file, output_file, config_file, verbose<font color="#909090">=2</font>, shock_tmp<font color="#909090">='/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_tactical/config/shock_tmp.dat'</font>, bound_latlon<font color="#909090">='/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_tactical/config/bound_latlon.dat'</font>, temp_nvp<font color="#909090">='/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_tactical/config/temp_nvp.dat'</font>)</dt></dl>
- <dl><dt><a name="-do_efficiency"><strong>do_efficiency</strong></a>()</dt></dl>
- <dl><dt><a name="-do_efficiency2"><strong>do_efficiency2</strong></a>()</dt></dl>
+exist&nbsp;in&nbsp;the&nbsp;config&nbsp;file,&nbsp;the&nbsp;function&nbsp;does&nbsp;not&nbsp;modify&nbsp;anything&nbsp;and&nbsp;exit&nbsp;silently.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+name_para&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;of&nbsp;the&nbsp;parameter&nbsp;to&nbsp;update<br>
+new_value&nbsp;:&nbsp;either&nbsp;string,&nbsp;float&nbsp;or&nbsp;integer<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new&nbsp;value&nbsp;of&nbsp;the&nbsp;parameter&nbsp;to&nbsp;update<br>
+fil&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;to&nbsp;the&nbsp;config&nbsp;file.<br>
+&nbsp;<br>
+Notes<br>
+-----<br>
+It&nbsp;is&nbsp;better&nbsp;to&nbsp;use&nbsp;this&nbsp;function&nbsp;with&nbsp;the&nbsp;help&nbsp;of&nbsp;the&nbsp;<a href="#ParasTact">ParasTact</a>&nbsp;class.&nbsp;<br>
+TODO:&nbsp;possibility&nbsp;of&nbsp;changing&nbsp;several&nbsp;parameters&nbsp;aa&nbsp;the&nbsp;same&nbsp;time.</tt></dd></dl>
+ <dl><dt><a name="-do_ABM_tactical"><strong>do_ABM_tactical</strong></a>(input_file, output_file, config_file, verbose<font color="#909090">=2</font>, shock_tmp<font color="#909090">='/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_tactical/config/shock_tmp.dat'</font>, bound_latlon<font color="#909090">='/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_tactical/config/bound_latlon.dat'</font>, temp_nvp<font color="#909090">='/home/earendil/Documents/ELSA/ABM/ABM_FINAL/abm_tactical/config/temp_nvp.dat'</font>)</dt><dd><tt>Main&nbsp;function&nbsp;of&nbsp;control&nbsp;of&nbsp;the&nbsp;tactical&nbsp;ABM.&nbsp;The&nbsp;function&nbsp;uses&nbsp;tactical_simulation,<br>
+which&nbsp;has&nbsp;beem&nbsp;compiled&nbsp;precedently&nbsp;using&nbsp;the&nbsp;wrapper.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+input_file&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;to&nbsp;M1&nbsp;file&nbsp;(planned&nbsp;trajectories)<br>
+output_file&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;to&nbsp;save&nbsp;M3&nbsp;file&nbsp;(trajectories&nbsp;after&nbsp;control)<br>
+config_file&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;to&nbsp;config&nbsp;file.<br>
+verbose&nbsp;:&nbsp;integer,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;verbosity<br>
+shock_tmp&nbsp;:&nbsp;string,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;to&nbsp;file&nbsp;containing&nbsp;the&nbsp;possible&nbsp;coordinates&nbsp;of&nbsp;shocks.<br>
+bound_latlon&nbsp;:&nbsp;string,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;to&nbsp;file&nbsp;containing&nbsp;the&nbsp;coordinates&nbsp;of&nbsp;the&nbsp;boundary&nbsp;of&nbsp;the&nbsp;controlled&nbsp;airspace.<br>
+temp_nvp&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;to&nbsp;file&nbsp;containing&nbsp;temporary&nbsp;navigation&nbsp;points&nbsp;used&nbsp;in&nbsp;the&nbsp;simulations.</tt></dd></dl>
  <dl><dt><a name="-tactical_simulation"><strong>tactical_simulation</strong></a> = simulation(...)</dt></dl>
 </td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">

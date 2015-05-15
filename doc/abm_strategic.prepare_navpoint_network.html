@@ -461,20 +461,53 @@ navpoints&nbsp;:&nbsp;list&nbsp;of&nbsp;coordinates&nbsp;of&nbsp;new&nbsp;navpoi
 Notes<br>
 -----<br>
 Changed&nbsp;in&nbsp;2.9.7:&nbsp;don't&nbsp;use&nbsp;vor&nbsp;anymore.&nbsp;More&nbsp;efficient.</tt></dd></dl>
- <dl><dt><a name="-prepare_hybrid_network"><strong>prepare_hybrid_network</strong></a>(paras_G, rep<font color="#909090">='.'</font>, save<font color="#909090">=True</font>, save_path<font color="#909090">=None</font>, show<font color="#909090">=True</font>)</dt><dd><tt>New&nbsp;in&nbsp;2.9.6:&nbsp;refactorization.<br>
-Changed&nbsp;in&nbsp;2.9.7:&nbsp;-&nbsp;navpoints&nbsp;are&nbsp;not&nbsp;contained&nbsp;in&nbsp;any&nbsp;sectors&nbsp;but&nbsp;touch&nbsp;one&nbsp;are&nbsp;linked&nbsp;to&nbsp;it.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;numberize&nbsp;also&nbsp;airports&nbsp;and&nbsp;pairs.<br>
-Changed&nbsp;in&nbsp;2.9.8:&nbsp;supports&nbsp;single&nbsp;sector&nbsp;network&nbsp;TODO.&nbsp;Supports&nbsp;custom&nbsp;external&nbsp;function&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;choosing&nbsp;airports.<br>
-TODO:&nbsp;make&nbsp;an&nbsp;builder&nbsp;and&nbsp;different&nbsp;methods.</tt></dd></dl>
- <dl><dt><a name="-prepare_sectors_network"><strong>prepare_sectors_network</strong></a>(paras_G, no_airports<font color="#909090">=False</font>)</dt><dd><tt>Prepare&nbsp;the&nbsp;network&nbsp;of&nbsp;sectors&nbsp;which&nbsp;will&nbsp;be&nbsp;the&nbsp;base&nbsp;for&nbsp;the&nbsp;navpoint&nbsp;network.<br>
+ <dl><dt><a name="-prepare_hybrid_network"><strong>prepare_hybrid_network</strong></a>(paras_G, rep<font color="#909090">=None</font>, save_name<font color="#909090">=None</font>, show<font color="#909090">=True</font>)</dt><dd><tt>This&nbsp;is&nbsp;a&nbsp;builder&nbsp;for&nbsp;an&nbsp;hybrid&nbsp;network.&nbsp;An&nbsp;``hybrid&nbsp;network''&nbsp;is&nbsp;a&nbsp;Net&nbsp;object&nbsp;(the&nbsp;class&nbsp;is&nbsp;<br>
+defined&nbsp;in&nbsp;the&nbsp;file&nbsp;simAirSpaceO.py)&nbsp;which&nbsp;has&nbsp;an&nbsp;attribute&nbsp;which&nbsp;is&nbsp;a&nbsp;NavpointNet&nbsp;object&nbsp;<br>
+(also&nbsp;defined&nbsp;in&nbsp;simAirSpaceO.py).&nbsp;The&nbsp;Net&nbsp;object,&nbsp;let&nbsp;us&nbsp;call&nbsp;it&nbsp;G,&nbsp;is&nbsp;the&nbsp;support&nbsp;for&nbsp;<br>
+all&nbsp;the&nbsp;information&nbsp;concerning&nbsp;the&nbsp;sectors,&nbsp;whereas&nbsp;the&nbsp;NavpointNet&nbsp;object&nbsp;--&nbsp;$G_{nav}$&nbsp;--&nbsp;<br>
+includes&nbsp;all&nbsp;information&nbsp;related&nbsp;to&nbsp;the&nbsp;navigation&nbsp;point&nbsp;network.&nbsp;The&nbsp;latter&nbsp;can&nbsp;be&nbsp;accessed&nbsp;<br>
+using&nbsp;$G.G_{nav}$.<br>
+&nbsp;<br>
+The&nbsp;builder&nbsp;is&nbsp;auite&nbsp;versatile&nbsp;and&nbsp;can&nbsp;be&nbsp;used&nbsp;with&nbsp;some&nbsp;ata&nbsp;concerning&nbsp;the&nbsp;airspace&nbsp;or&nbsp;can<br>
+take&nbsp;some&nbsp;features&nbsp;from&nbsp;traffic&nbsp;data,&nbsp;like&nbsp;the&nbsp;entry/exits,&nbsp;the&nbsp;capacities,&nbsp;etc.<br>
 &nbsp;<br>
 Parameters<br>
 ----------<br>
 paras_G&nbsp;:&nbsp;dictionnary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;all&nbsp;the&nbsp;relevant&nbsp;parameters&nbsp;to&nbsp;apply.&nbsp;Such&nbsp;a&nbsp;dictionnary&nbsp;can&nbsp;be<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;generated&nbsp;with&nbsp;the&nbsp;paras_G.py&nbsp;file.<br>
+rep&nbsp;:&nbsp;string,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;full&nbsp;path&nbsp;of&nbsp;the&nbsp;directory&nbsp;where&nbsp;to&nbsp;save&nbsp;the&nbsp;network&nbsp;and&nbsp;related&nbsp;files&nbsp;(like&nbsp;statistics).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;None,&nbsp;nothing&nbsp;is&nbsp;saved<br>
+save_name&nbsp;:&nbsp;&nbsp;string,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;not&nbsp;None,&nbsp;specifies&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;file&nbsp;where&nbsp;the&nbsp;network&nbsp;is&nbsp;saved.&nbsp;If&nbsp;None,&nbsp;the&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;the&nbsp;network&nbsp;given&nbsp;by&nbsp;paras_G['name']&nbsp;will&nbsp;be&nbsp;used.<br>
+show&nbsp;:&nbsp;boolean,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;True,&nbsp;display&nbsp;an&nbsp;image&nbsp;of&nbsp;the&nbsp;network.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+G&nbsp;:&nbsp;hybrid&nbsp;network.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Hybrid&nbsp;networks&nbsp;have&nbsp;an&nbsp;attribute&nbsp;G_nav&nbsp;which&nbsp;is&nbsp;the&nbsp;navpoint&nbsp;network.<br>
+&nbsp;<br>
+Notes<br>
+-----<br>
+New&nbsp;in&nbsp;2.9.6:&nbsp;refactorization.<br>
+Changed&nbsp;in&nbsp;2.9.7:&nbsp;-&nbsp;navpoints&nbsp;are&nbsp;not&nbsp;contained&nbsp;in&nbsp;any&nbsp;sectors&nbsp;but&nbsp;touch&nbsp;one&nbsp;are&nbsp;linked&nbsp;to&nbsp;it.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;numberize&nbsp;also&nbsp;airports&nbsp;and&nbsp;pairs.<br>
+Changed&nbsp;in&nbsp;2.9.8:&nbsp;supports&nbsp;single&nbsp;sector&nbsp;network&nbsp;TODO.&nbsp;Supports&nbsp;custom&nbsp;external&nbsp;function&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;choosing&nbsp;airports.<br>
+TODO:&nbsp;make&nbsp;a&nbsp;builder&nbsp;class&nbsp;with&nbsp;methods.</tt></dd></dl>
+ <dl><dt><a name="-prepare_sectors_network"><strong>prepare_sectors_network</strong></a>(paras_G)</dt><dd><tt>Prepare&nbsp;the&nbsp;network&nbsp;of&nbsp;sectors&nbsp;which&nbsp;will&nbsp;be&nbsp;the&nbsp;base&nbsp;for&nbsp;the&nbsp;navpoint&nbsp;network.&nbsp;If&nbsp;no&nbsp;file&nbsp;<br>
+containing&nbsp;a&nbsp;networkx&nbsp;object&nbsp;is&nbsp;given&nbsp;via&nbsp;paras_G['net_sec'],&nbsp;it&nbsp;builds&nbsp;a&nbsp;new&nbsp;sector&nbsp;network<br>
+with&nbsp;paras_G['N']&nbsp;number&nbsp;of&nbsp;sectors,&nbsp;including&nbsp;one&nbsp;sector&nbsp;at&nbsp;each&nbsp;corner&nbsp;of&nbsp;the&nbsp;square&nbsp;<br>
+[0,&nbsp;1]&nbsp;x&nbsp;[0,&nbsp;1].&nbsp;The&nbsp;latter&nbsp;is&nbsp;done&nbsp;to&nbsp;facilitate&nbsp;the&nbsp;voronoi&nbsp;tesselation&nbsp;and&nbsp;the&nbsp;subsequent<br>
+computation&nbsp;of&nbsp;the&nbsp;boundaries&nbsp;of&nbsp;the&nbsp;sectors.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+paras_G&nbsp;:&nbsp;dictionary<br>
 &nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;the&nbsp;parameters&nbsp;for&nbsp;the&nbsp;construction&nbsp;of&nbsp;the&nbsp;network<br>
-no_airports&nbsp;:&nbsp;boolean<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Don't&nbsp;add&nbsp;airports&nbsp;to&nbsp;network&nbsp;if&nbsp;True.<br>
 &nbsp;<br>
 Returns<br>
 -------<br>
@@ -483,7 +516,8 @@ G&nbsp;:&nbsp;Net&nbsp;object.<br>
 Notes<br>
 -----<br>
 New&nbsp;in&nbsp;2.9.6:&nbsp;refactorization.<br>
-Changed&nbsp;in&nbsp;2.9.8:&nbsp;updating&nbsp;signature&nbsp;of&nbsp;build&nbsp;function</tt></dd></dl>
+Changed&nbsp;in&nbsp;2.9.8:&nbsp;updating&nbsp;signature&nbsp;of&nbsp;build&nbsp;function<br>
+Changed&nbsp;in&nbsp;2.9.9:&nbsp;removed&nbsp;the&nbsp;possiblity&nbsp;of&nbsp;adding&nbsp;airports.</tt></dd></dl>
  <dl><dt><a name="-recompute_neighbors"><strong>recompute_neighbors</strong></a>(G)</dt><dd><tt>Checks&nbsp;if&nbsp;neighbouring&nbsp;sectors&nbsp;have&nbsp;a&nbsp;common&nbsp;boundary.&nbsp;Disconnects&nbsp;them&nbsp;otherwise.<br>
 &nbsp;<br>
 Parameters<br>
@@ -545,5 +579,6 @@ Used&nbsp;in&nbsp;particular&nbsp;to&nbsp;convert&nbsp;2.9&nbsp;graphs&nbsp;(mod
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>version</strong> = '2.9.8'</td></tr></table>
+<td width="100%"><strong>result_dir</strong> = '/home/earendil/Documents/ELSA/ABM/results'<br>
+<strong>version</strong> = '2.9.9'</td></tr></table>
 </body></html>

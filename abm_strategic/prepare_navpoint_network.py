@@ -33,18 +33,9 @@ from utilities import clean_network, find_entry_exit
 from libs.tools_airports import get_paras, extract_flows_from_data, expand, dist_flat_kms
 #Modules
 from libs.general_tools import draw_network_and_patches, silence, counter, delay, date_st, make_union_interval, voronoi_finite_polygons_2d
+from libs.paths import result_dir
 
-if 0:
-    # Manual seed
-    see_=1
-    #see_ = 15 #==> the one I used for new, old_good, etc.. 
-    # see=2
-    print "===================================="
-    print "USING SEED", see_
-    print "===================================="
-    seed(see_)
-
-version='2.9.8'
+version='2.9.9'
 
 _colors = ('Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed')
 
@@ -173,14 +164,14 @@ def automatic_name(G, paras_G):
 
     """
 
-    long_name=G.type_of_net + '_N' + str(len(G.nodes()))
+    long_name = G.type_of_net + '_N' + str(len(G.nodes()))
     
     if G.airports!=[] and len(G.airports)==2:
        long_name+='_airports' +  str(G.airports[0]) + '_' + str(G.airports[1])
     elif len(G.airports)>2:
         long_name+='_nairports' + str(len(G.airports))
-    if paras_G['pairs']!=[] and len(G.airports)==2:
-        long_name+='_direction_' + str(paras_G['pairs'][0][0]) + '_' + str(paras_G['pairs'][0][1])
+    if paras_G['pairs_sec']!=[] and len(G.airports)==2:
+        long_name+='_direction_' + str(paras_G['pairs_sec'][0][0]) + '_' + str(paras_G['pairs_sec'][0][1])
     long_name+='_cap_' + G.typ_capacities
     
     if G.typ_capacities!='manual':
@@ -1009,7 +1000,7 @@ def give_capacities_and_weights(G, paras_G):
 
     return G
 
-def navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-2):
+def navpoints_at_borders(G, lin_dens=10., only_outer_boundary=False, thr=1e-2):
     """
     Create navpoints at the boundaries of all sectors or only on the boundary
     of the aggregated shape. Build the list of borders and then call 
@@ -1052,21 +1043,23 @@ def navpoints_at_borders(G, lin_dens=10., only_outer_boundary = False, thr = 1e-
                 if not (seg in borders or seg[::-1] in borders): # this is to ensure non-redundancy of the borders.
                     borders.append(seg)
 
-    navpoints = compute_navpoints_borders(borders, shape, lin_dens = lin_dens, only_outer_boundary = only_outer_boundary, thr = thr)
+    navpoints = compute_navpoints_borders(borders, shape, lin_dens=lin_dens, only_outer_boundary=only_outer_boundary, thr=thr)
 
     print "I will create", len(navpoints), "navpoints on the borders."
     return navpoints
 
-def prepare_sectors_network(paras_G, no_airports=False):  
+def prepare_sectors_network(paras_G):  
     """
-    Prepare the network of sectors which will be the base for the navpoint network.
+    Prepare the network of sectors which will be the base for the navpoint network. If no file 
+    containing a networkx object is given via paras_G['net_sec'], it builds a new sector network
+    with paras_G['N'] number of sectors, including one sector at each corner of the square 
+    [0, 1] x [0, 1]. The latter is done to facilitate the voronoi tesselation and the subsequent
+    computation of the boundaries of the sectors.
 
     Parameters
     ----------
-    paras_G : dictionnary
+    paras_G : dictionary
         of the parameters for the construction of the network
-    no_airports : boolean
-        Don't add airports to network if True.
 
     Returns
     -------
@@ -1076,6 +1069,7 @@ def prepare_sectors_network(paras_G, no_airports=False):
     -----
     New in 2.9.6: refactorization.
     Changed in 2.9.8: updating signature of build function
+    Changed in 2.9.9: removed the possiblity of adding airports.
 
     """
 
@@ -1084,11 +1078,14 @@ def prepare_sectors_network(paras_G, no_airports=False):
     G.type_of_net = paras_G['type_of_net']
 
     # Import the network from the paras if given, build a new one otherwise
-    if paras_G['net_sec'] !=None:
+    if paras_G['net_sec']!=None:
         G.import_from(paras_G['net_sec'], numberize=((type(paras_G['net_sec'].nodes()[0])!=type(1.)) and (type(paras_G['net_sec'].nodes()[0])!=type(1))))
     else:
         #G.build(paras_G['N'],paras_G['nairports'],paras_G['min_dis'],Gtype=paras_G['type_of_net'],put_nodes_at_corners = True)
-        G.build(paras_G['N'], Gtype=paras_G['type_of_net'], put_nodes_at_corners = True)
+        if paras_G['N']<=4:
+            print "WARNING: you requested less than 4 sectors, so I do not put any sectors on the corners of the square."
+            paras_G['N']+=4
+        G.build(paras_G['N']-4, Gtype=paras_G['type_of_net'], put_nodes_at_corners=paras_G['N']>4)
 
     # Give the pre-built polygons to the network.
     if paras_G['polygons']!=None:
@@ -1096,7 +1093,7 @@ def prepare_sectors_network(paras_G, no_airports=False):
         for name, shape in paras_G['polygons'].items():
             G.polygons[G.idx_nodes[name]]=shape
     else:
-        G, vor= compute_voronoi(G)
+        G, vor = compute_voronoi(G)
     
     # Check if every sector has a polygon
     for n in G.nodes():
@@ -1107,8 +1104,8 @@ def prepare_sectors_network(paras_G, no_airports=False):
             raise
 
     # Check if there are polygons reduced to a single point.
-    check_empty_polygon(G, repair = True)
-    check_empty_polygon(G, repair = False)
+    check_empty_polygon(G, repair=True)
+    check_empty_polygon(G, repair=False)
 
     # Make sure that neighbors have a common boundary
     recompute_neighbors(G)
@@ -1116,11 +1113,11 @@ def prepare_sectors_network(paras_G, no_airports=False):
     # Convex hull of the sectors
     G.global_shape = unary_union(G.polygons.values()).convex_hull
 
-    if not no_airports:
-        if paras_G['airports']!=[]:
-            G.add_airports(paras_G['airports'], paras_G['min_dis'], pairs=paras_G['pairs'])
-        else:
-            G.generate_airports(paras_G['nairports'],paras_G['min_dis'])
+    # if not no_airports:
+    #     if paras_G['airports_sec']!=[]:
+    #         G.add_airports(paras_G['airports'], paras_G['min_dis'], pairs=paras_G['pairs'])
+    #     else:
+    #         G.generate_airports(paras_G['nairports'],paras_G['min_dis'])
 
     return G
     
@@ -1289,20 +1286,53 @@ class NoEdges(Exception):
 # =========================================================================================== #
 # =========================================================================================== #
 
-def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=True):
+def prepare_hybrid_network(paras_G, rep=None, save_name=None, show=True):
     """
+    This is a builder for an hybrid network. An ``hybrid network'' is a Net object (the class is 
+    defined in the file simAirSpaceO.py) which has an attribute which is a NavpointNet object 
+    (also defined in simAirSpaceO.py). The Net object, let us call it G, is the support for 
+    all the information concerning the sectors, whereas the NavpointNet object -- $G_{nav}$ -- 
+    includes all information related to the navigation point network. The latter can be accessed 
+    using $G.G_{nav}$.
+
+    The builder is auite versatile and can be used with some ata concerning the airspace or can
+    take some features from traffic data, like the entry/exits, the capacities, etc.
+
+    Parameters
+    ----------
+    paras_G : dictionnary
+         include all the relevant parameters to apply. Such a dictionnary can be
+         generated with the paras_G.py file.
+    rep : string, optional
+        full path of the directory where to save the network and related files (like statistics).
+        If None, nothing is saved
+    save_name :  string, optional
+        If not None, specifies the name of the file where the network is saved. If None, the name
+        of the network given by paras_G['name'] will be used.
+    show : boolean, optional
+        if True, display an image of the network.
+
+    Returns
+    -------
+    G : hybrid network.
+        Hybrid networks have an attribute G_nav which is the navpoint network.
+
+    Notes
+    -----
     New in 2.9.6: refactorization.
     Changed in 2.9.7: - navpoints are not contained in any sectors but touch one are linked to it.
                       - numberize also airports and pairs.
     Changed in 2.9.8: supports single sector network TODO. Supports custom external function 
         for choosing airports.
-    TODO: make an builder and different methods.
+    TODO: make a builder class with methods.
+
     """
+    
     print
 
     ############ Prepare network of sectors #############
     print "Preparing network of sector..."
-    G=prepare_sectors_network(paras_G, no_airports=paras_G['file_airports']==None)
+    G = prepare_sectors_network(paras_G)
     if len(G.edges())==0:
         raise NoEdges("The sector network has only one sector, this feature is not supported for now.")#TODO
     #G.show()
@@ -1314,19 +1344,21 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     for n in G.nodes():
         G.node[n]['navs']=[]
         
-    G.G_nav=NavpointNet()
-    G.G_nav.type='nav'
+    G.G_nav = NavpointNet()
+    G.G_nav.type = 'nav'
 
     if paras_G['net_nav']==None:
-        nav_at_borders = navpoints_at_borders(G, only_outer_boundary = not paras_G['make_borders_points'], lin_dens = paras_G['lin_dens_borders'])
+        nav_at_borders = navpoints_at_borders(G, only_outer_boundary=not paras_G['make_borders_points'], lin_dens=paras_G['lin_dens_borders'])
         #nav_at_borders = []
-        G.G_nav.build((paras_G['N_by_sectors']-1)*len(G.nodes()),paras_G['nairports'],paras_G['min_dis'], generation_of_airports=False, \
-                sector_list=[G.node[n]['coord'] for n in G.nodes()], navpoints_borders=nav_at_borders, shortcut=0.01) #ATTENTION: min_dis is not the right one. TODO
-        idx=max(G.G_nav.nodes())
+        # Remark: paras_G['nairports'] is not used here because of the generation_of_airports=False.
+        G.G_nav.build((paras_G['N_by_sectors']-1)*len(G.nodes()), 0, paras_G['min_dis'], generation_of_airports=False, \
+                sector_list=[G.node[n]['coord'] for n in G.nodes()], navpoints_borders=nav_at_borders, shortcut=0.01)
+
+        idx = max(G.G_nav.nodes())
     else:
         numberize = ((type(paras_G['net_nav'].nodes()[0])!=type(1.)) and (type(paras_G['net_nav'].nodes()[0])!=type(1)))
         G.G_nav.import_from(paras_G['net_nav'], numberize=numberize) 
-        idx=max(G.G_nav.nodes())
+        idx = max(G.G_nav.nodes())
         convert_minutes = max([abs(cc) for n in G.G_nav.nodes() for cc in G.G_nav.node[n]['coord']])>180. and max([abs(cc) for ccs in G.global_shape.exterior.coords for cc in ccs])<180
         if convert_minutes:
             print "I detected that the coordinates of navpoints were in minutes whereas coordinates of the area were in degree."
@@ -1351,9 +1383,10 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print
     #G.G_nav.show(stack=True)
 
-    for n in list(paras_G['airports_nav'])[:]:
-        if not n in G.G_nav.nodes():
-            paras_G['airports_nav'].remove(n)
+    if paras_G['airports_nav']!=None:
+        for n in list(paras_G['airports_nav'])[:]:
+            if not n in G.G_nav.nodes():
+                paras_G['airports_nav'].remove(n)
 
     ######### Linking the two networks together ##########
     print "Linking the networks together..."
@@ -1403,12 +1436,12 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
             G.G_nav.remove_node(nav)
             # Remove node from list of airports
             if nav in paras_G['airports_nav']:
-                #print "Removed", nav, "from list of airports."
+                print "Removed", nav, "from list of airports."
                 paras_G['airports_nav'].remove(nav)
             # Remove node from list of pairs
             for ee in paras_G['pairs_nav'][:]:
                 if nav in set(ee):
-                    #print "Removed", ee, "from list of pairs."
+                    print "Removed", ee, "from list of pairs."
                     paras_G['pairs_nav'].remove(ee)
                 
         else:
@@ -1431,53 +1464,59 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print 
 
     try:
-        for n in paras_G['airports_nav']:
-            assert n in G.G_nav.nodes()
-    except:
-        raise Exception("Airport", n, "is not in the list of nodes of G.G_nav")
+        if paras_G['airports_nav']!=None:
+            for n in paras_G['airports_nav']:
+                assert n in G.G_nav.nodes()
+    except AssertionError:
+        raise Exception("Navpoint", n, "is not in the list of nodes of G.G_nav")
     #draw_network_and_patches(None, G.G_nav, G.polygons, show=True, flip_axes=True, rep = rep)
 
 
     ########### Choose the airports #############
+    # `Airports' means all entry and exit points here, not only physical airports.
     print "Choosing the airports..."
 
     paras_G['pairs_nav'], paras_G['airports_nav'] = reduce_airports_to_existing_nodes(G.G_nav, paras_G['pairs_nav'], paras_G['airports_nav'])
     paras_G['pairs_sec'], paras_G['airports_sec'] = reduce_airports_to_existing_nodes(G, paras_G['pairs_sec'], paras_G['airports_sec'])
 
-    if not paras_G['make_entry_exit_points']: 
+    if not paras_G['use_only_outer_nodes_for_airports']: 
         if paras_G['airports_sec']!=None and paras_G['airports_nav']!=None:
             # TODO
-            print "Warning: specifiying airports for both sectors and navpoints is not operational."
-            G.add_airports(paras_G['airports_sec'], -10, pairs=paras_G['pairs_sec'], C_airport = paras_G['C_airport'])
+            print "WARNING: specifiying airports for both sectors and navpoints does make sense unless they are consitent with each other."
+            G.add_airports(paras_G['airports_sec'], -10, pairs=paras_G['pairs_sec'], C_airport=paras_G['C_airport'])
         elif paras_G['airports_sec']!=None and paras_G['airports_nav']==None:
-            G.add_airports(paras_G['airports_sec'], -10, pairs=paras_G['pairs_sec'], C_airport = paras_G['C_airport'])
+            # If the airports_sec are specified but not the airports_nav, add the former to network and then infer the latter.
+            G.add_airports(paras_G['airports_sec'], -10, pairs=paras_G['pairs_sec'], C_airport=paras_G['C_airport'])
             G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
         elif paras_G['airports_sec']==None and paras_G['airports_nav']!=None:
+            # The other way round.
             if paras_G['function_airports_nav']!=None:
                 # Custom function of airport building based on traffic.
                 print "Extracting airports and pairs with custom function..."
                 assert 'flights_selected' in paras_G.keys() and paras_G['flights_selected']!=None
-                flights_selected, airports_nav, pairs_nav = paras_G['function_airports_nav'](G.G_nav, paras_G['flights_selected'])
-                print "Deleted flights because no navpoints of the trajectories belonged to the network:", len(paras_G['flights_selected']) - len(flights_selected)
-            else:
-                airports_nav, pairs_nav = paras_G['airports_nav'], paras_G['pairs_nav']
+                paras_G['flights_selected'], paras_G['airports_nav'], paras_G['pairs_nav'] = paras_G['function_airports_nav'](G.G_nav, paras_G['flights_selected'])
+                print "Deleted flights because no navpoint of the trajectories belonged to the network:", len(paras_G['flights_selected']) - len(flights_selected)
             
-            if not paras_G['singletons'] and pairs_nav!=None: 
+            if not paras_G['singletons'] and paras_G['pairs_nav']!=None: 
                 # Remove the pairs of navpoints which yield the same sec-entry and sec-exit.
-                pairs_nav = remove_singletons(G, pairs_nav)
-            G.G_nav.add_airports(airports_nav, -10, pairs=pairs_nav, C_airport = paras_G['C_airport'])
+                paras_G['pairs_nav'] = remove_singletons(G, paras_G['pairs_nav'])
+
+            # Add airports to the nav-net and infer the airports for the sec-net.
+            G.G_nav.add_airports(paras_G['airports_nav'], paras_G['min_dis'], pairs= paras_G['pairs_nav'], C_airport=paras_G['C_airport'])
             G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=paras_G['singletons'])
-        else: # TODO: add generate nav-airports feature
-            G.generate_airports(paras_G['nairports'], -10, C_airport=paras_G['C_airport'])
-            G.G_nav.infer_airports_from_sectors(G.airports, paras_G['min_dis'])
+        else:
+            # If none of them are specified, draw at random some entry/exits for the navpoint network and
+            # infer the sector airports.
+            G.G_nav.generate_airports(paras_G['nairports_nav'], paras_G['min_dis'], C_airport=100000)
+            G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=paras_G['singletons'])
     else:
         G = detect_nodes_on_boundaries(paras_G, G)
         pairs_outer = compute_possible_outer_pairs(G)
         print "Found outer nodes:", G.G_nav.outer_nodes
         print "With", len(pairs_outer), "corresponding pairs."
         print "I add them as airports."
-        G.G_nav.add_airports(G.G_nav.outer_nodes, paras_G['min_dis'], pairs = pairs_outer)
-        G.infer_airports_from_navpoints(paras_G['C_airport'])
+        G.G_nav.add_airports(G.G_nav.outer_nodes, paras_G['min_dis'], pairs=pairs_outer)
+        G.infer_airports_from_navpoints(paras_G['C_airport'], singletons=paras_G['singletons'])
 
     print 'Number of airports (sectors) at this point:', len(G.airports)
     print 'Number of connections (sectors) at this point:', len(G.connections())
@@ -1485,11 +1524,12 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     print 'Number of connections (navpoints) at this point:', len(G.G_nav.connections()) 
 
     try:
-        for f in flights_selected:
-            e1, e2 = find_entry_exit(G.G_nav, f)
-            assert e1, e2 in G.G_nav.connections()
-    except:
-        print "e1, e2", e1, e2
+        if  paras_G['flights_selected']!=None:
+            for f in paras_G['flights_selected']:
+                e1, e2 = find_entry_exit(G.G_nav, f)
+                assert e1, e2 in G.G_nav.connections()
+    except AssertionError:
+        raise Exception("e1, e2", e1, e2)
 
     #assert 333 in G.G_nav.nodes()
     #assert (333, 197) in G.G_nav.connections()
@@ -1576,8 +1616,8 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
 
 
     ############# Computing shortest paths ###########
-    G.Nfp=paras_G['Nfp']
-    G.G_nav.Nfp=G.Nfp
+    G.Nfp = paras_G['Nfp']
+    G.G_nav.Nfp = G.Nfp
     
     print 'Computing shortest_paths (sectors) ...'
     pairs_deleted = G.compute_shortest_paths(G.Nfp, repetitions=False, old=False, delete_pairs=False)   
@@ -1606,6 +1646,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     G.G_nav.stamp_airports()
 
     print 'Number of pairs nav-entry/exit before checking flights:', len(G.G_nav.short.keys())
+
     #print 'Number of flights before checking flights:', len(paras_G["flights_selected"])
     G.check_airports_and_pairs() # No action here
 
@@ -1618,7 +1659,7 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     #     G = give_capacities_and_weights(G, paras_G)
     #flights_selected = paras_G["flights_selected"][:]0
 
-    # Check distribution velocities
+    # Check distribution of velocities
     velocities = {(n1, n2):dist_flat_kms(np.array(G.G_nav.node[n1]['coord'])*60., np.array(G.G_nav.node[n2]['coord'])*60.)/(G.G_nav[n1][n2]['weight']/60.) for n1, n2 in G.G_nav.edges()}
     for e, vel in velocities.items():
         if vel>1200:
@@ -1626,7 +1667,8 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     #plt.hist(velocities.values(), bins = 100)
     #plt.show()
 
-    print 'Selected finally', len(flights_selected), "flights."
+    if paras_G['flights_selected']!=None:
+        print 'Selected finally', len(paras_G['flights_selected']), "flights."
 
         #G.check_all_real_flights_are_legitimate(flights_selected) # no action taken here
 
@@ -1650,17 +1692,19 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
     G.name = name
     G.comments = {'long name':long_name, 'made with version':version}
     
-    if save:
-        if save_path==None: 
-            save_path = join(rep, name)
-        with open(save_path + '.pic','w') as f:
+    if save_name==None:
+        save_name = name
+
+    if rep!=None:
+        with open(join(rep, save_name) + '.pic','w') as f:
             pickle.dump(G, f)
-        with open(save_path + '_flights_selected.pic','w') as f:
-            pickle.dump(flights_selected, f)
+        if paras_G['flights_selected']!=None:
+            with open(join(rep, save_name + '_flights_selected.pic'),'w') as f:
+                pickle.dump(flights_selected, f)
 
-    G.basic_statistics(rep = save_path + '_')
+    G.basic_statistics(rep=rep, name=save_name)
 
-    print 'Network saved as', save_path + '.pic'
+    print 'Network saved as', join(rep, save_name)+'.pic'
     #show_everything(G.polygons,G,save=True,name=name,show=False)       
     
 
@@ -1668,13 +1712,23 @@ def prepare_hybrid_network(paras_G, rep='.', save=True, save_path=None, show=Tru
         
     if show:
         if paras_G['flights_selected']==None:
-            draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=G.G_nav.short.values(), rep = rep)
+            draw_network_and_patches(None, G.G_nav, G.polygons, name=save_name, show=True, flip_axes=True, trajectories=[sp for paths in G.G_nav.short.values() for sp in paths], rep=rep)
         else:
             trajectories = [[G.G_nav.idx_nodes[p[0]] for p in f['route_m1']] for f in paras_G['flights_selected']]
-            draw_network_and_patches(None, G.G_nav, G.polygons, name=name, show=True, flip_axes=True, trajectories=trajectories, rep = rep)
+            draw_network_and_patches(None, G.G_nav, G.polygons, name=save_name, show=True, flip_axes=True, trajectories=trajectories, rep=rep)
     return G
 
 if  __name__=='__main__':
+
+    if 1:
+        # Manual seed
+        see_ = 2
+        #see_ = 15 #==> the one I used for new, old_good, etc.. 
+        # see=2
+        print "===================================="
+        print "USING SEED", see_
+        print "===================================="
+        seed(see_)
 
     from paras_G import paras_G
     
@@ -1682,5 +1736,6 @@ if  __name__=='__main__':
     print paras_G
     print
 
-    rep = "../networks"
-    G = prepare_hybrid_network(paras_G, rep = rep)
+    rep = join(result_dir, "networks")
+    #G = prepare_hybrid_network(paras_G, rep=rep)
+    G = prepare_hybrid_network(paras_G, rep=rep)

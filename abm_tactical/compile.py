@@ -31,7 +31,7 @@ if __name__ == '__main__':
 		print "Executed this command:", command
 
 		maindir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-		print maindir
+		# print maindir
 		choose_paras('main_dir', maindir) 
 		#/home/earendil/Documents/ELSA/ABM/ABM_FINAL		#main_dir
 

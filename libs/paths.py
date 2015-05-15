@@ -16,4 +16,5 @@ path_utilities = join(main_dir, 'libs')
 path_modules = join(main_dir, 'libs')
 
 # Overwrite this to indicate your main directory for results here
-result_dir = join(dirname(main_dir), 'results')
+# result_dir = join(dirname(main_dir), 'results')
+result_dir = "/home/earendil/Documents/ELSA/ABM/results"

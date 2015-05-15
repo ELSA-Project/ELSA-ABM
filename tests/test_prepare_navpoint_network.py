@@ -2,9 +2,11 @@
 
 import sys
 sys.path.insert(1, '..')
+sys.path.insert(1, '../abm_strategic')
 import unittest
 from networkx import Graph
 import types
+import os
 import numpy as np
 from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
@@ -492,6 +494,17 @@ class TestHighNetworkFunctions(HybridNetworkCase):
 
 		#self.assertRaises(Pouet, find_pairs, all_airports, all_pairs, 4, self.G)
 
+class TestWholeFunction(unittest.TestCase):
+	def test_prepare_hybrid_network(self):
+		from paras_G_test import paras_G
+		rep = '.'
+		G = prepare_hybrid_network(paras_G, rep=rep, show=False)
+		os.system('rm Example.pic')
+		os.system('rm Example.png')
+		os.system('rm Example_basic_stats_net.txt')
+		
+
+		#TODO: put other tests on G.
 
 if __name__ == '__main__':
 	#suite = unittest.TestLoader().loadTestsFromTestCase(TestLawNetworkFunctions)

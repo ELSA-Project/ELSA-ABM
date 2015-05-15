@@ -18,7 +18,7 @@ from string import split
 import numpy as np
 import pickle
 import random as rd
-from os.path imoprt join as jn
+from os.path import join as jn
 
 from abm_tactical import *
 from abm_strategic import *
@@ -84,7 +84,7 @@ def do_ABM_tactical(input_file, output_file, config_file, verbose=2,
 
 	"""
 	Main function of control of the tactical ABM. The function uses tactical_simulation,
-	which has beem comiled precedently using the wrapper.
+	which has beem compiled precedently using the wrapper.
 
 	Parameters
 	----------
@@ -119,7 +119,8 @@ def do_ABM_tactical(input_file, output_file, config_file, verbose=2,
 
 		with silence(verbose==0): # Does not work.
 			tactical_simulation(inpt)
-
+	except:
+		pass #TODO	
 	if verbose==2:
 		print
 		print "Done."
@@ -164,11 +165,12 @@ if __name__ == '__main__':
 	Manual entry.
 	"""
 
-	input_file = "trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat"
-	output_file = jn(main_dir, "results/output.dat")
+	input_file = jn(result_dir, "trajectories/M1/inputABM_n-10_Eff-0.975743921611_Nf-1500.dat")
+	output_file = jn(result_dir, "results/output.dat")
 	config_file = jn(main_dir, 'abm_tactical/config/config.cfg')
 	shock_tmp = jn(main_dir, 'abm_tactical/config/shock_tmp.dat')
 	bound_latlon = jn(main_dir, 'abm_tactical/config/bound_latlon.dat')
+	print bound_latlon
 	temp_nvp = jn(main_dir, 'abm_tactical/config/temp_nvp.dat')
 
 
