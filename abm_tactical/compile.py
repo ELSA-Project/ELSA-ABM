@@ -5,7 +5,49 @@ import os
 import sys
 sys.path.insert(1, '..')
 
-from interface.abm_interface import choose_paras
+
+def choose_paras(name_para, new_value, fil="../abm_tactical/config/config.cfg"):
+	"""
+	Function to modify a config file for the tactical ABM. If the given parameters does not 
+	exist in the config file, the function does not modify anything and exit silently.
+
+	Parameters
+	----------
+	name_para : string
+		name of the parameter to update
+	new_value : either string, float or integer
+		new value of the parameter to update
+	fil : string
+		full path to the config file.
+
+	Notes
+	-----
+	It is better to use this function with the help of the ParasTact class. 
+	TODO: possibility of changing several parameters aa the same time.
+	Note: This function is the same (or should be) than in abm_tactical/abm_interface.py 
+	but it cannot be imported from it due to circular importations.
+
+	"""
+
+	with open(fil) as f:
+		lines = f.readlines()
+	#print "Trying to set", name_para, "to new value", new_value
+	new_lines = []
+	for i, l in enumerate(lines):
+		if l[0]!='#' and len(l)>1: # If not a comment and not a blank line
+			value, name = l.strip('\n').split('\t#')#split(l.strip(), '\t#')
+			if name == name_para:
+				#print "found", name_para, "I put new value", new_value
+				line = str(new_value) + "\t#" + name + '\n'*(line[-1]=='\n') # last bit because of shock_f_lvl_min
+			else:
+				line = l[:]
+		else:
+			line = l[:]
+		new_lines.append(line)
+
+	with open(fil, 'w') as f:
+		for line in new_lines:
+			f.write(line)
 
 if __name__ == '__main__':
 	if len(sys.argv)==2 and sys.argv[1] == '--debug':

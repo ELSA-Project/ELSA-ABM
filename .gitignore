@@ -30,4 +30,5 @@ doc/*.synctex.gz
 doc/*.toc
 doc/*.log
 doc/*.aux
+doc/*.html
 tests/*.pyc

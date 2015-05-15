@@ -1,4 +1,4 @@
- # ELSA Air Traffic Simulator 
+# ELSA Air Traffic Simulator 
 
 This an air traffic scenario simulator featuring an Agent-Based Model (ABM) and simulating different some concepts from air traffic management. It has been developped by the ELSA project, "Empirically grounded agent based models for the future ATM scenario", funded via the Work Package E of SESAR. It aims at studying some of the new concepts foreseen by SESAR. 
 
@@ -13,7 +13,7 @@ More information about the ELSA project and its results can be found here:
 ## Getting started
 
 First, create a directory where you see fit to host the code. Then download the code
-either using git (preferred method) via 'git clone https://github.com/GGurtner/ELSA-ABM.git'. You can also download the code directly by clicking on the 'download zip' button on the right and extract the archive.
+either using git (preferred method) via `git clone https://github.com/GGurtner/ELSA-ABM.git`. You can also download the code directly by clicking on the 'download zip' button on the right hand side and extract the archive.
 
 Note that the code has only been tested on linux distributions like Ubuntu. It is probably not compliant with Windows or MACOS yet but will be in the future. In the following we assume that the user has a bsd-like distribution.
 
@@ -26,6 +26,7 @@ sudo apt-get install python
 Then you should make sure that all the dependencies required are installed. The following python modules should be installed:
 
 * scipy
+* numpy
 * shapely
 * networkx
 * basemap
@@ -43,6 +44,11 @@ Then install all modules:
 
 ```
 easy_install scipy, shapely, networkx, basemap, MySQLdb, maplotlib, descartes
+```
+
+You will need the swig package to do the interface between C and Python, which can be installed this way:
+```
+sudo apt-get install swig
 ```
 
 Once the source code has been downloaded and the dependencies satisfied, you can run the setup.py in the main folder in command line:

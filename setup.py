@@ -44,7 +44,7 @@ if __name__ == '__main__':
 	os.system('mkdir -p ' + result_dir)
 
 	print
-	print "Writing C code and making wrapper..."
+	print "Compiling C code and making wrapper..."
 	os.system("cd abm_tactical && ./compile.py")
 
 	print
