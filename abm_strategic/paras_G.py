@@ -13,15 +13,15 @@ def extract_data_from_files(paras_G):
 	for item in ['net_sec', 'polygons', 'capacities', 'weights', 'airports_sec', 'airports_nav', 'net_nav', 'flights_selected']:
 		if paras_G['file_' + item]!=None:
 			try:
-				f = open( paras_G['file_' + item])
-				try:
-					paras_G[item] = pickle.load(f)
-					print "Loaded file", paras_G['file_' + item], "for", item
-				except:
-					print "Could not load the file", paras_G['file_' + item], " as a pickle file."
-					print "I skipped it and the", item, "will be generated or ignored."
-					pass # TODO
-				f.close()
+				with open( paras_G['file_' + item]) as f:
+					try:
+						paras_G[item] = pickle.load(f)
+						print "Loaded file", paras_G['file_' + item], "for", item
+					except:
+						print "Could not load the file", paras_G['file_' + item], " as a pickle file."
+						print "I skipped it and the", item, "will be generated or ignored."
+						pass # TODO
+
 			except:
 				print "Could not find file",  paras_G['file_' + item]
 				print "I skipped it and the", item, "will be generated or ignored."
@@ -74,8 +74,11 @@ paras_G['file_polygons'] = None
 
 
 # -------------- Traffic ---------------
-# Leave "None" if you don't want to base neither weights nor capacities on traffic.
-# Input should be a list of flight object as in the Distance library. TODO: description.
+# Leave "None" if you don't want to base neither weights, entry-exits nor capacities on traffic.
+# Otherwise, the input should be a pickle file with a list of flight object as in the Distance 
+# library. Essentially, each object is dict-like object which needs to have a 'route_m1' key 
+# which is a list of tuples (node, altitude) and a 'route_m1t' key with a list of tuples 
+# (node, time)
 paras_G['file_flights_selected'] = None
 
 

@@ -1,5 +1,7 @@
 abm_strategic/*.pyc
 abm_strategic/*sublime*
+abm_strategic/my_paras.py
+abm_strategic/my_paras_iter.py
 abm_tactical/*.pyc
 scripts/*.pyc
 libs/*.pyc
@@ -28,3 +30,4 @@ doc/*.synctex.gz
 doc/*.toc
 doc/*.log
 doc/*.aux
+tests/*.pyc

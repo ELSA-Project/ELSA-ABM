@@ -8,7 +8,8 @@ Created on Mon Dec 17 14:38:09 2012
 ===========================================================================
 This is the main interface to the model. The main functions are 
  - do_standard, which makes a single iteration of the model, 
- - generate_traffic, used by tactical model
+ - generate_traffic, high level traffic generator used by the tactical 
+ layer
 ===========================================================================
 """
 
@@ -815,7 +816,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     if simple_setup:
         paras['file_net'] = None
         paras['G'] = G
-        paras['Nfp'] = 2 # Remark: must match number of pre-computed nav-shortest paths per sec-shortest paths.
+        paras['Nfp'] = G.Nfp # Remark: must match number of pre-computed nav-shortest paths per sec-shortest paths.
         paras['Nsp_nav'] = 2
         paras['unit'] = 15
         paras['days'] = 24.*60.
@@ -886,7 +887,6 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     if record_stats_file!=None:
         ff.close()
 
-
     trajectories = compute_M1_trajectories(queue, sim.starting_date)
     #signature at this point: (n), tt
 
@@ -900,7 +900,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         write_down_capacities(G, save_file=save_file_capacities)
     
     if coordinates:
-        trajectories_coords = convert_trajectories(G, trajectories, put_sectors=put_sectors, 
+        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, 
                                                                           remove_flights_after_midnight=remove_flights_after_midnight,
                                                                           starting_date=starting_date)
         #signature at this point: (x, y, 0, tt) or (x, y, 0, tt, s)

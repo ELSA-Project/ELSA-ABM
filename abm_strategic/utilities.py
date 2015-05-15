@@ -24,10 +24,10 @@ from libs.general_tools import  delay, date_human, date_st, flip_polygon
 from libs.tools_airports import bet_OD
 from libs.efficiency import rectificate_trajectories_network
 
-version='2.9.1'
+version = '2.9.1'
 
 #seed(3)
-_colors=['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed','Red']
+_colors = ['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','DarkRed','DeepPink','Gold','Green','OrangeRed','Red']
 
 #shuffle(_colors)
 
@@ -588,9 +588,9 @@ point
  -- (n, z), t : same with altitude attached to each point.
 
 The format of time can be either:
- -- a float representing the number of minutes elapsed since the beginning of 
-the day (which is stored somewhere else). This format is denoted t.
- -- a list of tuple [yy, mm, dd, h, m , s]. This format is denoted tt.
+ -- t : a float representing the number of minutes elapsed since the beginning of 
+the day (which is stored somewhere else).
+ -- tt : a tuple (yy, mm, dd, h, m , s).
 
 """
 
