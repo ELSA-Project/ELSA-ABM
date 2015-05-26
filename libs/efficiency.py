@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from libs.tools_airports import build_long_2d
 from libs.general_tools import insert_list_in_list
 
-__version__ = "1.4"
+__version__ = "1.4.2"
 
 # Several handy functions.
 gall = lambda x: [6371000.*pl.pi*x[1]/(180.*pl.sqrt(2)), 6371000.*pl.sqrt(2)*pl.sin(pl.pi*(x[0]/180.))]
@@ -157,8 +157,7 @@ def rectificate_trajectories_network_with_time_and_alt(trajs_w_t, eff_target, G,
 		of trajectories with signatures (n, z), t
 	eff_target : float
 		target efficiency.
-	G : networkx Graph or DiGraph.
-		Navpoint network.
+	G : hybrid network
 	remove_nodes : boolean, optional
 		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
 	resample_trajectories : boolean, optional
@@ -196,11 +195,11 @@ def rectificate_trajectories_network_with_time_and_alt(trajs_w_t, eff_target, G,
 	# Recompute altitudes
 	for i, traj_new in enumerate(trajs_rec):
 		traj_old = geom_trajs[i]
-		long_dis, long_dis_cul_old = build_long_2d([G_old.node[n]['coord'] for n in traj_old]) 
+		long_dis, long_dis_cul_old = build_long_2d([G_old.G_nav.node[n]['coord'] for n in traj_old]) 
 		long_dis_cul_old = np.array(long_dis_cul_old)
 		alt = alts[i]
 
-		long_dis, long_dis_cul = build_long_2d([G.node[n]['coord'] for n in traj_new]) 
+		long_dis, long_dis_cul = build_long_2d([G.G_nav.node[n]['coord'] for n in traj_new]) 
 		long_dis_cul = np.array(long_dis_cul)
 		
 		f_inter = return_linear_interpolation_altitude_func(long_dis_cul_old, alt)
@@ -224,8 +223,7 @@ def rectificate_trajectories_network_with_time(trajs_w_t, eff_target, G, remove_
 		of trajectories with signatures (n), tt or (n), t
 	eff_target : float
 		target efficiency.
-	G : networkx Graph or DiGraph.
-		navpoint network.
+	G : hybrid network
 	remove_nodes : boolean, optional
 		if True, remove the chosen nodes from the trajectories. Otherwise, duplicate and move the existing point.
 	resample_trajectories : boolean, optional
@@ -298,6 +296,8 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 	TODO: test for DiGraph.
 	Remark: The nodes are never removed from the network, only from the trajectories.
 	Changed in 1.4: fixed sector allocations of new nodes. Using an hybrid netwrok instead of a navpoint network.
+	Changed in 1.4.1: new nodes have sector -1 if they don't fall into any sector (it can happen if the sectors
+	are not convex).
 
 	"""
 
@@ -409,8 +409,14 @@ def rectificate_trajectories_network(trajs, eff_target,	G, remove_nodes=False, r
 	for n in G.G_nav.nodes():
 		if n>old_max_label:
 			sec = find_sector(n, G)
-			G.G_nav.node[n]['sec'] = sec
-			G.node[sec]['navs'].append(n)
+
+			if sec==None:
+				G.G_nav.node[n]['sec'] = -1
+				#print n, G.G_nav.node[n]
+				#raise Exception()
+			else:
+				G.G_nav.node[n]['sec'] = sec
+				G.node[sec]['navs'].append(n)
 
 	return trajs_rec, eff, G, groups_rec
 

@@ -683,7 +683,7 @@ def write_down_capacities(G, save_file=None):
         for n in G.nodes():
             print (str(n+1) + '\t' + str(G.node[n]['capacity']), file=f)
 
-def add_first_last_points(trajs, secs=False):
+def add_first_last_points(trajs, dummy_sec=None):
     """
     Add a first and a last navpoint outside of the area to each trajectory, as required for 
     the tactical model. The function computes the direction given by the first two points of
@@ -696,13 +696,18 @@ def add_first_last_points(trajs, secs=False):
     trajs : list
         of trajectories. A trajectory is a list of points, with signature (x, y, z, t)
         or (x, y, z, t, s). t is time in format [yy, mm, dd, h, m, s]
-    secs : boolean, optional
-        If true, the points will include 0 for their sector as their fifth component.
+    dummy_sec : integer, optional
+        If None, the points will not include a sector in their signature. Otherwise, 
+        it gives the label of the dummy sector.
     
     Returns
     -------
     trajs : list
         of trajectories with same signature for points. 
+
+    Notes
+    -----
+    Changes in 2.9.6: Added possiblity of putting custom label for 'new sector'.
 
     """
 
@@ -713,10 +718,10 @@ def add_first_last_points(trajs, secs=False):
         first_point_coords = pos1 - (pos2 - pos1)
         first_point_time = t1 - (t2 - t1)
         first_point_time = list(first_point_time.timetuple())[:6]
-        if not secs:
-            new_first_navpoint = (first_point_coords[0], first_point_coords[1], traj[0][2], first_point_time)
+        if dummy_sec!=None:
+            new_first_navpoint = (first_point_coords[0], first_point_coords[1], traj[0][2], first_point_time, dummy_sec)
         else:
-            new_first_navpoint = (first_point_coords[0], first_point_coords[1], traj[0][2], first_point_time, 0)
+            new_first_navpoint = (first_point_coords[0], first_point_coords[1], traj[0][2], first_point_time)
 
         # print "first point:", traj[0]
         # print "second point:", traj[1]
@@ -729,10 +734,10 @@ def add_first_last_points(trajs, secs=False):
         last_point_coords = pos2 + (pos2 - pos1)
         last_point_time = t2 + (t2 - t1)
         last_point_time = list(last_point_time.timetuple())[:6]
-        if not secs:
-            new_last_navpoint = (last_point_coords[0], last_point_coords[1], traj[-1][2], last_point_time)
+        if dummy_sec!=None:
+            new_last_navpoint = (last_point_coords[0], last_point_coords[1], traj[-1][2], last_point_time, dummy_sec)
         else:
-            new_last_navpoint = (last_point_coords[0], last_point_coords[1], traj[-1][2], last_point_time, 0)
+            new_last_navpoint = (last_point_coords[0], last_point_coords[1], traj[-1][2], last_point_time)
 
         # print "second last point:", traj[-2]
         # print "last point:", traj[-1]
@@ -846,7 +851,9 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     print ("Average capacity:", np.mean([paras['G'].node[n]['capacity'] for n in paras['G'].nodes()]))
     if 'traffic' in paras.keys():
         print ("Number of flights in traffic:", len(paras['traffic']))
-    
+
+    #print ("Capacities:", {n:G.node[n]['capacity'] for n in G.nodes()})
+
     with clock_time():
         sim = Simulation(paras, G=G, verbose=True)
         sim.make_simu(storymode=storymode)
@@ -893,7 +900,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     if rectificate!=None:
         eff_target = rectificate['eff_target']
         del rectificate['eff_target']
-        trajectories, eff, G.G_nav, groups_rec = rectificate_trajectories_network_with_time(trajectories, eff_target, deepcopy(G.G_nav), **rectificate)
+        trajectories, eff, G, groups_rec = rectificate_trajectories_network_with_time(trajectories, eff_target, deepcopy(G), **rectificate)
         # signature at this point : (n), tt
 
     if save_file_capacities!=None:
@@ -915,7 +922,8 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             trajectories_coords = insert_altitudes(trajectories_coords, sample_trajectories)
             #signature at this point: (x, y, z, tt) or (x, y, z, tt, s)
 
-            trajectories_coords = add_first_last_points(trajectories_coords, secs=put_sectors)
+            dummy_sector = None if not put_sectors else -1
+            trajectories_coords = add_first_last_points(trajectories_coords, dummy_sec=dummy_sector)
 
         if save_file!=None:
             write_trajectories_for_tact(trajectories_coords, fil=save_file) 

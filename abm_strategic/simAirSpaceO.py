@@ -394,7 +394,7 @@ class Network_Manager:
         #for i in range(1,len(path)-1):
         if last==-1: 
             last = len(path)
-        for i in range(first, len(path)):
+        for i in range(first, last):
             n = path[i]
             t1, t2 = times[i]/60.,times[i+1]/60.
             h = 0

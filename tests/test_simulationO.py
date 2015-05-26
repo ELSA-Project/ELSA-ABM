@@ -170,7 +170,7 @@ class FunctionsTest(SimulationTest):
 		trajs = []
 		trajs.append([(0., 0., 0, [2010, 1, 1, 0, 0, 0]), (0., 1., 0, [2010, 1, 1, 0, 10, 0]), (0., 4., 0, [2010, 1, 1, 0, 30, 0])])
 
-		trajs_modified = add_first_last_points(trajs, secs=False)
+		trajs_modified = add_first_last_points(trajs, dummy_sec=None)
 
 		self.assertTrue(len(trajs_modified[0])==5)
 		for point in trajs_modified[0]:
@@ -182,13 +182,13 @@ class FunctionsTest(SimulationTest):
 		trajs = []
 		trajs.append([(0., 0., 0, [2010, 1, 1, 0, 0, 0], 5), (0., 1., 0, [2010, 1, 1, 0, 10, 0], 5), (0., 4., 0, [2010, 1, 1, 0, 30, 0], 5)])
 
-		trajs_modified = add_first_last_points(trajs, secs=True)
+		trajs_modified = add_first_last_points(trajs, dummy_sec=-10)
 
 		self.assertTrue(len(trajs_modified[0])==5)
 		for point in trajs_modified[0]:
 			self.assertTrue(len(point)==5)
-		self.assertTrue(trajs_modified[0][0]==(0., -1., 0, [2009, 12, 31, 23, 50, 0], 0))
-		self.assertTrue(trajs_modified[0][-1]==(0., 7., 0, [2010, 1, 1, 0, 50, 0], 0))
+		self.assertTrue(trajs_modified[0][0]==(0., -1., 0, [2009, 12, 31, 23, 50, 0], -10))
+		self.assertTrue(trajs_modified[0][-1]==(0., 7., 0, [2010, 1, 1, 0, 50, 0], -10))
 		
 
 class SimulationTimesZeros(SimulationTest):
