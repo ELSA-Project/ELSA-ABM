@@ -109,21 +109,34 @@ long double angle_betw_0pi(long double *a, long double *b){
 	return atan2l(fcross, fdot);
 }
 
+//~ 
+//~ long double haversine_distance(long double *p1, long double *p2){
+	//~ long double phi1=rad(p1[0]),phi2=rad(p2[0]),lam1=rad(p1[1]),lam2=rad(p2[1]);
+	//~ 
+	//long double x=acosl(sinl(phi1)*sinl(phi2)+cosl(phi1)*cosl(phi2)*cosl(lam2-lam1))*RH; 
+	//~ //Vincent forumla
+	//~ long double d_lam=lam1-lam2;
+	//~ long double x= RH*atan2l(sqrtl(powl(cosl(phi2)*sinl(d_lam),2)+powl( cosl(phi1)*sinl(phi2)-sinl(phi1)*cosl(phi2)*cosl(d_lam),2)), sinl(phi1)*sinl(phi2)+cosl(phi1)*cosl(phi2)*cosl(d_lam) );
+	//~ return x;
+//~ 
+//~ //	long double P1[3],P2[3];
+//~ //	_to_cart(p1, P1);
+//~ //	_to_cart(p2, P2);
+//~ //	
+//~ //	return angle_betw_0pi(P1, P2)*RH;
+//~ }
 
 long double haversine_distance(long double *p1, long double *p2){
-	long double phi1=rad(p1[0]),phi2=rad(p2[0]),lam1=rad(p1[1]),lam2=rad(p2[1]);
-	
-	//long double x=acosl(sinl(phi1)*sinl(phi2)+cosl(phi1)*cosl(phi2)*cosl(lam2-lam1))*RH; 
-	//Vincent forumla
-	long double d_lam=lam1-lam2;
-	long double x= RH*atan2l(sqrtl(powl(cosl(phi2)*sinl(d_lam),2)+powl( cosl(phi1)*sinl(phi2)-sinl(phi1)*cosl(phi2)*cosl(d_lam),2)), sinl(phi1)*sinl(phi2)+cosl(phi1)*cosl(phi2)*cosl(d_lam) );
-	return x;
+	long double th1=p1[0], ph1=p1[1], th2=p2[0],  ph2=p2[1];
 
-//	long double P1[3],P2[3];
-//	_to_cart(p1, P1);
-//	_to_cart(p2, P2);
-//	
-//	return angle_betw_0pi(P1, P2)*RH;
+	long double dx, dy, dz;
+	ph1 -= ph2;
+	ph1 *= TO_RAD, th1 *= TO_RAD, th2 *= TO_RAD;
+ 
+	dz = sin(th1) - sin(th2);
+	dx = cos(ph1) * cos(th1) - cos(th2);
+	dy = sin(ph1) * cos(th1);
+	return asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * RH;
 }
 
 long double _norm(long double *a){

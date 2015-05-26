@@ -144,8 +144,12 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			#ifdef CAPACITY
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx6\n");
-			(*flight)[i].nvp[h][4]=atof(&c[++j]); // TAKE OUTTTT
-			#endif		
+			(*flight)[i].nvp[h][4]=atof(&c[++j]) + WA_SECT_LABEL; // TAKE OUTTTT
+			#else
+			(*flight)[i].nvp[h][4]=0.;
+			#endif	
+			
+				
 			
 			#ifdef BOUND_CONTROL
 			/*It does not work! */
@@ -403,9 +407,9 @@ int get_capacity(char *file_r,CONF_t *conf){
 			i--;
 			continue;
 		}
-		if(atoi(c)!=i) BuG("Not Regular Capacity file, miss index\n");
+		if(atoi(c)!= (i-WA_SECT_LABEL) ) BuG("Not Regular Capacity file, miss index\n");
 		for(j=0;c[j]!='\t';j++);
-		(*conf).capacy[i]=atoi(&c[j+1]);
+		(*conf).capacy[i]=atoi(&c[j+1])* (*conf).x_capacity;
 		
 
 	}

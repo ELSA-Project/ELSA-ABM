@@ -20,7 +20,7 @@
 #define SGL2 0.000000001
 
 //#define EUCLIDEAN
-
+#define TO_RAD (3.1415926536 / 180)
 
 /*alloc a long double array of long double*/
 long double **falloc_matrix(int , int );

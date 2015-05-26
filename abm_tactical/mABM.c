@@ -69,7 +69,7 @@ void save_m3(Aircraft_t *flight, int Nflight,Aircraft_t *Flight,char *output_ABM
 				
 				strftime(buff,100,"%Y-%m-%d %H:%M:%S",pTm);
 				#ifdef CAPACITY
-				fprintf(wstream,"%.10LF,%.10LF,%.0Lf,%s,%d\t",flight[i].nvp[j][0],flight[i].nvp[j][1],flight[i].nvp[j][2],buff,(int) flight[i].nvp[j][DPOS-1]);
+				fprintf(wstream,"%.10LF,%.10LF,%.0Lf,%s,%d\t",flight[i].nvp[j][0],flight[i].nvp[j][1],flight[i].nvp[j][2],buff,(int) flight[i].nvp[j][DPOS-1] - WA_SECT_LABEL );
 				#else
 				fprintf(wstream,"%.10Lf,%.10Lf,%.0Lf,%s\t",flight[i].nvp[j][0],flight[i].nvp[j][1],flight[i].nvp[j][2],buff);				
 				#endif
@@ -200,8 +200,10 @@ int _del_tool(TOOL_f *t,int N,CONF_t conf){
 	ifree_2D((*t).neigh,N);
 	free((*t).n_neigh);
 	
-
+	#ifdef CAPACITY
 	free((*t).workload);
+	#endif
+	
 	free((*t).F);
 	
 	return 1;
@@ -583,9 +585,9 @@ int  _calculate_longest_direct(Aircraft_t *f,TOOL_f tl,CONF_t conf,int rer){
 	for(i=(*f).st_indx+1;i<(*f).n_nvp-plus;i++) {
 		sect = (int) (*f).nvp[i][4];
 		if(st_in != sect ) if((conf.capacy[sect])<tl.workload[sect]){
-			if (rer) printf("rer Overfull Capacity %d \t %d -> %d\t%d\n",(conf.capacy[sect]),tl.workload[sect],st_in,i-1);
-			else  printf("dir Overfull Capacity %d \t %d -> %d\t%d\n",(conf.capacy[sect]),tl.workload[sect],st_in,i-1);
-			
+			//~ if (rer) printf("rer Overfull Capacity %d \t %d -> %d\t%d\n",(conf.capacy[sect]),tl.workload[sect],st_in,i-1);
+			//~ else  printf("dir Overfull Capacity %d \t %d -> %d\t%d\n",(conf.capacy[sect]),tl.workload[sect],st_in,i-1);
+			//~ 
 			//return (*f).n_nvp-plus;
 
 			return i-1;
@@ -852,6 +854,9 @@ int _get_d_neigh(CONF_t *conf,Aircraft_t **f,int N_f){
 	for(i=0;i<N_f;i++) for(j=0;j<((*f)[i].n_nvp-1);j++) if((*f)[i].vel[j]>max_v) max_v = (*f)[i].vel[j];
 	
 	(*conf).d_neigh = 2.*(2.*((*conf).t_w*(*conf).t_i)*max_v*(1+(*conf).sig_V)) + ((*conf).d_thr*(1+_f_dist(2.*(*conf).t_w,conf))) ;
+	
+	//~ printf("%Lf\n",(*conf).d_neigh);
+	//~ exit(0);
 	
 	return 1;
 	
@@ -1223,7 +1228,7 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 	 * according to the capacity contrains of the sectors*/
 	int longest_direct = _calculate_longest_direct(f,tl,conf,0);
 	
-	for(i=((*f).st_indx+1),h=1;i<(longest_direct) &&t<(3.5*conf.t_w*conf.t_i);i++,h++) {
+	for(i=((*f).st_indx+1),h=1;i<(longest_direct) && t<1200;i++,h++) {
 		/*Evalue the improvent of jumping h+1 nvp*/
 		diff[1]=_calculate_optimum_direct(f, h+1);
 		/* If it smaller the LSKm it gives the previous direct*/
@@ -1314,7 +1319,7 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 		/*Modify the minimum distance array with a zero if it will cross a shock*/
 		_checkShockareaRoute((*f)[i].pos,conf.t_w, sh,tl.dist,t);
 		/*check if the minimu  distance array has some value under the safaty distance*/
-		//unsafe=_check_risk(tl.dist,conf,conf.t_w,(*f)[i].tp);
+		unsafe=_check_risk(tl.dist,conf,conf.t_w,(*f)[i].tp);
 		
 		if(unsafe) {
 			/* If I already moved the i-Flight in the current time step*/
@@ -1381,7 +1386,6 @@ int _evaluate_workload(Aircraft_t **f,int n_f,int N_f,TOOL_f tl,CONF_t conf, lon
 	int i,j,t;
 	
 	/*For the Flight that are flying */
-	
 	int walk[(conf).n_sect];
 	
 	for(i=0;i<conf.n_sect;i++) tl.workload[i]=0;
@@ -1410,7 +1414,7 @@ int _evaluate_workload(Aircraft_t **f,int n_f,int N_f,TOOL_f tl,CONF_t conf, lon
 		}
 		for(j=1;j<(conf).n_sect;j++) if(walk[j]!=0) (tl.workload[j])++;	
 	}
-	
+	#ifdef BEFORE_DEP
 	/*For the Flight that will fly */
 	for(;i<N_f;i++) if( (curr_t < (*f)[i].time[0]) && (curr_t +3600 > (*f)[i].time[0]) )  {
 		for(j=0;j<(conf).n_sect;j++) walk[j]=0;
@@ -1427,6 +1431,7 @@ int _evaluate_workload(Aircraft_t **f,int n_f,int N_f,TOOL_f tl,CONF_t conf, lon
 		}
 		for(j=1;j<(conf).n_sect;j++) if(walk[j]!=0) (tl.workload[j])++;	
 	}
+	#endif
 	#endif
 	return 0;
 }
@@ -1514,6 +1519,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 		
 		/*if f_not_solv>0, the f_not_solv flight cannot be solved*/
 		if(f_not_solv>=0){
+			printf("Not Solved %d Flight\n",(*f)[f_not_solv].ID);
 			/*if it does not sol the conflict for 50 trials it exit form the simulation*/
 			if(++try> N_TRY) {
 				printf("Not Solved, too many trials\n");
@@ -1585,7 +1591,6 @@ int ABM(Aircraft_t **f, int N_f, CONF_t conf, SHOCK_t sh){
 	long double t_stp=(conf.t_r*conf.t_w*conf.t_i);
 	
 	//printf("Starting Simulation\n");
-	
 	/*For each time-step it runs evolution*/
 	long double NT = ((conf.end_datetime)+t_stp);
 	for(t=conf.start_datetime,step=0 ;t<=NT; t+=t_stp, step++ ) if(_evolution(f,N_f, conf,sh,tool,t) == 0) {

@@ -19,7 +19,7 @@
 
 //#define LS 600
 //#define LS 1500
-#define LS 100
+#define LS 1000
 
 /*Maximum distance for a temporary 
  point from the starting point*/
@@ -27,7 +27,7 @@
 
 //#define DEBUG0
 
-//#define PLOT 
+//define PLOT 
 
 /*Maximum Number of trials to solve a conflict*/
 #define N_TRY 50
