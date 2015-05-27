@@ -3,17 +3,20 @@
 #define __MSECTOR_H
 
 /*minimum distance of temporary navigation point with the border of the sector (meters)*/
+/*DEPRECATED*/
 #define DT 3
 
 /*Number of temporary point*/
-#define NTMP 50000
+#define NTMP 100000
 
 /*Minimum value of F_LVL for nvp inside the sector (feets)*/
 #define F_LVL_MIN 240.
 
 /*Minimum distance between the first or the last point of the trajectory and the sector (meters)*/
+/*DEPRECATED*/
 #define D_AIR 30000.
 
+/*DEPRECATED*/
 #define V_THR 500.
 
 /*If is defined read the temporary point from a file*/ /*Deprecated*/
@@ -23,6 +26,9 @@
 //#define BOUND_CONTROL
 
 #define CAPACITY
+
+/*Workaround label of sector: add +1 to Labelling*/
+#define WA_SECT_LABEL 1
 
 /*Structure of shock*/
 typedef struct {

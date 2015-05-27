@@ -130,8 +130,10 @@ void plot_movie( Aircraft_t **f,int N_f,CONF_t conf,char *fw ){
 	for(j=0;j<(conf.t_w*conf.t_r);j++) {
 		for(i=0;i<N_f;i++) if((*f)[i].pos[j][3]==1. && (*f)[i].pos[j][0]!=SAFE)
 		{
-			gall_peter((*f)[i].pos[j],P);
-			fprintf(postream,"%Lf\t%Lf\t%Lf\t",P[0],P[1],(*f)[i].pos[j][2]);
+			//gall_peter((*f)[i].pos[j],P);
+			//fprintf(postream,"%Lf\t%Lf\t%Lf\t",P[0],P[1],(*f)[i].pos[j][2]);
+			fprintf(postream,"%Lf\t%Lf\t%Lf\t",(*f)[i].pos[j][0],(*f)[i].pos[j][1],(*f)[i].pos[j][2]);
+			
 			fprintf(postream,"%d\t",(*f)[i].ID);
 		}
 		fprintf(postream,"\n");

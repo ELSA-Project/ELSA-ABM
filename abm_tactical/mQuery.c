@@ -144,8 +144,12 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			#ifdef CAPACITY
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx6\n");
-			(*flight)[i].nvp[h][4]=atof(&c[++j]); // TAKE OUTTTT
-			#endif		
+			(*flight)[i].nvp[h][4]=atof(&c[++j]) + WA_SECT_LABEL; // TAKE OUTTTT
+			#else
+			(*flight)[i].nvp[h][4]=0.;
+			#endif	
+			
+				
 			
 			#ifdef BOUND_CONTROL
 			/*It does not work! */
@@ -278,6 +282,8 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).d_thr = (int) _find_value_string(config_file,"d_thr");
 	(*config).f_lvl[0] = _find_value_string(config_file, "shock_f_lvl_min");
 	(*config).f_lvl[1] = _find_value_string(config_file, "shock_f_lvl_max");
+	(*config).x_capacity = _find_value_string(config_file, "x_capacity");
+	
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
@@ -293,7 +299,8 @@ int get_configuration(char *config_file,CONF_t *config){
 	
 	(*config).start_datetime = _find_value_datetime(config_file, "start_datetime");
 	(*config).end_datetime = _find_value_datetime(config_file, "end_datetime");
-
+	(*config).noise_d_thr = _find_value_string(config_file,"noise_d_thr");
+	
 	return 1;
 }
 
@@ -400,9 +407,9 @@ int get_capacity(char *file_r,CONF_t *conf){
 			i--;
 			continue;
 		}
-		if(atoi(c)!=i) BuG("Not Regular Capacity file, miss index\n");
+		if(atoi(c)!= (i-WA_SECT_LABEL) ) BuG("Not Regular Capacity file, miss index\n");
 		for(j=0;c[j]!='\t';j++);
-		(*conf).capacy[i]=atoi(&c[j+1]);
+		(*conf).capacy[i]=atoi(&c[j+1])* (*conf).x_capacity;
 		
 
 	}

@@ -69,13 +69,15 @@ int generate_temporary_point(CONF_t *config){
 	*/
 
 	if((*config).tmp_from_file){
-		printf("Attention! read temporary nvp from file\n");
+		//printf("Attention! read temporary nvp from file\n");
 		int i;
 		char c[500];
 
 		FILE *rstream=fopen((*config).temp_nvp,"r");
 		if(rstream==NULL) BuG("Impossible to open temp_nvp.dat\n");
 		for(n=0;fgets(c,500,rstream);n++){
+			
+			if(n>=NTMP) BuG("cheak the number of temporary point in Sector.h (NTMP define)\n");
 			(*config).tmp_nvp[n][0]=atof(c);
 			for(i=0;c[i]!='\t';i++);
 			(*config).tmp_nvp[n][1]=atof(&c[++i]);
@@ -90,6 +92,7 @@ int generate_temporary_point(CONF_t *config){
 				BuG("Temporary Point outside boundary\n");
 #endif
 		}
+		
 		fclose(rstream);
 		//free(rep);	
 		return 1;
@@ -352,7 +355,10 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	/*Get the capacity constrains from file*/
 	#ifdef CAPACITY
 	get_capacity((*config).capacity_file, config);
+	#else
+	(*config).n_sect = 0;
 	#endif
+	
 	
 	return 1;
 }

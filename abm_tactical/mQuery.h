@@ -124,6 +124,7 @@ typedef struct {
 	
 	/*threshold value of the safety distance between aircraft */
 	long double d_thr;
+	long double noise_d_thr;
 	
 	/*Boolean 1) Peter-Gall Projection 2) Sferic Geometry*/
 	int geom;
@@ -135,6 +136,9 @@ typedef struct {
 	int tmp_from_file;
 	
 	char *bound_file;
+	
+	/* Moltiplicative factor for capacity */
+	long double x_capacity;
 	
 	/*Main directory*/
 	char *main_dir;
