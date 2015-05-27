@@ -273,7 +273,7 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).xdelay = _find_value_string(config_file,"xdelay");
 	(*config).pdelay = _find_value_string(config_file,"pdelay");
 	(*config).laplacian_vel = (int) _find_value_string(config_file,"laplacian_vel");
-	(*config).Nm_shock = (int) _find_value_string(config_file,"Nm_shock");
+	(*config).Nm_shock = _find_value_string(config_file,"Nm_shock");
 	(*config).radius = _find_value_string(config_file,"radius");
 	(*config).t_w = (int) _find_value_string(config_file,"t_w");
 	(*config).t_i = _find_value_string(config_file,"t_i");
