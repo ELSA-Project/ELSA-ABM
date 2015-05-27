@@ -158,6 +158,7 @@ def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, b
 			for par2 in paras[name_par2 + '_iter']:
 				print name_par2, "=", par2
 				paras.update(name_par2, par2, config_file=config_file)
+				print 'Nm_shock=', paras['Nm_shock']
 				with clock_time():
 					output_file = name_results_shocks(paras, m1_file_name=input_file, zone=zone, suff=suff)
 					for i in range(paras['nsim']):
