@@ -15,23 +15,23 @@ if __name__ == '__main__':
 		os.system(command)
 		print "Executed this command:", command
 	else:
-		command = "gcc mABM.c main.c mQuery.c mSector.c mTest.c mUtility.c -o ElsaABM.so -lm"
+		command = "gcc -O3 mABM.c main.c mQuery.c mSector.c mTest.c mUtility.c -o ElsaABM.so -lm"
 		os.system(command)
 		print "Executed this command:", command
 		#!/bin/bash
 		command = "swig -python ABMtactic.i"
 		os.system(command)
 		print "Executed this command:", command
-		command = "gcc -fpic -c -I/usr/include/python2.7 -I/usr/lib/python2.7/config/ *.c" 
+		command = "gcc -O3 -fpic -c -I/usr/include/python2.7 -I/usr/lib/python2.7/config/ *.c" 
 		os.system(command)
 		print "Executed this command:", command
 		#gcc -shared main.o ABMtactic_wrap.o -lm -o _ABMtactic.so
-		command = "gcc -shared *.o -lm -o _ABMtactic.so"
+		command = "gcc -O3 -shared *.o -lm -o _ABMtactic.so"
 		os.system(command)
 		print "Executed this command:", command
 
 		maindir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-		print maindir
+		#print maindir
 		choose_paras('main_dir', maindir) 
 		#/home/earendil/Documents/ELSA/ABM/ABM_FINAL		#main_dir
 
