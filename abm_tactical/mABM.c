@@ -217,7 +217,7 @@ int _create_shock(SHOCK_t *sh,CONF_t conf){
 		(*sh).shock[i][0]=conf.point_shock[coin][0];
 		(*sh).shock[i][1]=conf.point_shock[coin][1];
 		(*sh).shock[i][2]=conf.radius;
-		(*sh).shock[i][3]= ((long double) irand(niter) )*(conf.t_r*conf.t_w*conf.t_i);
+		(*sh).shock[i][3]= conf.start_datetime + ((long double) irand(niter) )*(conf.t_r*conf.t_w*conf.t_i);
 		(*sh).shock[i][4]= 1+((long double) irand(conf.lifetime-1) );
 		(*sh).shock[i][5]= conf.f_lvl[0] + (irand(((conf.f_lvl[1]-conf.f_lvl[0])/10) ))*10.;		
 	}
@@ -1010,7 +1010,7 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 	/*Evaluate the longest possible direct 
 	 * according to the capacity constrain*/
 	int longest_rer =  _calculate_longest_direct(f,tl,conf,1);
-	if (longest_rer< ((*f).n_nvp-1) ) printf("%d\t%d\n",longest_rer,((*f).n_nvp-1) );
+	//if (longest_rer< ((*f).n_nvp-1) ) printf("%d\t%d\n",longest_rer,((*f).n_nvp-1) );
 
 
 	int solved,h,dj,l,m;
@@ -1519,7 +1519,7 @@ int _evolution(Aircraft_t **f,int N_f, CONF_t conf, SHOCK_t sh, TOOL_f tl, long 
 		
 		/*if f_not_solv>0, the f_not_solv flight cannot be solved*/
 		if(f_not_solv>=0){
-			printf("Not Solved %d Flight\n",(*f)[f_not_solv].ID);
+			//printf("Not Solved %d Flight\n",(*f)[f_not_solv].ID);
 			/*if it does not sol the conflict for 50 trials it exit form the simulation*/
 			if(++try> N_TRY) {
 				printf("Not Solved, too many trials\n");
