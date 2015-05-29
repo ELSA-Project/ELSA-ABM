@@ -17,7 +17,7 @@ from __future__ import print_function
 
 import sys
 sys.path.insert(1, '..')
-from os.path import join as jn
+from os.path import dirname, join as jn
 import networkx as nx
 from random import shuffle, uniform,  sample, seed, choice, gauss, randrange
 import pickle
@@ -678,6 +678,7 @@ def write_down_capacities(G, save_file=None):
     """
     Write down the capacitie of all sector of network in a txt file.
     """
+    os.system('mkdir -p ' + dirname(save_file))
     with open(save_file, 'w') as f:
         print ("# Sectors\t Capacities", file=f)
         for n in G.nodes():
@@ -926,6 +927,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
             trajectories_coords = add_first_last_points(trajectories_coords, dummy_sec=dummy_sector)
 
         if save_file!=None:
+            os.system('mkdir -p '+dirname(save_file))
             write_trajectories_for_tact(trajectories_coords, fil=save_file) 
 
         return trajectories_coords, stats

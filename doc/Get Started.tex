@@ -41,11 +41,11 @@ First, create a directory where you see fit to host the code. Then download the 
 
 \subsection{Using git}
 
-git is install with several flavours of Ubuntu, Linux Mint, and Fedora. If git is not installed on your system, you can install it for instance using:
+git is already installed in several flavours of Ubuntu, Linux Mint, and Fedora. If git is not installed on your system, you can install it for instance using:
 \begin{verbatim}
 sudo apt-get install git
 \end{verbatim}
-on a bsd-like system like Ubuntu. Then run:
+on a Debian-like system like Ubuntu\footnote{In the following, we will assume that that user has this kind of OS. The code has not been tested with Windows or MacOS, although. We are pretty sure that the code will be broken for the former (because of paths issues), but it may run on the latter. The final release should be compatible with all OS.}. Then run:
 \begin{verbatim}
 git clone https://github.com/GGurtner/ELSA-ABM.git
 \end{verbatim}
@@ -73,9 +73,10 @@ Then you should make sure that all the dependencies required are installed. The 
 \item MySQLdb
 \item matplotlib
 \item descartes
+\item sklearn
 \end{itemize}
 
-On bsd-like system like Ubuntu, you can use \verb|easy_install|. First install \verb|easy_install| using:
+On Debian-like system like Ubuntu, you can use \verb|easy_install|. First install \verb|easy_install| using:
 
 \begin{verbatim}
 sudo apt-get install easy_install 
@@ -84,7 +85,7 @@ sudo apt-get install easy_install
 Then installing all modules:
 
 \begin{verbatim}
-easy_install scipy numpy shapely networkx basemap mysqldb maplotlib descartes
+easy_install scipy numpy shapely networkx basemap mysqldb maplotlib descartes sklearn
 \end{verbatim}
 
 You will need the swig package to do the interface between C and Python, which can be installed this way:
@@ -124,7 +125,7 @@ The code is organized as follows:
 \item the \verb|doc| folder gathers the documentation, in the form of html files describing the python code and pdf files for small tutorials.
 \end{itemize}          
 
-The Strategic model and the Tactical one are fairly independent. One can use them for their own purpose by feeding them with the right input. They can also be used conjointly, even if this feature is very basic at the moment. Indeed, the interface is still under construction and should feature more advanced capabilities for the public release (June or July) with a more integrated code.
+The Strategic model and the Tactical one are fairly independent. One can use them for his/her own purpose by feeding them with the right input. They can also be used conjointly, even if this feature is very basic at the moment. Indeed, the interface is still under construction and should feature more advanced capabilities for the public release (June or July) with a more integrated code.
 
 \section{Using the network generator}
 \label{sec:network}
@@ -221,6 +222,81 @@ The function also recomputes automatically the altitudes and times of crossing o
 
 This function also features some more advanced capabilities, like the possibility of fixing different probabilities of moving different groups of points. This allows to smoothly go from the current scenario to a SESAR scenario where all (planned) trajectories are straight. One can refer to the documentation of the lower level function  \verb|rectificate_trajectories| for more details about this.
 
+\section{Using the Tactical layer}
+
+The code of the Tactical ABM is stored in abm\_tactical folder. In the abm\_tactical/config folder there is the config.cfg that contains the values of most of the parameters.
+
+The tactical layer can be used independently of the other features of the models. It can be directly controlled via command line with the binary or via a python interface, described in \ref{subsec:interface}.
+
+You can directly compile the source code in the following way:
+
+\begin{verbatim}
+gcc -O3 -c *.c && gcc *.o -o ElsaABM.so -lm
+\end{verbatim}
+or use the \verb|compile.py| script which is also compiling the files for the python interface. Using the \verb|setup.py| script described at the beginning only calls \verb|compile.py|.
+
+Once the binary \verb|ElsaABM.so| is produced and it is possible to execute the simulations:
+
+\begin{verbatim}
+./ElsaABM.so M1_file M3_file Config_file,
+\end{verbatim}
+where \verb|M1_file| is the file containing the trajectories which will serve as input for the model and \verb|M3_file| is the file containing the output, i.e. the trajectories deconflicted by the controller.
+
+\subsection{Input-Output File Format}
+
+Either M1 input file as M3 output files have the same format. The first line must contain the number of Flight:
+
+\begin{verbatim}
+1475\tNflight
+\end{verbatim}
+
+the following lines are the trajectory of each aircraft. In particular the first two positions, separated by a $\backslash t$,  represent respectively the ID, a unique int number that identify the flight, and the number of NVP in the related route. 
+
+The following positions are the nvps of the route. They consist in 5 values, separated by a comma: the horizontal position (latitude and longitude), the Flight Level, the time in the format `2010-05-06 10:20:32', and an integer number that refers to the membership of the nvp of the sectors. (see the example file)
+
+\subsection{Utility files}
+Other useful files are stored in the config folder. They are respectively temp\_nvp.dat, shock\_tmp.dat, and  sector\_capacities.dat.\\
+
+The temp\_nvp.dat consists in a two column text file with latitude and longitude of the temporary points used for rerouting. The number of temporary nvps used in the simulation is a \#define NTMP in mSector.h. You must be careful because the code does not check if the points are within the ACC.\\
+
+The shock\_tmp.dat has the same format of temp\_nvp.dat and it contains the centers of the shocks used in the simulations.\\
+
+The sector\_capacities.dat has two columns the first represents the ID of the sector, the seconds is the related capacity.
+
+
+\subsection{Define}
+
+Other parameters are defined in the header files. Every time you want to change these parameter you need to recompile the code. For example in mABM.h is defined LS that is the minimum improvement of the trajectory for a direct
+
+\begin{verbatim}
+#define LS 1000
+\end{verbatim}
+
+another useful \#define is DTMP\_P that is the Maximum distance in meters of the selected temporary points for the rerouting operations.
+
+Others \#define do not have associated values. For example:
+
+\begin{verbatim}
+#define SINGLE_TOUCH
+\end{verbatim}
+
+If you comment this \#define the ABM can perform a multiple modification of the route of the same aircraft in the same time-step if it does not find any solution.
+
+\subsection{Python interface to the Tactical layer}
+\label{subsec:interface}
+
+The folder \verb|interface|, and more specifically the file \verb|abm_inteface| provides some function to call the C code from python. The most important function is called \verb|do_ABM_tactical| and calls an interface to the code using SWIG. It arguments include the paths to all necessary files, i.e. the input file, the output file, the config file, and all the additional files \verb|temp_nvp.dat|, \verb|shock_tmp.dat| etc.
+
+Another useful function is called \verb|choose_paras| which able to modify a configuration file in a transparent way. The user just needs to indicate the path to the config file to modify, the name of the parameter to change, the new value, and the function will change the value in the file. So one possible workflow using this interface could be:
+
+\begin{verbatim}
+from value in values:
+    choose_paras(value, name_of_a_parameter)
+    do_ABM_tactical(input, output, config)
+\end{verbatim} 
+
+This interface is very basic for the moment and will be expanded in the future, in particular by directly passing python lists to the SWIG interface containing all the information relevant about the flights.
+
 \section{Miscellaneous}
 
 \subsection{Trajectories formats}
@@ -250,16 +326,16 @@ The code is shipped with several utilities in order to see the results. Two of t
 \end{itemize}
 
 \subsection{Paths}
-Some paths are automatically inferred from the parameter dictionaries. For instance, the function \verb|build_path| in simulationO.py takes some values of the parameters and builds file name with them. So one can easily override this by changing the function of its own purpose.
+Some paths are automatically inferred from the parameter dictionaries. For instance, the function \verb|build_path| in simulationO.py takes some values of the parameters and builds file name with them. So one can easily override this by changing the function for its own purpose.
 
 
 \section{Going further}
 
-The description of the models are available in two different deliverable of the ELSA project, the D1.3 and the D2.4 of the extension of ELSA. They go in details about which mechanisms and algorithms are used, what is the modelling framework and so on, as well as the results obtained so far.  
+The description of the models are available in two different deliverable of the ELSA project, the D1.3 and the D2.4 of the extension of ELSA. They describe in details which mechanisms and algorithms are used, what is the modelling framework and so on, as well as the results obtained so far. Note that the strategic description enclosed in D1.3 is a bit out of date, but an updated partial description is included in D2.4 and will be expanded in D2.5 for the final release.
 
 The public release of this code will happen in June-July and will be shipped with a more detailed documentation about the features of the code.
 
-The folder scripts/ contain different scripts that one can modify to suit its needs. They may or may not work with your configuration and data, so they should be considered as starting points for custom studies.
+The folder scripts/ contain different scripts that one can modify to suit its needs. They may or may not work with your configuration and data, so they should be considered as starting points for custom pieces of codes.
 
 
 \section*{Finding some help}

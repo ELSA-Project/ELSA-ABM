@@ -15,7 +15,7 @@ More information about the ELSA project and its results can be found here:
 First, create a directory where you see fit to host the code. Then download the code
 either using git (preferred method) via `git clone https://github.com/GGurtner/ELSA-ABM.git`. You can also download the code directly by clicking on the 'download zip' button on the right hand side and extract the archive.
 
-Note that the code has only been tested on linux distributions like Ubuntu. It is probably not compliant with Windows or MACOS yet but will be in the future. In the following we assume that the user has a bsd-like distribution.
+Note that the code has only been tested on linux distributions like Ubuntu. It is probably not compliant with Windows or MACOS yet but will be in the future. In the following we assume that the user has a Debian-like distribution.
 
 The code is mainly written in Python 2 so you should install it before anything else, using:
 
@@ -33,6 +33,7 @@ Then you should make sure that all the dependencies required are installed. The 
 * MySQLdb
 * matplotlib
 * descartes
+* sklearn
 
 For this you can use easy_install. First install easy_install using:
 
