@@ -16,8 +16,10 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<malloc.h>
+#include<time.h>
 
 /*Take string as HH:MM:SS and return the number of seconds*/
+
 long double _convert_time(char *c ){
 	long double time;
 	int H,m,s, i,f;
@@ -41,11 +43,13 @@ int _calculate_velocity(Aircraft_t *flight,int Nflight){
 	for(i=0;i<Nflight;i++){
 		for(j=0;j<(flight[i].n_nvp-1);j++) {
 			t=(flight[i].time[j+1]-flight[i].time[j]);
-			//if(t>0.001) 
+
+			#ifdef EUCLIDEAN
+			flight[i].vel[j]=euclid_dist2d(flight[i].nvp[j], flight[i].nvp[j+1])/t;
+			#else
 			flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/t;
-			//else  flight[i].vel[j]=haversine_distance(flight[i].nvp[j], flight[i].nvp[j+1])/1.;
+			#endif
 			
-			//flight[i].vel[j]=200.;
 		}	
 	}
 	return 1;
@@ -72,9 +76,11 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 	#endif
 	
 	#ifdef WORKAROUND_NIGHT
+	/*It does not manage date*/
 	int over_night;
 	#endif
 	
+	struct tm t;
 	
 	for(i=0;i<Nflight;i++){
 		
@@ -108,6 +114,9 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			if(c[j]=='\0') BuG("BUG in M1 File -lx2\n");
 			(*flight)[i].nvp[h][1]=atof(&c[++j]);
 			
+			#ifdef EUCLIDEAN
+			project((*flight)[i].nvp[h],(*flight)[i].nvp[h]);
+			#endif
 
 			for(++j;c[j]!=','&&c[j]!='\0'&&c[j]!='\n';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx3\n");
@@ -115,9 +124,14 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx4\n");
-			for(++j;c[j]!=' '&&c[j]!='\0';j++);
-			if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
-			(*flight)[i].time[h]=_convert_time(&c[++j]);
+			
+			
+			strptime(&c[++j],"%Y-%m-%d %H:%M:%S",&t);
+			(*flight)[i].time[h]=(long double) mktime(&t);
+			
+			//~ for(++j;c[j]!=' '&&c[j]!='\0';j++);
+			//~ if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
+			//~ (*flight)[i].time[h]=_convert_time(&c[++j]);
 			
 			#ifdef WORKAROUND_NIGHT
 			if(h>0 && over_night==0){
@@ -130,10 +144,15 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			#ifdef CAPACITY
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx6\n");
-			(*flight)[i].nvp[h][4]=atof(&c[++j]); // TAKE OUTTTT
-			#endif		
+			(*flight)[i].nvp[h][4]=atof(&c[++j]) + WA_SECT_LABEL; // TAKE OUTTTT
+			#else
+			(*flight)[i].nvp[h][4]=0.;
+			#endif	
+			
+				
 			
 			#ifdef BOUND_CONTROL
+			/*It does not work! */
 			if(inside==0) if(point_in_polygon((*flight)[i].nvp[h],(*conf).bound,(*conf).Nbound))inside=1;
 			#endif
 
@@ -146,7 +165,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 		#endif
 	}
 	
-	
+	/*Evaluate velocity as the mean velocity between two NVPs*/
 	_calculate_velocity((*flight),Nflight);
 	
 	return Nflight;
@@ -179,6 +198,36 @@ long double _find_value_string(char *config_file,char *label){
 	printf("Impossible to find %s in config-file\n",label);
 	exit(0);
 }
+long double _find_value_datetime (char *config_file,char *label){
+
+	FILE *rstream=fopen(config_file, "r");
+	if(rstream==NULL){
+		printf("I was looking here %s for the config file\n", config_file);
+		BuG("BUG - configuration file doesn't exist\n");
+	}
+	struct tm t;
+	char c[R_BUFF];
+	int i,lsize;
+	
+	for(lsize=0;label[lsize]!='\0';lsize++);
+	
+	while (fgets(c, R_BUFF, rstream)) {
+		if(c[0]=='#'||c[0]=='\n'||c[0]==' ') continue;
+		for(i=0;c[i]!='#'&&c[i]!='\0';i++);
+		if(c[i]=='\0') BuG("configuration file not standard\n");
+		if(!memcmp(&c[++i], label, lsize)) {
+			fclose(rstream);
+			
+			strptime(c,"%Y-%m-%d %H:%M:%S",&t);
+			return (long double) mktime(&t);	
+		}
+	}
+	
+	fclose(rstream);
+	printf("Impossible to find %s in config-file\n",label);
+	exit(0);
+}
+
 
 char * _find_value_string_char(char *config_file,char *label){
 	/*
@@ -216,13 +265,15 @@ char * _find_value_string_char(char *config_file,char *label){
 
 int get_configuration(char *config_file,CONF_t *config){
 	
-	(*config).max_ang = _find_value_string(config_file,"max_ang");
+	/*It searches for a #string in the configuration file and it assignes the left value*/
+	(*config).conf_ang = _find_value_string(config_file,"max_ang");
+	(*config).extr_ang = _find_value_string(config_file,"extr_ang");
 	(*config).nsim = (int) _find_value_string(config_file,"nsim");
 	(*config).direct_thr = _find_value_string(config_file,"direct_thr");
 	(*config).xdelay = _find_value_string(config_file,"xdelay");
 	(*config).pdelay = _find_value_string(config_file,"pdelay");
 	(*config).laplacian_vel = (int) _find_value_string(config_file,"laplacian_vel");
-	(*config).Nm_shock =  _find_value_string(config_file,"Nm_shock");
+	(*config).Nm_shock = _find_value_string(config_file,"Nm_shock");
 	(*config).radius = _find_value_string(config_file,"radius");
 	(*config).t_w = (int) _find_value_string(config_file,"t_w");
 	(*config).t_i = _find_value_string(config_file,"t_i");
@@ -231,19 +282,30 @@ int get_configuration(char *config_file,CONF_t *config){
 	(*config).d_thr = (int) _find_value_string(config_file,"d_thr");
 	(*config).f_lvl[0] = _find_value_string(config_file, "shock_f_lvl_min");
 	(*config).f_lvl[1] = _find_value_string(config_file, "shock_f_lvl_max");
+	(*config).x_capacity = _find_value_string(config_file, "x_capacity");
+	
 	(*config).geom = _find_value_string(config_file, "geom");
 	(*config).sig_V = _find_value_string(config_file, "sig_V");
 	(*config).tmp_from_file = _find_value_string(config_file, "tmp_from_file");
 	(*config).lifetime = _find_value_string(config_file, "lifetime");
+	//printf("%s\n", config_file);
+	//exit(0);
+	//(*config).main_dir = "/home/earendil/Documents/ELSA/ABM/ABM_FINAL";
 	(*config).main_dir = _find_value_string_char(config_file, "main_dir");
-	(*config).bound_latlon = _find_value_string_char(config_file, "bound_latlon");
 	(*config).temp_nvp = _find_value_string_char(config_file, "temp_nvp");
 	(*config).shock_tmp = _find_value_string_char(config_file, "shock_tmp");
+	(*config).bound_file = _find_value_string_char(config_file, "bound_file");
+	(*config).capacity_file = _find_value_string_char(config_file, "capacity_file");
+	
+	(*config).start_datetime = _find_value_datetime(config_file, "start_datetime");
+	(*config).end_datetime = _find_value_datetime(config_file, "end_datetime");
+	(*config).noise_d_thr = _find_value_string(config_file,"noise_d_thr");
+	
 	return 1;
 }
 
 int get_boundary( CONF_t *config ){
-	FILE *rstream=fopen((*config).bound_latlon, "r");
+	FILE *rstream=fopen((*config).bound_file, "r");
 	
 	if(rstream==NULL) BuG("No Bound File found\n");
 	
@@ -255,7 +317,7 @@ int get_boundary( CONF_t *config ){
 	fclose(rstream);
 	
 	//Actually reading the file
-	rstream=fopen((*config).bound_latlon, "r");
+	rstream=fopen((*config).bound_file, "r");
 	(*config).bound = falloc_matrix(Nbound, 2);
 	for(i=0;fgets(c, R_BUFF, rstream)&&i<Nbound;i++){
 		(*config).bound[i][0]=atof(c);
@@ -294,6 +356,10 @@ int get_temp_shock(CONF_t *conf){
 		for(j=0;c[j]!='\t'&&c[j]!=' '&&c[j]!='\0';j++);
 		if(c[j]=='\0') BuG("Error in shock_tmp.dat");
 		(*conf).point_shock[i][1]=atof(&c[++j]);
+		
+		#ifdef EUCLIDEAN
+		project((*conf).point_shock[i],(*conf).point_shock[i]);
+		#endif 
 	}
 	fclose(rstream);
 	//free(rep);
@@ -331,7 +397,8 @@ int get_capacity(char *file_r,CONF_t *conf){
 	for((*conf).n_sect=0;fgets(c, R_BUFF, rstream);((*conf).n_sect)++) if(c[0]=='#') ((*conf).n_sect)--;
 	fclose(rstream);
 	
-	(*conf).capacy = ialloc_vec((*conf).n_sect+1);
+	((*conf).n_sect)++;
+	(*conf).capacy = ialloc_vec((*conf).n_sect);
 	
 	rstream=fopen(file_r,"r");
 	int i,j;
@@ -340,9 +407,13 @@ int get_capacity(char *file_r,CONF_t *conf){
 			i--;
 			continue;
 		}
-		if(atoi(c)!=i) BuG("Not Regular Capacity file, miss index\n");
+		if(atoi(c)!= (i-WA_SECT_LABEL) ) BuG("Not Regular Capacity file, miss index\n");
 		for(j=0;c[j]!='\t';j++);
-		(*conf).capacy[i]=atoi(&c[j+1])/3.;
+		(*conf).capacy[i]=atoi(&c[j+1])* (*conf).x_capacity;
+		
+
 	}
+	(*conf).capacy[0]=SAFE;
+	
 	return 1;	
 }

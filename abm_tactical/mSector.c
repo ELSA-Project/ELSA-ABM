@@ -69,27 +69,36 @@ int generate_temporary_point(CONF_t *config){
 	*/
 
 	if((*config).tmp_from_file){
-		printf("Attention! read temporary nvp from file\n");
+		//printf("Attention! read temporary nvp from file\n");
 		int i;
 		char c[500];
 
 		FILE *rstream=fopen((*config).temp_nvp,"r");
 		if(rstream==NULL) BuG("Impossible to open temp_nvp.dat\n");
 		for(n=0;fgets(c,500,rstream);n++){
+			
+			if(n>=NTMP) BuG("cheak the number of temporary point in Sector.h (NTMP define)\n");
 			(*config).tmp_nvp[n][0]=atof(c);
 			for(i=0;c[i]!='\t';i++);
 			(*config).tmp_nvp[n][1]=atof(&c[++i]);
+			
+			#ifdef EUCLIDEAN
+			project((*config).tmp_nvp[n],(*config).tmp_nvp[n]);
+			#endif
+
 #ifdef BOUND__CONTROL
+			/* ATTENTION THIS CONTROL DOES NOT WORKS */
 			if( !point_in_polygon((*config).tmp_nvp[n],(*config).bound,(*config).Nbound))
 				BuG("Temporary Point outside boundary\n");
 #endif
 		}
+		
 		fclose(rstream);
-		//free(rep);
+		//free(rep);	
 		return 1;
 	}
 //#endif
-	
+	/* ATTENTION !!!! (DEPRECATED)*/
 	long double Mx= _find_extrem((*config).bound,(*config).Nbound,0,1);
 	long double mx= _find_extrem((*config).bound,(*config).Nbound,0,0);
 	long double My= _find_extrem((*config).bound,(*config).Nbound,1,1);
@@ -210,6 +219,17 @@ int _add_nvp_bound(Aircraft_t **f,int i,int j,long double **bound,int k){
 }
 */
 
+
+int project(long double *in, long double *out){
+	long double in2[2];
+	in2[0]=in[0];
+	in2[1]=in[1];
+	
+	/*Change this to change Projection*/
+	gall_peter(in2,out);
+	return 1;
+}
+
 int _is_to_add(Aircraft_t f,int xp,long double **bound,int k){
 	
 	if( ( segments_intersect(f.nvp[xp], f.nvp[xp+1], bound[k], bound[k+1]) && !isbetween(bound[k], bound[k+1],f.nvp[xp+1]) ) && !isbetween( bound[k], bound[k+1],f.nvp[xp]) ){
@@ -220,15 +240,7 @@ int _is_to_add(Aircraft_t f,int xp,long double **bound,int k){
 
 int modify_traj_intersect_bound(Aircraft_t **flight,int *Nflight,CONF_t config){
 	int i,j;
-		
-	/*Change exagerate velocity: flight too much speed*/
-	/*
-	for(i=0;i<*Nflight;i++){
-		for(j=0;j<((*flight)[i].n_nvp-1);j++) if((*flight)[i].vel[j]>V_THR) {
-			(*flight)[i].vel[j]=240.;
-		}
-	}*/
-	
+			
 	/*Add flag to nvp*/
 	for(i=0;i<*Nflight;i++){
 		(*flight)[i].nvp[0][3]=0;
@@ -240,11 +252,11 @@ int modify_traj_intersect_bound(Aircraft_t **flight,int *Nflight,CONF_t config){
 }
 
 int set_boundary_flag_onFlight(Aircraft_t **f,int *Nflight, CONF_t c){
-	int i,j,N;
+	int i,j;
 	for(i=0;i<*Nflight;i++) {
 		(*f)[i].st_indx=1;
 		(*f)[i].ready=0;
-		for(j=0,N=0;j<((*f)[i].n_nvp-1);j++) {
+		for(j=0;j<((*f)[i].n_nvp-1);j++) {
 			if(( point_in_polygon((*f)[i].nvp[j], c.bound, c.Nbound)||point_in_polygon((*f)[i].nvp[j+1], c.bound, c.Nbound) )&&(*f)[i].nvp[j][2]>=F_LVL_MIN){
 				(*f)[i].nvp[j][3]=1.;
 				}
@@ -306,40 +318,47 @@ int _alloc_flight_pos(Aircraft_t **f,int N_f,CONF_t *conf){
 }
 
 int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,char *input_ABM, char *config_file){
+	
+	/*Get configuration parameter from file*/
 	get_configuration(config_file, config);
 
 	//char* rep_tail = "/abm_tactical/config/bound_latlon.dat";
 	//char * rep = malloc(snprintf(NULL, 0, "%s%s", (*config).main_dir, rep_tail) + 1);
 	//sprintf(rep, "%s%s", (*config).main_dir, rep_tail);
-	get_boundary(config);	
+	
+	
+	get_boundary(config); /*Maybe Unuseless*/
 
 	//free(rep);
 	//free(config_file);
 
 	
 	//printf("Generate Point\n");
+	
+	/*Get temporary point from file
+	 * The generation is deprecated*/
 	generate_temporary_point(config);
 	
+	/*Get the M1 flight plan*/
 	*Nflight=get_M1(input_ABM,flight,config);
 	
+	/*Set 0 on the activation flag for the first and the last nvp*/
 	modify_traj_intersect_bound(flight, Nflight, *config);
 
-	//cheak_traj_intersect_bound(*flight, *Nflight, *config);
-	
-	//set_boundary_flag_onFlight(flight,Nflight,*config);
-	
-	
-	
-	
-	//_set_cross_timeM1(flight,*Nflight);
+	/*allocation of memory for the position matrix*/
 	_alloc_flight_pos(flight,*Nflight,config);
 	
+	/*Allocataion and initiazation of the shock*/
 	_alloc_shock(*config,shock);
 	get_temp_shock(config);
 	
+	/*Get the capacity constrains from file*/
 	#ifdef CAPACITY
-	get_capacity("../sector_capacities.dat", config);
+	get_capacity((*config).capacity_file, config);
+	#else
+	(*config).n_sect = 0;
 	#endif
+	
 	
 	return 1;
 }

@@ -81,11 +81,12 @@ def do_sweep_on((input_file, paras, other_paras)):#, zone, suff, force)):
 					do_ABM_tactical(input_file, output_file, other_paras['config_file'], verbose=1, 
 							shock_tmp=other_paras['shock_file'],
 							bound_latlon=other_paras['bound_file'],
-							temp_nvp=other_paras['tmp_navpoints_file'])
+							temp_nvp=other_paras['tmp_navpoints_file'],
+							capacity_file=other_paras['capacity_file'])
 	#print
 	return files_input, logs_input
 
-def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, bound_file_zone, tmp_navpoints_file_zone, force=False, trajectories=None,\
+def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, bound_file_zone, tmp_navpoints_file_zone, capacity_file, force=False, trajectories=None,\
 	temp_config_dir=main_dir+'/abm_tactical/config_temp', n_cores=1, suff = '', dryrun=False, **kwargs):
 
 	"""
@@ -163,14 +164,19 @@ def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, b
 						#counter(i, n_iter, message="Doing iterations... ")
 						files.append((input_file, output_file.split('.dat')[0] + '_' + str(i) + '.dat'))
 					
-					if (not os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + suff + '.dat') or force) and not dryrun:
+					#print output_file
+					#print output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.dat'
+					#print os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.dat')
+					#raise Exception()
+					if (not os.path.exists(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.dat') or force) and not dryrun:
 						#logs.append(output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + '.txt')
 						
 						#with stdout_redirected(to=output_file.split('.dat')[0] + '_' + str(paras['nsim']-1) + suff + '.txt'):
 						do_ABM_tactical(input_file, output_file, config_file, verbose=1, 
 								shock_tmp=shock_file,
 								bound_latlon=bound_file,
-								temp_nvp=tmp_navpoints_file)
+								temp_nvp=tmp_navpoints_file,
+								capacity_file=capacity_file)
 		print
 
 	# print "Running parallelized sweep..."
@@ -233,7 +239,21 @@ if __name__=='__main__':
 	del all_paras['args']
 
 	# Sweep parameters
-	files, logs = sweep_paras_shocks(*args, dryrun = True, **all_paras)
+	print
+	# for f in all_paras['input_files']:
+	# 	print "Input file:", f
+	# 	args[2] = f
+
+	# def d2(a):
+	# 	return a**2
+
+	# p = Pool(1)
+	# #coin =  p.map(do, input_files)
+	# coin =  p.map(d2, list(range(10)))
+	# print coin
+	# p.close()
+
+	files, logs = sweep_paras_shocks(*args, dryrun=False, **all_paras)
 	#	print
 
 	# Build complete log

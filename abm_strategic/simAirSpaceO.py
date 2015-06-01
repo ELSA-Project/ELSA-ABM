@@ -188,8 +188,11 @@ class Network_Manager:
 
         i=0
         found=False
+        #print 'flight id', flight.ac_id
         while i<len(flight.FPs) and not found:
+            # print 'fp id', i
             fp=flight.FPs[i]
+            #print 'fp.p', fp.p
             self.compute_flight_times(G, fp)
             path, times=fp.p, fp.times
 
@@ -335,6 +338,7 @@ class Network_Manager:
     def overload_airport_hours(self, G, n, (t1, t2)):
         """
         Same than overload_sector_hours, for airports.
+        Changed in 2.9.8: added the condition h<len(G.node[n]['load'])
         """
         
         overload = False

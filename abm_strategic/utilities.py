@@ -1115,7 +1115,7 @@ def insert_altitudes(trajectories, sample_trajectories, min_FL=240.):
 def iter_partial_rectification(trajectories, eff_targets, G, metric='centrality', N_per_sector=1, **kwargs_rectificate):
     """
     Used to iterate a partial_rectification without recomputing the best nodes each time.
-    Working but probematic from a theoretical point of view.
+    Working but problematic from a theoretical point of view.
     """
     trajectories_copy = deepcopy(trajectories)
     G_copy = deepcopy(G)
@@ -1150,7 +1150,7 @@ def partial_rectification(trajectories, eff_target, G, metric='centrality', N_pe
     """
     High level function for rectification. Fix completely N_per_sector points with 
     highest metric value per sector.
-    Working but probematic from a theoretical point of view.
+    Working but problematic from a theoretical point of view.
     """
     # Make groups
     #n_best = select_interesting_navpoints(G, OD=OD(trajectories), N_per_sector=N_per_sector, metric=metric) # Selecting points with highest betweenness centrality within each sector

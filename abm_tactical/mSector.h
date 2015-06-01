@@ -3,17 +3,20 @@
 #define __MSECTOR_H
 
 /*minimum distance of temporary navigation point with the border of the sector (meters)*/
+/*DEPRECATED*/
 #define DT 3
 
 /*Number of temporary point*/
-#define NTMP 50000
+#define NTMP 100000
 
 /*Minimum value of F_LVL for nvp inside the sector (feets)*/
 #define F_LVL_MIN 240.
 
 /*Minimum distance between the first or the last point of the trajectory and the sector (meters)*/
+/*DEPRECATED*/
 #define D_AIR 30000.
 
+/*DEPRECATED*/
 #define V_THR 500.
 
 /*If is defined read the temporary point from a file*/ /*Deprecated*/
@@ -21,6 +24,11 @@
 
 /*If It's defined cheak for intersection between flight tmp_nvp and boundary (slow)*/
 //#define BOUND_CONTROL
+
+#define CAPACITY
+
+/*Workaround label of sector: add +1 to Labelling*/
+#define WA_SECT_LABEL 1
 
 /*Structure of shock*/
 typedef struct {
@@ -57,4 +65,11 @@ int init_Sector(Aircraft_t **,int *,CONF_t	*,SHOCK_t *, char *, char *);
 int is_on_bound(long double *,long double **,int );
 
 int remove_aircraft(Aircraft_t **, int *, int);
+
+int alloc_shock(CONF_t,SHOCK_t *);
+
+/*project the coordinate accordin to a function defined insiede*/
+int project(long double *,long double *);
+
+
 #endif

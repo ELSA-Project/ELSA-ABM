@@ -154,7 +154,12 @@ def get_M_bis(file_r, put_m1_date=None):
 def to_datetime(st, put_m1_date=None):
 	date_st, hour_st = st.split(' ')
 	year, month, day = date_st.split('-')
-	hour, minutes, sec, ms = hour_st.split(':')
+	coin = hour_st.split(':')
+	if len(coin)==3:
+		hour, minutes, sec = coin
+	else:
+		hour, minutes, sec, ms = coin
+
 	hour = int(hour)
 	if put_m1_date!=None:
 		year, month, day = put_m1_date
@@ -167,7 +172,7 @@ def to_datetime(st, put_m1_date=None):
 		day += 1
 		hour -= 24
 	try:
-		ddt =  dt.datetime(int(year), int(month), int(day), int(hour), int(minutes), int(sec), int(ms))
+		ddt =  dt.datetime(int(year), int(month), int(day), int(hour), int(minutes), int(sec))#, int(ms))
 	except:
 		print st 
 		raise
@@ -192,7 +197,7 @@ def extract_from_file(files):
 if __name__=='__main__':
 	p = Pool(1)
 
-	n_files_to_analyse = 400
+	n_files_to_analyse = -1
 
 	force = False
 

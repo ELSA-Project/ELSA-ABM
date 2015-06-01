@@ -19,6 +19,8 @@
 #define SGL 0.0000001
 #define SGL2 0.000000001
 
+//#define EUCLIDEAN
+#define TO_RAD (3.1415926536 / 180)
 
 /*alloc a long double array of long double*/
 long double **falloc_matrix(int , int );
@@ -102,5 +104,13 @@ int time_to_int(long double ,int *);
 
 /*Find the next index respect a point on a rote*/
 int find_p_indx(long double **,int ,long double *);
+
+/*Evaluate the euclidean distanca in 2Dim*/
+long double euclid_dist2d(long double *,long double *);
+
+/*cheak se il punto e compreso nel segmento EUCLIDEAN*/
+int eucl_isbetween(long double *,long double *, long double *);
+
+long double eucl_angle_direction(long double *,long double *, long double *);
 
 #endif

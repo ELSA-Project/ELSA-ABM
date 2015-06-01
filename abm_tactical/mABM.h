@@ -17,14 +17,26 @@
 #define MU 0.0071942
 #define B_LP 0.034241
 
+//#define LS 600
+//#define LS 1500
+#define LS 1000
 
 /*Maximum distance for a temporary 
  point from the starting point*/
 #define DTMP_P 100000
 
-#define DEBUG0
+//#define DEBUG0
 
-//#define PLOT 
+//define PLOT 
+
+/*Maximum Number of trials to solve a conflict*/
+#define N_TRY 50
+
+#define SINGLE_TOUCH
+
+/* To use strptime and other Time features*/
+#define __USE_XOPEN 
+#define  _GNU_SOURCE
 
 /*Structure with useful variable 
  that is better to carry*/
@@ -47,8 +59,11 @@ typedef struct {
 	int **neigh;
 	int *n_neigh;
 	
-	/*Matrix of the workload for each sector*/
-	int **workload;
+	/*Vector of the workload for each sector*/
+	int *workload;
+	
+	/*Comodo for Aircraft array*/
+	Aircraft_t *F;
 	
 } TOOL_f ;
 

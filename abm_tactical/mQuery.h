@@ -16,7 +16,15 @@
 
 #define DPOS 5
 
-#define WORKAROUND_NIGHT
+/*Solved*/
+//#define WORKAROUND_NIGHT
+
+/* To use strptime and other Time features*/
+#define __USE_XOPEN 
+#define  _GNU_SOURCE
+
+
+
 
 /*************************** STRUCTURE ***********************************/
 
@@ -56,6 +64,12 @@ typedef struct {
 	/*time used to cross the sector [0]: m1 [1]:m3*/ 
 	long double delta_t[2];
 	
+	/*Number of elementary time-increment on departures*/
+	int tp;
+	
+	/* It is one if the aircraft is moved within the time-step*/
+	int touched;
+	
 }  Aircraft_t ;
 
 
@@ -68,6 +82,8 @@ typedef struct {
 	
 	//Max angle of deviation from original trajectory
 	long double max_ang;
+	long double extr_ang;
+	long double conf_ang;
 	
 	//Number of simulation
 	int nsim;
@@ -108,6 +124,7 @@ typedef struct {
 	
 	/*threshold value of the safety distance between aircraft */
 	long double d_thr;
+	long double noise_d_thr;
 	
 	/*Boolean 1) Peter-Gall Projection 2) Sferic Geometry*/
 	int geom;
@@ -117,7 +134,12 @@ typedef struct {
 
 	/* Boolean. If 1, new temporary navpoints are read from the disk. Otherwise they are generated. */
 	int tmp_from_file;
-
+	
+	char *bound_file;
+	
+	/* Moltiplicative factor for capacity */
+	long double x_capacity;
+	
 	/*Main directory*/
 	char *main_dir;
 
@@ -130,12 +152,19 @@ typedef struct {
 	/*file for boundaries*/
 	char *shock_tmp;
 	
+	/*file for capacity*/
+	char *capacity_file;
+	
 	/*safe distance for neightboors flight*/
 	long double d_neigh;
 	
 	/*Capcity vector of n_sect+1 elements; 0 element is an infinity capacity sector*/
 	int *capacy;
 	int n_sect;
+	
+	/* Start and End datetime of the simulation*/
+	long double start_datetime;
+	long double end_datetime;
 	
 } CONF_t ;
 
