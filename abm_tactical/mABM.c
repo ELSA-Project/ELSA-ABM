@@ -18,6 +18,7 @@
 #include<math.h>
 #include<time.h>
 #include<float.h>
+#include<string.h>
 
 void init_output(Aircraft_t *flight,int Nflight,char *output_ABM){
 	/* Non capisco a che serve l M1
@@ -51,8 +52,8 @@ void save_m3(Aircraft_t *flight, int Nflight,Aircraft_t *Flight,char *output_ABM
 	if(wstream==NULL) BuG("Impossible to save output data\n");
 	
 	time_t pT;
-	struct tm *pTm;
-	char buff[100];
+	struct tm pTm;
+	char buff[500];
 	
 	fprintf(wstream,"%d\tNflight\n",Nflight);
 	int i,j,h,T[DPOS];
@@ -64,10 +65,13 @@ void save_m3(Aircraft_t *flight, int Nflight,Aircraft_t *Flight,char *output_ABM
 			for(j=0;j<flight[i].n_nvp;j++){
 				
 				//time_to_int(flight[i].time[j],T);
+				//printf("%Lf\n",flight[i].time[j]);
 				pT = (time_t) flight[i].time[j];
-				pTm = localtime(&pT);
+				localtime_r(&pT, &pTm);
+				//memcpy(&pTm, localtime_r(&pT), sizeof(struct tm*));
+				//pTm = localtime(&pT);
 				
-				strftime(buff,100,"%Y-%m-%d %H:%M:%S",pTm);
+				strftime(buff,500,"%Y-%m-%d %H:%M:%S",&pTm);
 				#ifdef CAPACITY
 				fprintf(wstream,"%.10LF,%.10LF,%.0Lf,%s,%d\t",flight[i].nvp[j][0],flight[i].nvp[j][1],flight[i].nvp[j][2],buff,(int) flight[i].nvp[j][DPOS-1] - WA_SECT_LABEL );
 				#else
@@ -1433,7 +1437,9 @@ int _evaluate_workload(Aircraft_t **f,int n_f,int N_f,TOOL_f tl,CONF_t conf, lon
 	}
 	#endif
 	#endif
+
 	return 0;
+		
 }
 
 

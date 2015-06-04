@@ -16,6 +16,7 @@
 #include<time.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 
 void _print_bound( CONF_t c){
 	FILE *wstream=fopen("/tmp/bound_latlon.dat","w");
@@ -171,13 +172,15 @@ int cheak_nan_pos(Aircraft_t *f,CONF_t conf){
 }
 
 void print_time(long double t){
-	struct tm *T;
+	struct tm T;
 	char buff[100];
 	time_t pT = (time_t) t;
 	
-	T = localtime(&pT);
-				
-	strftime(buff,100,"%Y-%m-%d %H:%M:%S",T);
+	//T = localtime(&pT);
+	//memcpy(&T, localtime(&pT), sizeof(struct tm));	
+	localtime_r(&pT,&T);
+	
+	strftime(buff,100,"%Y-%m-%d %H:%M:%S",&T);
 	printf("%s\n",buff);
 	
 	return;
