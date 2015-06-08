@@ -32,3 +32,4 @@ doc/*.log
 doc/*.aux
 doc/*.html
 tests/*.pyc
+*.orig

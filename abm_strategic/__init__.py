@@ -10,5 +10,5 @@ result_dir = paths.result_dir
 from simulationO import generate_traffic, do_standard
 from iter_simO import average_sim, iter_sim
 from prepare_navpoint_network import prepare_hybrid_network
-from efficiency import rectificate_trajectories_network_with_time#, iter_partial_rectification
+from efficiency import rectificate_trajectories_network_with_time_and_alt#, iter_partial_rectification
 from utilities import draw_network_map, Paras

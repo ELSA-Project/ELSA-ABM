@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import sys
-sys.path.insert(1, '..')
-sys.path.insert(1, '../abm_strategic')
+sys.path.insert(1, '../..')
+sys.path.insert(1, '../../abm_strategic')
 import pickle
 import os 
 from os.path import join
 
 from abm_strategic.simulationO import generate_traffic
-#from libs.general_tools import draw_network_and_patches
 from abm_strategic import result_dir
+#result_dir = jn(main_dir, 'tests', 'example')
 
 if __name__ == '__main__':
 	with open(join(result_dir, 'networks', 'Example.pic'), 'r') as f:

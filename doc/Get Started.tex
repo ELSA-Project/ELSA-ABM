@@ -93,8 +93,6 @@ You will need the swig package to do the interface between C and Python, which c
 sudo apt-get install swig
 \end{verbatim}
 
-for tactical: TBD.
-
 \subsection{Make the setup}
 
 Once the source code has been downloaded and dependencies are satisfied, you can run the setup.py in the main folder in command line:
@@ -161,12 +159,12 @@ The output consists in three files:
 \end{itemize}
 
 One can copy the template file and modify it to generate different kinds of network. The inputs needed are all described in the template file. Note that most of them requires pickle files, but it is planned that in the future more formats will be supported, like jason.
-         
-
 
 \section{Using the strategic ABM}
+The strategic layer aims at producing sensible trajectories planned by the air companies in different environments with different behaviors from the airlines. The output is essentially the ``M1 files'', which are the equivalent of the DDR data about planned trajectories.
+\\
 
-The main functions concerning the ABM stratefic can be loaded via\footnote{Note that this is not likely to override any other loaded functions given the specific names of the functions. The list of the functions loaded can be viewed in the \_\_init\_\_ function in abm\_strategic/}:
+The main functions concerning the ABM strategic can be loaded via\footnote{Note that this is not likely to override any other loaded functions given the specific names of the functions. The list of the functions loaded can be viewed in the \_\_init\_\_ function in abm\_strategic/}:
 \begin{verbatim}
 from abm_strategic import *
 \end{verbatim}
@@ -188,7 +186,7 @@ The function needs an hybrid network to run, that you can build following sectio
 \begin{verbatim}
 generate_traffic(G)
 \end{verbatim}
-with \verb|G| an hybrid network. The file abm\_strategic/generate\_traffic\_example.py can be used as a way of exploring this function. One of the most interactive features is the ability for the user to directly control some parameters in a transparent way. For instance:
+with \verb|G| an hybrid network. The file \verb|abm_strategic/generate_traffic_example.py| can be used as a way of exploring this function. One of the most interactive features is the ability for the user to directly control some parameters in a transparent way. For instance:
 \begin{verbatim}
 generate_traffic(G, ACtot=1000, days=48*60)
 \end{verbatim}
@@ -211,7 +209,7 @@ E_S = \frac{\sum_S l_b}{\sum_S l_t}
 $$
 where $l_t$ are the current lengths of the trajectories and $l_b$ are the best ones (straight lines or great circle). This efficiency is always smaller than 1 and is usually around 0.95 in reality, meaning roughly that the trajectories could be shortened by 5\%.
 
-The function returns the straightened trajectories, and can to it in two ways:
+The function returns the straightened trajectories, and can do it in two ways:
 \begin{itemize}
 \item Either by removing some nodes on the trajectories, keeping always the first and the last points. Afterwards the points are resampled on each trajectory, hence keeping the number of points per trajectory constant (but not the total number of points).
 \item Or by moving some points slowly towards the middle of the segment defined by the point before and the point after it.
@@ -221,8 +219,13 @@ The first procedure is much faster and should be preferred, but uniformize the d
 The function also recomputes automatically the altitudes and times of crossing of the points using a linear interpolation between the point before and the point after.
 
 This function also features some more advanced capabilities, like the possibility of fixing different probabilities of moving different groups of points. This allows to smoothly go from the current scenario to a SESAR scenario where all (planned) trajectories are straight. One can refer to the documentation of the lower level function  \verb|rectificate_trajectories| for more details about this.
+\\
+
+As an example, the user can use again the \verb|abm_strategic/generate_traffic_example.py| file and change uncomment line 30. The file generated will have trajectories almost straight (efficiency equal to 0.99).
 
 \section{Using the Tactical layer}
+The Tactical layer aims at transforming planned trajectories into ``actual'' trajectories by deconflicting the them by a simulated super-controller. The standard input is an ``M1 file'' whereas the output is an ``M3 file'', similarly to what exists in DDR data.
+\\
 
 The code of the Tactical ABM is stored in abm\_tactical folder. In the abm\_tactical/config folder there is the config.cfg that contains the values of most of the parameters.
 
@@ -231,51 +234,72 @@ The tactical layer can be used independently of the other features of the models
 You can directly compile the source code in the following way:
 
 \begin{verbatim}
-gcc -O3 -c *.c && gcc *.o -o ElsaABM.so -lm
+LC_ALL=C gcc -O3 -c *.c && gcc *.o -o ElsaABM.so -lm
 \end{verbatim}
-or use the \verb|compile.py| script which is also compiling the files for the python interface. Using the \verb|setup.py| script described at the beginning only calls \verb|compile.py|.
+or use the \verb|compile.py| script which is also compiling the files for the python interface. Using the \verb|setup.py| script described at the beginning also calls \verb|compile.py|.
 
-Once the binary \verb|ElsaABM.so| is produced and it is possible to execute the simulations:
+Once the binary \verb|ElsaABM.so| is produced it is possible to execute the simulations:
 
 \begin{verbatim}
 ./ElsaABM.so M1_file M3_file Config_file,
 \end{verbatim}
-where \verb|M1_file| is the file containing the trajectories which will serve as input for the model and \verb|M3_file| is the file containing the output, i.e. the trajectories deconflicted by the controller.
+where \verb|M1_file| is the file containing the trajectories which will serve as input for the model and \verb|M3_file| is the file that will contain the output, i.e. the trajectories deconflicted by the controller.
+\\
+
+Using the files provided as examples in the tests/example/ folder, the user can run:
+\begin{verbatim}
+./ElsaABM.so ../tests/example/M1_example.dat ../tests/example/M3_example.dat
+ ../tests/example/config/config.cfg
+\end{verbatim}
+which should produce the \verb|M3_example_0.dat| file with deconflicted trajectories. 
 
 \subsection{Input-Output File Format}
 
-Either M1 input file as M3 output files have the same format. The first line must contain the number of Flight:
-
+Either M1 input file and M3 output files have the same format. The first line must contain the number of Flight:
 \begin{verbatim}
 1475\tNflight
 \end{verbatim}
-
 the following lines are the trajectory of each aircraft. In particular the first two positions, separated by a $\backslash t$,  represent respectively the ID, a unique int number that identify the flight, and the number of NVP in the related route. 
 
-The following positions are the nvps of the route. They consist in 5 values, separated by a comma: the horizontal position (latitude and longitude), the Flight Level, the time in the format `2010-05-06 10:20:32', and an integer number that refers to the membership of the nvp of the sectors. (see the example file)
+The following positions are the nvps of the route. They consist in 5 values, separated by a comma: the horizontal position (latitude and longitude), the Flight Level, the time in the format `2010-05-06 10:20:32', and an integer number that refers to the sector to which the navpoint belongs. 
 
-\subsection{Utility files}
-Other useful files are stored in the config folder. They are respectively temp\_nvp.dat, shock\_tmp.dat, and  sector\_capacities.dat.\\
+\subsection{Configuration File}
+Most of the parameters are stored in the configuration file. Changing these values do not require to re-compile the code. 
 
-The temp\_nvp.dat consists in a two column text file with latitude and longitude of the temporary points used for rerouting. The number of temporary nvps used in the simulation is a \#define NTMP in mSector.h. You must be careful because the code does not check if the points are within the ACC.\\
+An example of a config file can be found in \verb|abm_tactical/config/|. Each line starting with $\#$ is a comment, whereas all other lines are values. The name of the variable it refers to needs to be written after a '\verb|\t#|'. For instance:
+\begin{verbatim}
+#This is a comment
+24\t#t_w\n
+\end{verbatim}
+gives $4t_w = 24$. The position of the values in the configuration file does not matter.
 
-The shock\_tmp.dat has the same format of temp\_nvp.dat and it contains the centers of the shocks used in the simulations.\\
+Note that the ABM does not perform any consistency checks on the variables. For example if one wants to increase the lookahead $t\_w$, one needs to fix the product $t_w \times t_r \times t_i$ which represents the time-step\footnote{The smaller is this product, the better works the ABM by the way. See deliverable D2.4 included in the doc/ folder, however a small time-step implies a high computational effort. A good choice for the time-step is about 3min.}. These three values are the most crucial ones for the simulations and should be chosen with care. The user can find their descriptions in the deliverable D2.4 included in the doc/ folder.
+\\
 
-The sector\_capacities.dat has two columns the first represents the ID of the sector, the seconds is the related capacity.
+Most of the values of the configuration file can be changed without too much trouble. The most simple features are tunable with the parameters \verb|nsim| (number of simulations), and \verb|Nm_shock|, (number of shocks), \verb|radius| (radius of the shocks in nautical miles). Other parameters needs some more understanding of the models. See also the caveats section \ref{subsec:caveats}.
 
+
+\subsection{Additional files}
+Other files are required to run the simulations, which are called respectively \verb|temp_nvp.dat|, \verb|shock_tmp.dat|,  \verb|sector_capacities.dat|, and \verb|bound_latlon.dat|. Some examples are stored in the config folder \verb|abm_tactical/config/|. Their paths have to be specified in the config file, in the corresponding entries.\\
+
+The \verb|temp_nvp.dat| consists in a two columns text file with latitude and longitude of the temporary points used for rerouting. The number of temporary nvps used in the simulation is defined via a \#define flag in mSector.h. A python utility is included in \verb|abm_tactical/generate_temporary_points.py|, called compute\_temporary\_points, to generate to new files with temporary points. This function takes as input the boundaries of the airspace under control (given as a list of coordinates latitude/longitude), the number of points to generate and  where the file should be saved. You must be careful because the code does not check if the points are within the ACC.
+
+The \verb|shock_tmp.dat| has the same format of \verb|temp_nvp.dat| and it contains the centers of the shocks used in the simulations. This also has to be created via an external script, which is not included at the moment in the repository.
+
+The \verb|sector_capacities.dat| has two columns: the first one stores the ID of the sector, the second the related capacity. These label needs to be consistent with the ones present in the M1 file. Note that the user can use the '-1' for navpoints which do not have to be under control. This is more specifically used for the first and the last points of the trajectories (see caveats \ref{subsec:caveats}).
+
+Finally, the file \verb|bound_latlon.dat| contains the boundaries of the airspace as a list of latitudes/longitudes, like the \verb|temp_nvp.dat| file.
 
 \subsection{Define}
 
-Other parameters are defined in the header files. Every time you want to change these parameter you need to recompile the code. For example in mABM.h is defined LS that is the minimum improvement of the trajectory for a direct
-
+Other parameters are defined in the header files. Every time you want to change these parameter you need to recompile the code. For example in mABM.h is defined LS that is the minimum improvement of the trajectory for a direct:
 \begin{verbatim}
 #define LS 1000
 \end{verbatim}
 
-another useful \#define is DTMP\_P that is the Maximum distance in meters of the selected temporary points for the rerouting operations.
+Another useful \#define is DTMP\_P that is the Maximum distance in meters of the selected temporary points for the rerouting operations.
 
 Others \#define do not have associated values. For example:
-
 \begin{verbatim}
 #define SINGLE_TOUCH
 \end{verbatim}
@@ -285,7 +309,7 @@ If you comment this \#define the ABM can perform a multiple modification of the 
 \subsection{Python interface to the Tactical layer}
 \label{subsec:interface}
 
-The folder \verb|interface|, and more specifically the file \verb|abm_inteface| provides some function to call the C code from python. The most important function is called \verb|do_ABM_tactical| and calls an interface to the code using SWIG. It arguments include the paths to all necessary files, i.e. the input file, the output file, the config file, and all the additional files \verb|temp_nvp.dat|, \verb|shock_tmp.dat| etc.
+The folder \verb|interface|, and more specifically the file \verb|abm_interface| provides some function to call the C code from python. The most important function is called \verb|do_ABM_tactical| and calls an interface to the code using SWIG. It arguments include the paths to all necessary files, i.e. the input file, the output file, the config file, and all the additional files \verb|temp_nvp.dat|, \verb|shock_tmp.dat| etc.
 
 Another useful function is called \verb|choose_paras| which able to modify a configuration file in a transparent way. The user just needs to indicate the path to the config file to modify, the name of the parameter to change, the new value, and the function will change the value in the file. So one possible workflow using this interface could be:
 
@@ -297,11 +321,28 @@ from value in values:
 
 This interface is very basic for the moment and will be expanded in the future, in particular by directly passing python lists to the SWIG interface containing all the information relevant about the flights.
 
+\subsection{Caveats}
+\label{subsec:caveats}
+
+Here are some potential traps for new users concerning the tactical layer:
+\begin{itemize}
+\item The time step $t_s$ is the one the most important parameter of the model. It is equal to $t_s = t_i \times t_w\times t_r$:
+\begin{enumerate}
+\item The time increment $t_i$ is the time resolution for the trajectories. It should be very small (around 8 seconds),
+\item The time window $t_w$ represents the time horizon of the controller on which it will compute the future potential conflicts.
+\item The time roll $t_r$, which is a fraction of the time window, represents the time after which the controller updates trajectories of the flights.
+\end{enumerate}
+In particular, a user who would like to increase the time horizon of the controller would need to keep the time-step $t_s = t_i \times t_w\times t_r$ fixed by reducing the time-roll, otherwise different effects will mix up.
+\item The life duration of shocks is computed with respect to the time step. Hence changing $t_i$, $t_w$, or $t_r$ will change the duration of the flights.
+\item The shocks appear only on 10 flight levels, not on a whole column of air. The variables \verb|shock_f_lvl_min| and \verb|shock_f_lvl_max| do not change this fact. Instead, they are fixing the possible interval of flight levels of apparition of the shocks.
+\item The starting and ending dates have to be informed in the config file at the corresponding lines. They need to be consistent with the trajectories provided. 
+\end{itemize}
+
 \section{Miscellaneous}
 
 \subsection{Trajectories formats}
 
-There are different formats for trajectories in the code and we use the following abbreviations in the documentation to keep track of them:
+There are different formats for trajectories in the code and we use the following abbreviations in the in-code documentation to keep track of them:
 \begin{itemize}
 \item  \verb|(x, y, z, t)| : trajectories are made of 4-tuples with latitude, longitude, altitude and 
 time.
@@ -321,9 +362,10 @@ the day (which is stored somewhere else).
 
 The code is shipped with several utilities in order to see the results. Two of them are more specifically useful:
 \begin{itemize}
-\item \verb|draw_network_and_patches| in libs/general\_tools.py is able to display an hybrid network as well as trajectories using it.
-\item performance\_plots.py includes many possible plotting function and is easily usable with the strategic, in particular when sweeping parameters. 
+\item \verb|draw_network_and_patches| in \verb|libs/general_tools.py| is able to display an hybrid network as well as trajectories using it.
+\item \verb|performance_plots.py| includes many possible plotting functions and is easily usable with the strategic, in particular when sweeping parameters. 
 \end{itemize}
+Other visualization tools will be included in the final release.
 
 \subsection{Paths}
 Some paths are automatically inferred from the parameter dictionaries. For instance, the function \verb|build_path| in simulationO.py takes some values of the parameters and builds file name with them. So one can easily override this by changing the function for its own purpose.

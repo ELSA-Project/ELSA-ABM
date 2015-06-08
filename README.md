@@ -44,7 +44,7 @@ sudo apt-get install easy_install
 Then install all modules:
 
 ```
-easy_install scipy, shapely, networkx, basemap, MySQLdb, maplotlib, descartes
+easy_install scipy, shapely, networkx, basemap, MySQLdb, maplotlib, descartes, sklearn
 ```
 
 You will need the swig package to do the interface between C and Python, which can be installed this way:
