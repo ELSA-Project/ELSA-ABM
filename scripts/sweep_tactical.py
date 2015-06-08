@@ -158,6 +158,9 @@ def sweep_paras_shocks(zone, paras, input_files, config_file, shock_file_zone, b
 			for par2 in paras[name_par2 + '_iter']:
 				print name_par2, "=", par2
 				paras.update(name_par2, par2, config_file=config_file)
+				print 'Updated parameters:'
+				for par in paras.keys():
+					print ' --', par, '=', paras[par] 
 				with clock_time():
 					output_file = name_results_shocks(paras, m1_file_name=input_file, zone=zone, suff=suff)
 					for i in range(paras['nsim']):
@@ -229,6 +232,9 @@ def lifetime_func(time_shock, t_w, t_r, t_i):
 
 def Nm_shock_func(f_shocks, t_w, t_r, t_i, DAY, shock_f_lvl_min, shock_f_lvl_max):
 	return f_shocks*t_w*t_r*t_i/(DAY*(shock_f_lvl_max-shock_f_lvl_min)/10.)
+
+def time_roll_function(t_s, t_w):
+	return float(t_s)/float(t_w)
 
 if __name__=='__main__':
 

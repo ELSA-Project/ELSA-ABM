@@ -80,7 +80,8 @@ def choose_paras(name_para, new_value, fil="../abm_tactical/config/config.cfg"):
 def do_ABM_tactical(input_file, output_file, config_file, verbose=2, 
 	shock_tmp=jn(main_dir, 'abm_tactical/config/shock_tmp.dat'),
 	bound_latlon=jn(main_dir, 'abm_tactical/config/bound_latlon.dat'),
-	temp_nvp=jn(main_dir, 'abm_tactical/config/temp_nvp.dat')):
+	temp_nvp=jn(main_dir, 'abm_tactical/config/temp_nvp.dat'),
+	capacity_file=main_dir+'/abm_tactical/config/sector_capacities.dat'):
 
 	"""
 	Main function of control of the tactical ABM. The function uses tactical_simulation,
@@ -104,7 +105,7 @@ def do_ABM_tactical(input_file, output_file, config_file, verbose=2,
 		full path to file containing temporary navigation points used in the simulations.
 	"""
 
-	for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_latlon'), (temp_nvp, 'temp_nvp')]:
+	for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_latlon'), (temp_nvp, 'temp_nvp'), (capacity_file, 'capacity_file')]:
 		choose_paras(name, fil, fil=config_file)
 
 	try:
