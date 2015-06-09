@@ -192,15 +192,17 @@ def do_efficiency():
 											  sizes=sizes)
 
 def do_ABM_tactical(input_file, output_file, config_file, verbose=2, 
-	shock_tmp=main_dir + '/abm_tactical/config/shock_tmp.dat',
-	bound_latlon= main_dir + '/abm_tactical/config/bound_latlon.dat',
-	temp_nvp = main_dir + '/abm_tactical/config/temp_nvp.dat'):
+	shock_tmp=main_dir+'/abm_tactical/config/shock_tmp.dat',
+	bound_latlon= main_dir+'/abm_tactical/config/bound_latlon.dat',
+	temp_nvp=main_dir+'/abm_tactical/config/temp_nvp.dat',
+	capacity_file=main_dir+'/abm_tactical/config/sector_capacities.dat'):
 
 	n = rd.randint(0, 1000000000)
 	
-	for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_latlon'), (temp_nvp, 'temp_nvp')]:
+	for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_file'), (temp_nvp, 'temp_nvp'), (capacity_file, 'capacity_file')]:
 		# temp_file = fil + str(n)
 		# os.system('cp ' + fil + ' ' + temp_file)
+		#print "setting parameter", name, "to", fil, "in the following config file:", config_file
 		choose_paras(name, fil, fil=config_file)
 
 	# temp_config_file = config_file + str(n)
