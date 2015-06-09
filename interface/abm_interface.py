@@ -105,7 +105,7 @@ def do_ABM_tactical(input_file, output_file, config_file, verbose=2,
 		full path to file containing temporary navigation points used in the simulations.
 	"""
 
-	for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_latlon'), (temp_nvp, 'temp_nvp'), (capacity_file, 'capacity_file')]:
+	for fil, name in [(shock_tmp, 'shock_tmp'), (bound_latlon, 'bound_file'), (temp_nvp, 'temp_nvp'), (capacity_file, 'capacity_file')]:
 		choose_paras(name, fil, fil=config_file)
 
 	try:

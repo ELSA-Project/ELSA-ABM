@@ -233,6 +233,7 @@ This function also features some more advanced capabilities, like the possibilit
 As an example, the user can use again the \verb|tests/example/generate_traffic_example.py| file and change uncomment line 30. The file generated will have trajectories almost straight (efficiency equal to 0.99).
 
 \section{Using the Tactical layer}
+\label{sec:tactical}
 The Tactical layer aims at transforming planned trajectories into ``actual'' trajectories by deconflicting the them by a simulated super-controller. The standard input is an ``M1 file'' whereas the output is an ``M3 file'', similarly to what exists in DDR data.
 \\
 
@@ -334,6 +335,8 @@ from value in values:
 \end{verbatim} 
 
 This interface is very basic for the moment and will be expanded in the future, in particular by directly passing python lists to the SWIG interface containing all the information relevant about the flights.
+
+As an example, the user can run the file \verb|tests/example/interface_example.py|, which runs the same simulation than the command in the introduction of this section.
 
 \subsection{Caveats}
 \label{subsec:caveats}
