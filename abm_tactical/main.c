@@ -14,6 +14,9 @@ int simulation(char **args){
 
 	srand(time(NULL));
 	
+	setenv("TZ", "GMT", 1);
+	tzset();
+	
 	CONF_t config;
 	Aircraft_t *Flight,*flight;
 	int Nflight;

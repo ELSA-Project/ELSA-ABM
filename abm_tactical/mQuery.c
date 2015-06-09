@@ -80,7 +80,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 	int over_night;
 	#endif
 	
-	struct tm t;
+	struct tm t={0};
 	
 	for(i=0;i<Nflight;i++){
 		
@@ -128,6 +128,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			
 			strptime(&c[++j],"%Y-%m-%d %H:%M:%S",&t);
 			(*flight)[i].time[h]=(long double) mktime(&t);
+			if((*flight)[i].time[h] == -1.) BuG("Error on time\n");
 			
 			//~ for(++j;c[j]!=' '&&c[j]!='\0';j++);
 			//~ if(c[j]=='\0') BuG("BUG in M1 File -lx5\n");
@@ -147,9 +148,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			(*flight)[i].nvp[h][4]=atof(&c[++j]) + WA_SECT_LABEL; // TAKE OUTTTT
 			#else
 			(*flight)[i].nvp[h][4]=0.;
-			#endif	
-			
-				
+			#endif		
 			
 			#ifdef BOUND_CONTROL
 			/*It does not work! */
@@ -167,6 +166,8 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 	
 	/*Evaluate velocity as the mean velocity between two NVPs*/
 	_calculate_velocity((*flight),Nflight);
+	
+	fclose(rstream);
 	
 	return Nflight;
 }
@@ -205,21 +206,34 @@ long double _find_value_datetime (char *config_file,char *label){
 		printf("I was looking here %s for the config file\n", config_file);
 		BuG("BUG - configuration file doesn't exist\n");
 	}
-	struct tm t;
-	char c[R_BUFF];
+	struct tm t ={0};
+	char c[800];
 	int i,lsize;
+	long double T;
+	char buffer[80];
+	char timebuf[80];
+	
+	
+	time_t test;
 	
 	for(lsize=0;label[lsize]!='\0';lsize++);
 	
-	while (fgets(c, R_BUFF, rstream)) {
+	while (fgets(c, 800, rstream)) {
 		if(c[0]=='#'||c[0]=='\n'||c[0]==' ') continue;
 		for(i=0;c[i]!='#'&&c[i]!='\0';i++);
 		if(c[i]=='\0') BuG("configuration file not standard\n");
 		if(!memcmp(&c[++i], label, lsize)) {
 			fclose(rstream);
 			
-			strptime(c,"%Y-%m-%d %H:%M:%S",&t);
-			return (long double) mktime(&t);	
+			for(i=0;c[i]!='\t';i++) timebuf[i]=c[i];
+			timebuf[i]='\0';
+			
+			strptime(timebuf,"%Y-%m-%d %H:%M:%S",&t);
+			
+			
+			T = (long double) mktime(&t);
+			
+			return 	T;
 		}
 	}
 	
@@ -361,6 +375,7 @@ int get_temp_shock(CONF_t *conf){
 		project((*conf).point_shock[i],(*conf).point_shock[i]);
 		#endif 
 	}
+	
 	fclose(rstream);
 	//free(rep);
 	return 1;
@@ -407,13 +422,14 @@ int get_capacity(char *file_r,CONF_t *conf){
 			i--;
 			continue;
 		}
-		if(atoi(c)!= (i-WA_SECT_LABEL) ) BuG("Not Regular Capacity file, miss index\n");
+		if(atoi(c)!= (i) ) BuG("Not Regular Capacity file, miss index\n");
 		for(j=0;c[j]!='\t';j++);
 		(*conf).capacy[i]=atoi(&c[j+1])* (*conf).x_capacity;
 		
 
 	}
 	(*conf).capacy[0]=SAFE;
+	fclose(rstream);
 	
 	return 1;	
 }
