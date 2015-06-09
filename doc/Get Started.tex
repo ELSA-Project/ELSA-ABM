@@ -73,22 +73,29 @@ Then you should make sure that all the dependencies required are installed. The 
 \item MySQLdb
 \item matplotlib
 \item descartes
-\item sklearn
+\item scikit-learn
 \end{itemize}
 
-On Debian-like system like Ubuntu, you can use \verb|easy_install|. First install \verb|easy_install| using:
+On Debian-like system like Ubuntu, you can use the following command to install them all:
 
 \begin{verbatim}
-sudo apt-get install easy_install 
+sudo apt-get install python-scipy python-numpy python-shapely 
+python-networkx python-mpltoolkits.basemap python-matplotlib 
+python-sklearn python-mysqldb
 \end{verbatim}
 
-Then installing all modules:
+The package `descartes' has to be installed separately using for instance pip:
+\begin{verbatim}
+sudo pip install descartes
+\end{verbatim}
+
+If pip is not installed on your system, you can install it like this:
 
 \begin{verbatim}
-easy_install scipy numpy shapely networkx basemap mysqldb maplotlib descartes sklearn
+sudo apt-get install python-pip 
 \end{verbatim}
 
-You will need the swig package to do the interface between C and Python, which can be installed this way:
+You will also need the swig package to do the interface between C and Python, which can be installed this way:
 \begin{verbatim}
 sudo apt-get install swig
 \end{verbatim}
@@ -182,15 +189,17 @@ The first one is a low level function which is essentially doing one simulation 
 
 On the other hand, the generate\_traffic function provides a better interface and a higher level of control of the ABM, as well as a simplified setup with standard default parameters. It is suited as a generic trajectory generator, usable in particular with the tactical layer. In this tutorial, we only describe this function which includes everything needs to do simple simulations\footnote{Or more complex ones, since a lot of optional capabilities are included there.}.
 
-The function needs an hybrid network to run, that you can build following section \ref{sec:network}. It needs also a parameter file, a template of which you can find in abm\_strategic/paras.py. The template serves also as example and is used if no parameter dictionary is given as entry. Hence one can very simply use the function like this:
+The function needs an hybrid network to run, that you can build following section \ref{sec:network}. It needs also a parameter file, a template of which you can find in \verb|abm_strategic/paras.py|. The template serves also as example and is used if no parameter dictionary is given as entry. Hence one can very simply use the function like this:
 \begin{verbatim}
 generate_traffic(G)
 \end{verbatim}
-with \verb|G| an hybrid network. The file \verb|abm_strategic/generate_traffic_example.py| can be used as a way of exploring this function. One of the most interactive features is the ability for the user to directly control some parameters in a transparent way. For instance:
+with \verb|G| an hybrid network. The file \verb|tests/example/generate_traffic_example.py| can be used as a way of exploring this function. One of the most interactive features is the ability for the user to directly control some parameters in a transparent way. For instance:
 \begin{verbatim}
 generate_traffic(G, ACtot=1000, days=48*60)
 \end{verbatim}
 overwrites the number of flights required by the parameter dictionary, setting it to 1000, and simulates two days of data.
+
+The parameters which are not specified has keyword arguments are taken from a configuration file of which a template can be found in \verb|abm_strategic/paras.py|. The setup makes a copy of it as \verb|abm_strategic/my_paras.py|. This also the default path on which the function `generate\_traffic' looks if the path of the config file is not specified (with keyword argument `paras\_file'). So in summary, the user can fully control the function via a configuration file, or use a configuration just as a template and overwrite the parameters via keyword arguments in `generate\_traffic'. The last option is particularly useful and one wants to iterate on different values for a given parameter.
 
 Another important option for the user is using the option \verb|coordinates|. If set to True, the function returns some coordinate-based trajectories instead of some label-based ones. This is in particular important for the tactical ABM which takes as input the former.
 
@@ -203,7 +212,7 @@ The abm\_strategic folder also include some tools to study some new concepts of 
 \begin{verbatim}
 from abm_strategic import *
 \end{verbatim}
-and is named \verb|rectificate_trajectories_network_with_time|. The inputs to this function is a list of trajectories to be modified, the navpoint network on which the trajectories are defined and an effiency target. The efficiency $E_S$ of a set $S$ of flights is defined by:
+and is named \verb|rectificate_trajectories_network_with_time|. The inputs to this function is a list of trajectories to be modified, the navpoint network on which the trajectories are defined and an efficiency target. The efficiency $E_S$ of a set $S$ of flights is defined by:
 $$
 E_S = \frac{\sum_S l_b}{\sum_S l_t}
 $$
@@ -221,7 +230,7 @@ The function also recomputes automatically the altitudes and times of crossing o
 This function also features some more advanced capabilities, like the possibility of fixing different probabilities of moving different groups of points. This allows to smoothly go from the current scenario to a SESAR scenario where all (planned) trajectories are straight. One can refer to the documentation of the lower level function  \verb|rectificate_trajectories| for more details about this.
 \\
 
-As an example, the user can use again the \verb|abm_strategic/generate_traffic_example.py| file and change uncomment line 30. The file generated will have trajectories almost straight (efficiency equal to 0.99).
+As an example, the user can use again the \verb|tests/example/generate_traffic_example.py| file and change uncomment line 30. The file generated will have trajectories almost straight (efficiency equal to 0.99).
 
 \section{Using the Tactical layer}
 The Tactical layer aims at transforming planned trajectories into ``actual'' trajectories by deconflicting the them by a simulated super-controller. The standard input is an ``M1 file'' whereas the output is an ``M3 file'', similarly to what exists in DDR data.
@@ -282,7 +291,12 @@ Most of the values of the configuration file can be changed without too much tro
 \subsection{Additional files}
 Other files are required to run the simulations, which are called respectively \verb|temp_nvp.dat|, \verb|shock_tmp.dat|,  \verb|sector_capacities.dat|, and \verb|bound_latlon.dat|. Some examples are stored in the config folder \verb|abm_tactical/config/|. Their paths have to be specified in the config file, in the corresponding entries.\\
 
-The \verb|temp_nvp.dat| consists in a two columns text file with latitude and longitude of the temporary points used for rerouting. The number of temporary nvps used in the simulation is defined via a \#define flag in mSector.h. A python utility is included in \verb|abm_tactical/generate_temporary_points.py|, called compute\_temporary\_points, to generate to new files with temporary points. This function takes as input the boundaries of the airspace under control (given as a list of coordinates latitude/longitude), the number of points to generate and  where the file should be saved. You must be careful because the code does not check if the points are within the ACC.
+The \verb|temp_nvp.dat| consists in a two columns text file with latitude and longitude of the temporary points used for rerouting. The number of temporary nvps used in the simulation is defined via a \#define variable called \verb|NTMP| in mSector.h. A python utility is included in \verb|abm_tactical/generate_temporary_points.py|, called compute\_temporary\_points, to generate to new files with temporary points. This function takes as input the boundaries of the airspace under control (given as a list of coordinates latitude/longitude), the number of points to generate and  where the file should be saved. The user must be careful because the code:
+\begin{itemize}
+\item does not check if the points are within the ACC. 
+\item does not check the number of points matches \verb|NTMP|.
+\end{itemize}
+
 
 The \verb|shock_tmp.dat| has the same format of \verb|temp_nvp.dat| and it contains the centers of the shocks used in the simulations. This also has to be created via an external script, which is not included at the moment in the repository.
 

@@ -33,18 +33,22 @@ Then you should make sure that all the dependencies required are installed. The 
 * MySQLdb
 * matplotlib
 * descartes
-* sklearn
+* scikit-learn
 
-For this you can use easy_install. First install easy_install using:
-
-```
-sudo apt-get install easy_install 
-```
-
-Then install all modules:
+You can do this using the following command (tested on Mint 17 and Ubuntu 14.04):
 
 ```
-easy_install scipy, shapely, networkx, basemap, MySQLdb, maplotlib, descartes, sklearn
+sudo apt-get install python-scipy python-numpy python-shapely python-networkx python-mpltoolkits.basemap python-matplotlib python-sklearn python-mysqldb
+```
+
+The package 'descartes' has to be installed separately using for instance pip:
+```
+sudo pip install descartes
+```
+
+If pip is not installed on your system, you can install it like this:
+```
+sudo apt-get install python-pip 
 ```
 
 You will need the swig package to do the interface between C and Python, which can be installed this way:

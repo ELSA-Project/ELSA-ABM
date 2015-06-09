@@ -768,7 +768,7 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
     G : hybrid network
         on which to generate the traffic.
     paras_file : string, optional
-        path for reading the parameters for the simulations. If None, reads paras.py.
+        path for reading the parameters for the simulations. If None, reads my_paras.py.
     save_file : string
         file for saving trajectories with the abm_tactical format.
     simple_setup : boolean

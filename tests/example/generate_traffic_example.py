@@ -6,20 +6,22 @@ sys.path.insert(1, '../..')
 sys.path.insert(1, '../../abm_strategic')
 import pickle
 import os 
-from os.path import join
+from os.path import join as jn
 
 from abm_strategic.simulationO import generate_traffic
-from abm_strategic import result_dir
+from abm_strategic import result_dir, main_dir
 #result_dir = jn(main_dir, 'tests', 'example')
 
 if __name__ == '__main__':
-	with open(join(result_dir, 'networks', 'Example.pic'), 'r') as f:
+	with open(jn(result_dir, 'networks', 'Example.pic'), 'r') as f:
 		G = pickle.load(f) 
 
-	os.system('mkdir -p ' + join(result_dir, 'trajectories', 'M1'))
-	save_file = join(result_dir, 'trajectories', 'M1', 'trajectories_example.dat')
+	os.system('mkdir -p ' + jn(result_dir, 'trajectories', 'M1'))
+	save_file = jn(result_dir, 'trajectories', 'M1', 'trajectories_example.dat')
+	paras_file = jn(main_dir, 'abm_strategic', 'my_paras.py')
 
-	trajectories = generate_traffic(G, 	save_file=save_file, 
+	trajectories = generate_traffic(G, 	paras_file=paras_file,
+										save_file=save_file, 
 										# file_traffic=file_traffic, 
 										# coordinates=True,
 										# put_sectors=True, 

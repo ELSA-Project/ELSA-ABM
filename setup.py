@@ -7,6 +7,7 @@ with libs/paths.py.
 """
 
 import os
+from os.path import join as jn
 
 if __name__ == '__main__':
 	main_dir = os.path.split(os.path.abspath(__file__))[0]
@@ -37,12 +38,20 @@ if __name__ == '__main__':
 		new_lines.append('')
 		new_lines.append('result_dir = "' + result_dir + '"')
 
-	with open(os.path.join(main_dir, 'libs/paths.py'), 'w') as f:
+	with open(jn(main_dir, 'libs', 'paths.py'), 'w') as f:
 		for line in new_lines:
 			f.write(line)
 
 	os.system('mkdir -p ' + result_dir)
 
+	os.system('mkdir -p ' + jn(result_dir, 'networks'))
+	os.system('mkdir -p ' + jn(result_dir, 'trajectories'))
+	os.system('mkdir -p ' + jn(result_dir, 'trajectories', 'M1'))
+	os.system('mkdir -p ' + jn(result_dir, 'trajectories', 'M3'))
+
+	os.system('cp ' + jn('abm_strategic', 'paras.py') + ' '+ jn('abm_strategic', 'my_paras.py'))
+	os.system('cp ' + jn('abm_strategic', 'paras_iter.py') + ' '+ jn('abm_strategic', 'my_paras_iter.py'))
+	
 	print
 	print "Compiling C code and making wrapper..."
 	os.system("cd abm_tactical && ./compile.py")
