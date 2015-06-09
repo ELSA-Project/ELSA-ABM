@@ -95,7 +95,10 @@ int generate_temporary_point(CONF_t *config){
 		
 		fclose(rstream);
 		//free(rep);	
-		return 1;
+	(*config).n_tmp_nvp = n;
+	
+	
+	return 1;
 	}
 //#endif
 	/* ATTENTION !!!! (DEPRECATED)*/

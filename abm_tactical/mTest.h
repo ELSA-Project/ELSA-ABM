@@ -40,6 +40,8 @@ void gall_peter(long double *,long double *);
 
 void print_time(long double );
 
+void plot_point(long double *,char *);
+
 int cheak_nan_pos(Aircraft_t *,CONF_t );
 
 //void print_workload(TOOL_f , CONF_t , char *);

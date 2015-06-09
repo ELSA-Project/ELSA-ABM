@@ -110,8 +110,19 @@ int del_flight_pos(Aircraft_t **f,int N, CONF_t conf ){
 
 int del_conf(CONF_t *conf){
 	ffree_2D((*conf).bound,(*conf).Nbound);
-	ffree_2D((*conf).tmp_nvp,(*conf).n_tmp_nvp);
+	ffree_2D((*conf).tmp_nvp,NTMP);
+	free((*conf).capacy);
+	
 	free((*conf).main_dir);
+	free((*conf).bound_file);
+	free((*conf).capacity_file);
+	free((*conf).temp_nvp);
+	free((*conf).shock_tmp);
+	
+	/*file for boundaries*/
+	//char *bound_latlon; // Where is?
+	
+	
 	return 1;
 	
 }
@@ -229,13 +240,13 @@ int _create_shock(SHOCK_t *sh,CONF_t conf){
 }
 
 /*int _nvp_to_close(long double *d,long double *t_c,long double *vel,long double **nvp, long double *l_nvp,int *j,int n_nvp,long double *time,long double t){*/
-int _nvp_to_close(long double *d,long double *t_c,long double *vel,long double dV, long double **nvp, long double *l_nvp,int *j,int n_nvp,long double *time,long double t){
+int _nvp_to_close(long double *d,long double *t_c,long double *vel,long double dV, long double **nvp, long double *l_nvp,int *j,int n_nvp, Aircraft_t *f,long double t){
 	if(*d>=*l_nvp){
 		*t_c=*t_c - *l_nvp/(vel[*j]*(1.+dV));
 		(*j)=*j+1;
 		if((*j+1)> (n_nvp-1)) {
 			return(0);}
-		time[*j]=t- *t_c;
+		(*f).time[*j]=t- *t_c;
 		*d=(vel[*j]*(1.+dV))* (*t_c);
 		#ifdef EUCLIDEAN
 		*l_nvp=euclid_dist2d(nvp[*j],nvp[*j+1]);
@@ -243,7 +254,7 @@ int _nvp_to_close(long double *d,long double *t_c,long double *vel,long double d
 		*l_nvp=haversine_distance(nvp[*j],nvp[*j+1]);
 		#endif
 		
-		return _nvp_to_close(d,t_c,vel,dV,nvp,l_nvp,j,n_nvp,time,t);
+		return _nvp_to_close(d,t_c,vel,dV,nvp,l_nvp,j,n_nvp,f,t);
 	}
 	else return 1;
 }
@@ -258,6 +269,8 @@ long double _f_dist(int t,CONF_t *conf){
 int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_step, long double t_r, long double dV){
 	int i,j;
 	long double l_nvp,d,t_c;
+	
+	//for(i=0;i<((*f).n_nvp-1);i++)  if((*f).vel[i]<1.||(*f).vel[i]>400.)  printf("%Lf\n",(*f).vel[i]);
 	
 	#ifdef EUCLIDEAN
 	long double t0 = (*f).time[(*f).st_indx-1] + euclid_dist2d(st_point, (*f).nvp[(*f).st_indx-1])/(*f).vel[(*f).st_indx-1];	
@@ -326,7 +339,9 @@ int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_
 			l_nvp=haversine_distance(nvp[j],nvp[j+1]);
 			#endif
 			
-			if(!_nvp_to_close(&d,&t_c,vel,0.,nvp,&l_nvp,&j,n_nvp,(*f).time,t0+(i+1)*time_step)) {
+			//if(!_nvp_to_close(&d,&t_c,vel,0.,nvp,&l_nvp,&j,n_nvp,(*f).time,t0+(i+1)*time_step)) {
+			if(!_nvp_to_close(&d,&t_c,vel,0.,nvp,&l_nvp,&j,n_nvp,f,t0+(i+1)*time_step)) {
+				
 				for(;i<(t_wind-1);i++){	
 					pos[i+1][0]=SAFE;
 					pos[i+1][1]=SAFE;
@@ -388,7 +403,7 @@ int _position(Aircraft_t *f,long double *st_point, int t_wind, long double time_
 			l_nvp=haversine_distance(nvp[j],nvp[j+1]);
 			#endif
 			
-			if(!_nvp_to_close(&d,&t_c,vel,dV,nvp,&l_nvp,&j,n_nvp,(*f).time,t0+(i+1)*time_step)) {
+			if(!_nvp_to_close(&d,&t_c,vel,dV,nvp,&l_nvp,&j,n_nvp,f,t0+(i+1)*time_step)) {
 				for(;i<(t_wind-1);i++){	
 					pos[i+1][0]=SAFE;
 					pos[i+1][1]=SAFE;
@@ -757,7 +772,7 @@ int _excange_in_list(Aircraft_t **f,int n_f,TOOL_f *tl){
 
 /*Check collision in flight distance*/
 // TODO: take safety events indices from _check_risk
-int _checkFlightsCollision(long double *d,CONF_t conf,Aircraft_t *f){
+int _checkFlightsCollision_OLD(long double *d,CONF_t conf,Aircraft_t *f){
 	int i,indx;
 	
 	for(indx=1;indx<conf.t_w;indx++) if (d[indx]<(conf.d_thr*(1+_f_dist(indx,&conf) )) )  break;
@@ -781,6 +796,50 @@ int _checkFlightsCollision(long double *d,CONF_t conf,Aircraft_t *f){
 	printf("%d\t%Lf\t%Lf\n",indx,(*f).pos[indx][0],(*f).pos[indx][1]);
 	printf("\n");
 	for(i=0;i<conf.t_w;i++) printf("%d]\t%Lf\t%Lf\t%d\n",i,d[i],(conf.d_thr*(1+(i-(*f).tp)*conf.noise_d_thr)),d[i]<(conf.d_thr*(1+(i-1)*conf.noise_d_thr)));
+	plot_pos((*f),conf,"/tmp/pos");
+	plot((*f),conf,"/tmp/nvp");
+	plot_point((*f).pos[indx],"/tmp/point");
+	printf("st: %Lf\t%Lf",(*f).st_point[0],(*f).st_point[1]);
+	BuG("Error on CheckCollision\n");
+	return -1;
+}
+
+int _checkFlightsCollision(long double *d,CONF_t conf,Aircraft_t *f){
+	int i,indx;
+	
+	for(indx=1;indx<conf.t_w;indx++) if (d[indx]<(conf.d_thr*(1+_f_dist(indx,&conf) )) )  break;
+	if(indx==conf.t_w) return 0;
+
+	long double t_c = indx *conf.t_i;
+	long double t = (*f).tp*conf.t_i;
+	
+	#ifdef EUCLIDEAN
+	t += euclid_dist((*f).st_point, (*f).nvp[(*f).st_indx])/(*f).vel[(*f).st_indx-1];
+	#else
+	t += haversine_distance((*f).st_point, (*f).nvp[(*f).st_indx])/(*f).vel[(*f).st_indx-1];	
+	#endif
+	
+	if (t>=t_c) return (*f).st_indx;
+	
+	for(i = (*f).st_indx;i<((*f).n_nvp-1);i++){
+		#ifdef EUCLIDEAN
+		t += euclid_dist((*f).nvp[i], (*f).nvp[i+1])/(*f).vel[i];
+		#else
+		t += haversine_distance((*f).nvp[i], (*f).nvp[i+1])/(*f).vel[i];
+		#endif
+		if (t>=t_c) return i+1;	
+	}
+	
+
+	/*if it print this is a BUG*/
+	printf("%d\t%Lf\t%Lf\n",indx,(*f).pos[indx][0],(*f).pos[indx][1]);
+	printf("\n");
+	for(i=0;i<conf.t_w;i++) printf("%d]\t%Lf\t%Lf\t%d\n",i,d[i],(conf.d_thr*(1+(i-(*f).tp)*conf.noise_d_thr)),d[i]<(conf.d_thr*(1+(i-1)*conf.noise_d_thr)));
+	plot_pos((*f),conf,"/tmp/pos");
+	plot((*f),conf,"/tmp/nvp");
+	plot_point((*f).pos[indx],"/tmp/point");
+	printf("st: %Lf\t%Lf",(*f).st_point[0],(*f).st_point[1]);
+	BuG("Error on CheckCollision\n");
 	return -1;
 }
 
@@ -901,6 +960,7 @@ int _select_candidate_tmp_nvp_shortpath(Aircraft_t *f,CONF_t conf, TOOL_f *tl, i
 	int i;
 	
 	_temp_angle_nvp(f,conf,tl,(*f).st_indx);
+	//for(i=0,(*tl).n_sel_nvp=0 ;i<conf.n_tmp_nvp;i++) printf("%Lf\t%Lf\n",conf.tmp_nvp[i][0],conf.tmp_nvp[i][1]);
 #ifdef EUCLIDEAN
 	for(i=0,(*tl).n_sel_nvp=0 ;i<conf.n_tmp_nvp;i++) if(euclid_dist2d((*f).st_point,conf.tmp_nvp[i])<DTMP_P) if((*tl).temp_angle[i]<conf.max_ang) if(frand(0,100)<50){
 		(*tl).sel_nvp_index[(*tl).n_sel_nvp][0]= euclid_dist2d((*f).st_point, (conf).tmp_nvp[i])+euclid_dist2d( (conf).tmp_nvp[i],(*f).nvp[safe+1]);
@@ -1071,6 +1131,16 @@ int _reroute(Aircraft_t *f,Aircraft_t *flight,int N_f,SHOCK_t sh,CONF_t conf, TO
 			if(solved==0) {
 
 				_position(f , (*f).st_point , conf.t_w*2, conf.t_i, conf.t_r, dV);
+				
+				for(i=0;i<(*f).n_nvp;i++) for(j=0;j<DPOS;j++) old_nvp[i][j] = (*f).nvp[i][j];
+				ffree_2D((*f).nvp,olf);
+				(*f).nvp = falloc_matrix((*f).n_nvp,DPOS);
+				for(i=0;i<(*f).n_nvp;i++) for(j=0;j<DPOS;j++)  (*f).nvp[i][j] = old_nvp[i][j];
+				
+				//for(i=0;i<(*f).n_nvp;i++) print_time((*f).time[i]);
+				//for(i=0;1;) print_time((*f).time[i]);
+
+				
 				ffree_2D(old_nvp, olf);
 				free(old_vel);
 				(*f).touched = 1;
@@ -1302,6 +1372,11 @@ int _direct(Aircraft_t *f,Aircraft_t *flight,int N_f,CONF_t conf, TOOL_f tl,SHOC
 	}
 	//~ printf("D\t");
 	//~ print_time(tt);
+	for(i=0;i<(*f).n_nvp;i++) for(j=0;j<DPOS;j++) old_nvp[i][j] = (*f).nvp[i][j];
+	ffree_2D((*f).nvp,old_n_nvp);
+	
+	(*f).nvp = falloc_matrix((*f).n_nvp,DPOS);
+	for(i=0;i<(*f).n_nvp;i++) for(j=0;j<DPOS;j++) (*f).nvp[i][j] = old_nvp[i][j];
 	
 	ffree_2D(old_nvp,old_n_nvp);
 	free(old_vel);
@@ -1324,7 +1399,7 @@ int _check_safe_events(Aircraft_t **f, int N_f, SHOCK_t sh,TOOL_f tl, CONF_t con
 		_checkShockareaRoute((*f)[i].pos,conf.t_w, sh,tl.dist,t);
 		/*check if the minimu  distance array has some value under the safaty distance*/
 		unsafe=_check_risk(tl.dist,conf,conf.t_w,(*f)[i].tp);
-		
+
 		if(unsafe) {
 			/* If I already moved the i-Flight in the current time step*/
 			#ifdef SINGLE_TOUCH
