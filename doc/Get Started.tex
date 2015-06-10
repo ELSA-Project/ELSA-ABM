@@ -208,6 +208,8 @@ The function returns the simulated trajectories but also some statistics about w
 \section{Rectification of the trajectories}
 \label{sec:rectification}
 
+\subsection{Description}
+
 The abm\_strategic folder also include some tools to study some new concepts of SESAR, among which the free-route trajectories. In the model, trajectories can be ``rectified'' by moving some points of the trajectories in order to ``straighten'' them. The relevant function is also available by calling:
 \begin{verbatim}
 from abm_strategic import *
@@ -231,6 +233,10 @@ This function also features some more advanced capabilities, like the possibilit
 \\
 
 As an example, the user can use again the \verb|tests/example/generate_traffic_example.py| file and change uncomment line 30. The file generated will have trajectories almost straight (efficiency equal to 0.99).
+
+\subsection{Caveats}
+
+The user needs to be careful with the rectification of the trajectories. Since it was designed as a hack to use the strategic model in the SESAR scenario (with free-routing), the output of the rectification function IS NOT compliant with the capacities of the sectors. In order to produce straight trajectories compliant with capacities, the users can design the network such a way that the air companies are able to use straight trajectories. For instance, by putting links directly between entries and exits, which will force the air companies to select this trajectory for their shortest paths. This has not been tested though.
 
 \section{Using the Tactical layer}
 \label{sec:tactical}
