@@ -342,6 +342,14 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	 * The generation is deprecated*/
 	generate_temporary_point(config);
 	
+	/*Get the capacity constrains from file*/
+	#ifdef CAPACITY
+	get_capacity((*config).capacity_file, config);
+	#else
+	(*config).n_sect = 0;
+	#endif
+
+	
 	/*Get the M1 flight plan*/
 	*Nflight=get_M1(input_ABM,flight,config);
 	
@@ -355,12 +363,6 @@ int init_Sector(Aircraft_t **flight,int *Nflight,CONF_t	*config, SHOCK_t *shock,
 	_alloc_shock(*config,shock);
 	get_temp_shock(config);
 	
-	/*Get the capacity constrains from file*/
-	#ifdef CAPACITY
-	get_capacity((*config).capacity_file, config);
-	#else
-	(*config).n_sect = 0;
-	#endif
 	
 	
 	return 1;
