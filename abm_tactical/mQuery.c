@@ -146,6 +146,7 @@ int get_M1(char *m1_file,Aircraft_t **flight,CONF_t *conf){
 			for(++j;c[j]!=','&&c[j]!='\0';j++);
 			if(c[j]=='\0') BuG("BUG in M1 File -lx6\n");
 			(*flight)[i].nvp[h][4]=atof(&c[++j]) + WA_SECT_LABEL; // TAKE OUTTTT
+			if( (*flight)[i].nvp[h][4]>((*conf).n_sect-1) || (*flight)[i].nvp[h][4]<0 ) BuG("Not Regular sector on M1 file\n");
 			#else
 			(*flight)[i].nvp[h][4]=0.;
 			#endif		
@@ -417,14 +418,15 @@ int get_capacity(char *file_r,CONF_t *conf){
 	
 	rstream=fopen(file_r,"r");
 	int i,j;
-	for(i=1;fgets(c, R_BUFF, rstream);i++){
-		if(c[0]=='#'){
+	for(i=0;fgets(c, R_BUFF, rstream);i++){
+		if(c[0]=='#'||c[0]==' '){
 			i--;
 			continue;
 		}
+
 		if(atoi(c)!= (i) ) BuG("Not Regular Capacity file, miss index\n");
 		for(j=0;c[j]!='\t';j++);
-		(*conf).capacy[i]=atoi(&c[j+1])* (*conf).x_capacity;
+		(*conf).capacy[i+1]=atoi(&c[j+1])* (*conf).x_capacity;
 		
 
 	}
