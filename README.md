@@ -99,8 +99,4 @@ More details are available in the Getting_started.pdf file in the doc/ folder on
 
 # License
 
-Copyright: Christian Bongiorno, Gérald Gurtner.
-
-Indirect contributors: Rosario Mantegna, Salvatore Miccichè, Fabrizio Lillo, Luca Valori, Simone Pozzi, Marco Ducci.
-
-The code IS NOT open yet and should not be disclosed without the autorization of the authors.
+The code is released under the General Public License version 3. See LICENSE.txt, COPYING.txt and AUTHORS.txt for more details.
