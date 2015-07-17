@@ -15,7 +15,7 @@
 #include<string.h>
 #include<stdio.h>
 #include<stdlib.h>
-#include<malloc.h>
+//#include<stdlib.h>
 #include<time.h>
 
 /*Take string as HH:MM:SS and return the number of seconds*/

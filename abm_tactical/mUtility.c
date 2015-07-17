@@ -12,7 +12,7 @@
 
 #include<stdio.h>
 #include<stdlib.h>
-#include<malloc.h>
+//#include<malloc.h>
 #include<math.h>
 
 long double **falloc_matrix(int n, int m){
