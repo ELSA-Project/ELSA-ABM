@@ -6,6 +6,7 @@
 \usepackage{lmodern}
 \usepackage{vmargin}
 \usepackage{pdfpages}
+\usepackage{url}
 
 
 %\setmarginsrb{leftmargin}{topmargin}{rightmargin}{bottommargin}{headheight}{headsep}{footheight}{footskip}
@@ -23,7 +24,7 @@
 
 
 \begin{center}
-\Large{{\sc  Getting Started with the Elsa Simulator}}
+\Large{{\sc  Getting Started with the ELSA Air Traffic Simulator}}
 \end{center}
 
 \vspace{-0.3cm}
@@ -35,9 +36,18 @@
 
 \vspace{0.3cm}
 
+\section*{Prerequisites}
+
+In the following, we will assume that that the user has:
+\begin{itemize}
+\item basic knowledge of Python for the strategic layer,
+\item no knowledge of C OR no knowledge of Python for the tactical layer, because one can use either the executable compiled from C or the Python interface.
+\item some basic knowledge of UNIX commands.
+\end{itemize} 
+
 \section{Setup}
 
-First, create a directory where you see fit to host the code. Then download the code either using git (preferred method) or directly downloading the zip.
+To install the code, first create a directory where you see fit to host the code. Then download the code either using git (preferred method) or directly downloading the zip from \url{https://github.com/ELSA-project/ELSA-ABM}.
 
 \subsection{Using git}
 
@@ -47,13 +57,13 @@ sudo apt-get install git
 \end{verbatim}
 on a Debian-like system like Ubuntu\footnote{In the following, we will assume that that user has this kind of OS. The code has not been tested with Windows or MacOS, although. We are pretty sure that the code will be broken for the former (because of paths issues), but it may run on the latter. The final release should be compatible with all OS.}. Then run:
 \begin{verbatim}
-git clone https://github.com/GGurtner/ELSA-ABM.git
+git clone https://github.com/ELSA-project/ELSA-ABM.git
 \end{verbatim}
 in the folder you have created to download the code. git is especially handy if you want to keep the repository updated with new releases and if you want to contribute to the code.
 
 \subsection{Downloading directly}
 
-You can also just download the source code by clicking on ``download zip'' on the main page, then extract it wherever you want.
+You can also just download the source code by clicking on ``download zip'' on the main page at \url{https://github.com/ELSA-project/ELSA-ABM}, then extract it wherever you want.
 
 \subsection{Installing dependencies}
 
@@ -117,6 +127,10 @@ tests/run_all_tests.py
 
 All tests should be positive. If it is not the case, you can once again open a ticket on GitHub.
 
+\subsection{For MAC OS}
+
+The installation has only been tested marginally on MAC OS. Everything should be easy for the tactical layer, because there are no dependencies. For the strategic, most of the modules are easily installable, using a package manager. The only exception is basemap, which is used by the code to draw some maps. The issue seems to be in the installation of a dependency of basemap, GEOS, but solutions exist online. The alternative is to comment all the import of basemap in the code, which are only used for post-processing. The rest of the setup should be the same.
+
 \section{Organization of the code}
 
 The code is organized as follows:
@@ -130,7 +144,7 @@ The code is organized as follows:
 \item the \verb|doc| folder gathers the documentation, in the form of html files describing the python code and pdf files for small tutorials.
 \end{itemize}          
 
-The Strategic model and the Tactical one are fairly independent. One can use them for his/her own purpose by feeding them with the right input. They can also be used conjointly, even if this feature is very basic at the moment. Indeed, the interface is still under construction and should feature more advanced capabilities for the public release (June or July) with a more integrated code.
+The Strategic model and the Tactical one are fairly independent. One can use them for his/her own purpose by feeding them with the right input. They can also be used conjointly, even if this feature is quite basic at the moment. 
 
 \section{Using the network generator}
 \label{sec:network}
@@ -165,7 +179,7 @@ The output consists in three files:
 \item some very basic statistics on the network (this file could be expanded in the future), called for instance Example\_basic\_stats\_net.txt
 \end{itemize}
 
-One can copy the template file and modify it to generate different kinds of network. The inputs needed are all described in the template file. Note that most of them requires pickle files, but it is planned that in the future more formats will be supported, like jason.
+One can copy the template file and modify it to generate different kinds of network. The inputs needed are all described in the template file.
 
 \section{Using the strategic ABM}
 The strategic layer aims at producing sensible trajectories planned by the air companies in different environments with different behaviors from the airlines. The output is essentially the ``M1 files'', which are the equivalent of the DDR data about planned trajectories.
@@ -238,9 +252,9 @@ As an example, the user can use again the \verb|tests/example/generate_traffic_e
 
 The user needs to be careful with the rectification of the trajectories. Since it was designed as a hack to use the strategic model in the SESAR scenario (with free-routing), the output of the rectification function IS NOT compliant with the capacities of the sectors. In order to produce straight trajectories compliant with capacities, the users can design the network such a way that the air companies are able to use straight trajectories. For instance, by putting links directly between entries and exits, which will force the air companies to select this trajectory for their shortest paths. This has not been tested though.
 
-\section{Using the Tactical layer}
+\subsection{Using the Tactical layer}
 \label{sec:tactical}
-The Tactical layer aims at transforming planned trajectories into ``actual'' trajectories by deconflicting the them by a simulated super-controller. The standard input is an ``M1 file'' whereas the output is an ``M3 file'', similarly to what exists in DDR data.
+The Tactical layer aims at transforming planned trajectories into ``actual'' trajectories by deconflicting them with a simulated super-controller. The standard input is an ``M1 file'' whereas the output is an ``M3 file'', similarly to what exists in DDR data.
 \\
 
 The code of the Tactical ABM is stored in abm\_tactical folder. In the abm\_tactical/config folder there is the config.cfg that contains the values of most of the parameters.
@@ -269,9 +283,9 @@ Using the files provided as examples in the tests/example/ folder, the user can 
 \end{verbatim}
 which should produce the \verb|M3_example_0.dat| file with deconflicted trajectories. 
 
-\subsection{Input-Output File Format}
+\subsubsection{Input-Output File Format}
 
-Either M1 input file and M3 output files have the same format. The first line must contain the number of Flight:
+Either M1 input file and M3 output files have the same format. The first line must contain the number of flights (trajectories contained in the files):
 \begin{verbatim}
 1475\tNflight
 \end{verbatim}
@@ -279,7 +293,7 @@ the following lines are the trajectory of each aircraft. In particular the first
 
 The following positions are the nvps of the route. They consist in 5 values, separated by a comma: the horizontal position (latitude and longitude), the Flight Level, the time in the format `2010-05-06 10:20:32', and an integer number that refers to the sector to which the navpoint belongs. 
 
-\subsection{Configuration File}
+\subsubsection{Configuration File}
 Most of the parameters are stored in the configuration file. Changing these values do not require to re-compile the code. 
 
 An example of a config file can be found in \verb|abm_tactical/config/|. Each line starting with $\#$ is a comment, whereas all other lines are values. The name of the variable it refers to needs to be written after a '\verb|\t#|'. For instance:
@@ -287,18 +301,18 @@ An example of a config file can be found in \verb|abm_tactical/config/|. Each li
 #This is a comment
 24\t#t_w\n
 \end{verbatim}
-gives $4t_w = 24$. The position of the values in the configuration file does not matter.
+gives $t_w = 24$. The position of the values in the configuration file does not matter.
 
 Note that the ABM does not perform any consistency checks on the variables. For example if one wants to increase the lookahead $t\_w$, one needs to fix the product $t_w \times t_r \times t_i$ which represents the time-step\footnote{The smaller is this product, the better works the ABM by the way. See deliverable D2.4 included in the doc/ folder, however a small time-step implies a high computational effort. A good choice for the time-step is about 3min.}. These three values are the most crucial ones for the simulations and should be chosen with care. The user can find their descriptions in the deliverable D2.4 included in the doc/ folder.
 \\
 
-Most of the values of the configuration file can be changed without too much trouble. The most simple features are tunable with the parameters \verb|nsim| (number of simulations), and \verb|Nm_shock|, (number of shocks), \verb|radius| (radius of the shocks in nautical miles). Other parameters needs some more understanding of the models. See also the caveats section \ref{subsec:caveats}.
+Most of the values of the configuration file can be changed without too much trouble. The most simple features are tunable with the parameters \verb|nsim| (number of simulations), and \verb|Nm_shock|, (number of shocks), \verb|radius| (radius of the shocks in nautical miles). Using and modifying other parameters requires some more deeper understanding of the models, which can be achieving by reading D2.4, included in the doc/ folder. See also the caveats section \ref{subsec:caveats}.
 
 
-\subsection{Additional files}
+\subsubsection{Additional files}
 Other files are required to run the simulations, which are called respectively \verb|temp_nvp.dat|, \verb|shock_tmp.dat|,  \verb|sector_capacities.dat|, and \verb|bound_latlon.dat|. Some examples are stored in the config folder \verb|abm_tactical/config/|. Their paths have to be specified in the config file, in the corresponding entries.\\
 
-The \verb|temp_nvp.dat| consists in a two columns text file with latitude and longitude of the temporary points used for rerouting. The number of temporary nvps used in the simulation is defined via a \#define variable called \verb|NTMP| in mSector.h. A python utility is included in \verb|abm_tactical/generate_temporary_points.py|, called compute\_temporary\_points, to generate to new files with temporary points. This function takes as input the boundaries of the airspace under control (given as a list of coordinates latitude/longitude), the number of points to generate and  where the file should be saved. The user must be careful because the code:
+The \verb|temp_nvp.dat| consists in a two columns text file with latitude and longitude of the temporary points used for rerouting. The number of temporary nvps used in the simulation is defined via a \#define variable called \verb|NTMP| in mSector.h. A python utility is included in \verb|abm_tactical/| \verb|generate_temporary_points.py|, called compute\_temporary\_points, to generate new files with temporary points. This function takes as input the boundaries of the airspace under control (given as a list of coordinates latitude/longitude), the number of points to generate and  where the file should be saved. The user must be careful because the code:
 \begin{itemize}
 \item does not check if the points are within the ACC. 
 \item does not check the number of points matches \verb|NTMP|.
@@ -307,13 +321,13 @@ The \verb|temp_nvp.dat| consists in a two columns text file with latitude and lo
 
 The \verb|shock_tmp.dat| has the same format of \verb|temp_nvp.dat| and it contains the centers of the shocks used in the simulations. This also has to be created via an external script, which is not included at the moment in the repository.
 
-The \verb|sector_capacities.dat| has two columns: the first one stores the ID of the sector, the second the related capacity. These label needs to be consistent with the ones present in the M1 file. Note that the user can use the '-1' for navpoints which do not have to be under control. This is more specifically used for the first and the last points of the trajectories (see caveats \ref{subsec:caveats}).
+The \verb|sector_capacities.dat| has two columns: the first one stores the ID of the sector, the second the related capacity. These labels need to be consistent with the ones present in the M1 file. Note that the user can use the '-1' for navpoints which do not have to be under control. This is more specifically used for the first and the last points of the trajectories (see caveats \ref{subsec:caveats}).
 
 Finally, the file \verb|bound_latlon.dat| contains the boundaries of the airspace as a list of latitudes/longitudes, like the \verb|temp_nvp.dat| file.
 
-\subsection{Define}
+\subsubsection{Define}
 
-Other parameters are defined in the header files. Every time you want to change these parameter you need to recompile the code. For example in mABM.h is defined LS that is the minimum improvement of the trajectory for a direct:
+Other parameters are defined in the header files. Every time you want to change these parameters you need to recompile the code. For example in mABM.h is defined LS that is the minimum improvement of the trajectory for a direct:
 \begin{verbatim}
 #define LS 1000
 \end{verbatim}
@@ -339,8 +353,6 @@ from value in values:
     choose_paras(value, name_of_a_parameter)
     do_ABM_tactical(input, output, config)
 \end{verbatim} 
-
-This interface is very basic for the moment and will be expanded in the future, in particular by directly passing python lists to the SWIG interface containing all the information relevant about the flights.
 
 As an example, the user can run the file \verb|tests/example/interface_example.py|, which runs the same simulation than the command in the introduction of this section.
 
@@ -381,26 +393,38 @@ the day (which is stored somewhere else).
 \item \verb|tt| : a tuple \verb|(yy, mm, dd, h, m , s)|.
 \end{itemize}
 
-\subsection{Visualization}
+\subsection{Post-processing and visualization}
 
-The code is shipped with several utilities in order to see the results. Two of them are more specifically useful:
+The code is shipped with several utilities in order to see the results. Some of them are more specifically useful:
 \begin{itemize}
 \item \verb|draw_network_and_patches| in \verb|libs/general_tools.py| is able to display an hybrid network as well as trajectories using it.
-\item \verb|performance_plots.py| includes many possible plotting functions and is easily usable with the strategic, in particular when sweeping parameters. 
+\item the class \verb|TrajConverter| in \verb|libs/tools_airports.py| is a general converter for formats of trajectories. It features a clustering algorithm which is able to gather coordinate-based navigation points into labelled-based ones.
+\item \verb|build_traffic_network| in \verb|libs/tools_airports.py| is a function able to infer the traffic network from data. The traffic network of a set of trajectories is the network having the navigation points as nodes, which are linked if at least one flight goes from one to the other. Links are weighted with the number of flights travelling through the them. This functions uses the \verb|TrajConverter|.
+\item \verb|write_trajectories_for_tact| and \verb|read_trajectories_for_tact| in \verb|abm_strategic_utilities.py| are useful functions for reading and writing on disk the trajectories generated.
+\item \verb|draw_traffic_network| in \verb|abm_strategic_utilities.py| is a wrapper of the \verb|draw_network_and_patches|, which is useful to draw the trajectories generated with the strategic and the tactical. It uses also \verb|build_traffic_network| and \verb|read_trajectories_for_tact|.
+\item the script \verb|show_trajectories| in the \verb|scripts/| folder makes use of all the previous functions to display a set of trajectories using the syntax:
+\begin{verbatim}
+./how_trajectories.py trajectories_file.dat save_path_for_image
+\end{verbatim}
+\item \verb|performance_plots.py| in the \verb|abm_strategic/| folder includes many possible plotting functions and is easily usable with the strategic, in particular when sweeping parameters.
+\item  the script \verb|sweep_tactical| is useful when one wants to sweep some configuration parameters for tactical simulations.
 \end{itemize}
-Other visualization tools will be included in the final release.
 
 \subsection{Paths}
 Some paths are automatically inferred from the parameter dictionaries. For instance, the function \verb|build_path| in simulationO.py takes some values of the parameters and builds file name with them. So one can easily override this by changing the function for its own purpose.
 
 
-\section{Going further}
+\subsection{Going further}
 
-The description of the models are available in two different deliverable of the ELSA project, the D1.3 and the D2.4 of the extension of ELSA. They describe in details which mechanisms and algorithms are used, what is the modelling framework and so on, as well as the results obtained so far. Note that the strategic description enclosed in D1.3 is a bit out of date, but an updated partial description is included in D2.4 and will be expanded in D2.5 for the final release.
+The description of the models are available in two different deliverable of the ELSA project, the D1.3 and the D2.4 of the extension of ELSA. They describe in details which mechanisms and algorithms are used, what is the modelling framework and so on, as well as the results obtained so far. 
 
-The public release of this code will happen in June-July and will be shipped with a more detailed documentation about the features of the code.
+%Note that the strategic description enclosed in D1.3 is a bit out of date, but an updated partial description is included in D2.4 and will be expanded in D2.5 for the final release.
 
-The folder scripts/ contain different scripts that one can modify to suit its needs. They may or may not work with your configuration and data, so they should be considered as starting points for custom pieces of codes.
+%The public release of this code will happen in June-July and will be shipped with a more detailed documentation about the features of the code.
+
+Other useful and more detailed information is contained in the \textit{docstrings} of the Python code. The docstrings are just some comments within the code which can be extracted and gathered together in order to give a more comprehensive documentation. This documentation is generated during the setup and is included in the doc/ folder. It can be displayed with an internet browser, allowing hyperlinks between functions and classes. The C code has also some minimal comments. 
+
+The folder scripts/ contains different scripts that one can modify to suit its needs. They may or may not work with your configuration and data, so they should be considered as starting points for custom pieces of codes.
 
 
 \section*{Finding some help}

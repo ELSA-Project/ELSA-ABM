@@ -13,9 +13,9 @@ More information about the ELSA project and its results can be found here:
 ## Getting started
 
 First, create a directory where you see fit to host the code. Then download the code
-either using git (preferred method) via `git clone https://github.com/GGurtner/ELSA-ABM.git`. You can also download the code directly by clicking on the 'download zip' button on the right hand side and extract the archive.
+either using git (preferred method) via `https://github.com/ELSA-project/ELSA-ABM.git`. You can also download the code directly by clicking on the 'download zip' button on the right hand side and extract the archive.
 
-Note that the code has only been tested on linux distributions like Ubuntu. It is probably not compliant with Windows or MACOS yet but will be in the future. In the following we assume that the user has a Debian-like distribution.
+Note that the code has only been tested on linux distributions like Ubuntu, and only marginally on MAC OS. In the following we assume that the user has a Debian-like distribution.
 
 The code is mainly written in Python 2 so you should install it before anything else, using:
 
@@ -95,7 +95,9 @@ from abm_tactical import *
 
 More details are available in the Getting_started.pdf file in the doc/ folder on how to use them. Automatically generated documentation is also available in the doc/ folder.
 
+# For MAC OS
 
+The installation has only been tested marginally on MAC OS. Everything should be easy for the tactical layer, because there are no dependencies. For the strategic, most of the modules are easily installable, using a package manager. The only exception is basemap, which is used by the code to draw some maps. The issue seems to be in the installation of a dependency of basemap, GEOS, but solutions exist online. The alternative is to comment all the import of basemap in the code, which are only used for post-processing. The rest of the setup should be the same.
 
 # License
 
