@@ -8,8 +8,6 @@ import os
 from abm_strategic.simAirSpaceO import Net, NavpointNet, Flight
 from abm_strategic.simulationO import *
 
-# Next ones to do: test on add_first_last_points
-
 # TODO: high level tests
 
 class SimulationTest(unittest.TestCase):
