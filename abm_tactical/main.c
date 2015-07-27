@@ -1,3 +1,7 @@
+/*
+ *@author: cbongiorno.
+ */
+
 #include "mQuery.h"
 #include "mSector.h"
 #include "mUtility.h"

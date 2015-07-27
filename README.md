@@ -102,3 +102,14 @@ The installation has only been tested marginally on MAC OS. Everything should be
 # License
 
 The code is released under the General Public License version 3. See LICENSE.txt, COPYING.txt and AUTHORS.txt for more details.
+
+# Credits 
+
+The tactical part has been mainly written by Christian Bongiorno.
+
+The strategic part, the airspace generator, the python interface of the tactical part, the scripts, the post-processing tools and the setup tools have mainly been written by Gérald Gurtner.
+
+Other indirect contributors are:
+Rosario Mantegna, Salvatore Miccichè, Fabrizio Lillo, Luca Valori, Simone Pozzi, Marco Ducci.
+
+We thanks Marc Bourgois for fruitful discussion and help.

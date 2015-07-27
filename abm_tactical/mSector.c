@@ -1,11 +1,7 @@
 /*
- *  mSector.c
- *  ElsaABM_v1
- *
- *  Created by Christian Bongiorno on 07/03/14.
- *  Copyright 2014 __MyCompanyName__. All rights reserved.
- *
+ *@author: cbongiorno.
  */
+ 
 #include "mQuery.h"
 #include "mUtility.h"
 #include "mSector.h"

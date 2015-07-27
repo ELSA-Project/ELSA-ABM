@@ -1,10 +1,5 @@
 /*
- *  mABM.h
- *  ElsaABM_v1
- *
- *  Created by Christian Bongiorno on 08/03/14.
- *  Copyright 2014 __MyCompanyName__. All rights reserved.
- *
+ *@author: cbongiorno.
  */
 
 #ifndef __MABM_H

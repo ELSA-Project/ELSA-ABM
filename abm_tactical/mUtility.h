@@ -1,10 +1,5 @@
 /*
- *  mUtility.h
- *  ElsaABM
- *
- *  Created by Christian Bongiorno on 06/03/14.
- *  Copyright 2014 __MyCompanyName__. All rights reserved.
- *
+ *@author: cbongiorno.
  */
 
 #ifndef __MUTILITY_H

@@ -1,4 +1,8 @@
-#ifndef __MSECTOR_H
+/*
+ *@author: cbongiorno.
+ */
+
+ #ifndef __MSECTOR_H
 
 #define __MSECTOR_H
 

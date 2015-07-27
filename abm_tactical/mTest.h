@@ -1,10 +1,5 @@
 /*
- *  mTest.h
- *  ElsaABM_v1
- *
- *  Created by Christian Bongiorno on 13/03/14.
- *  Copyright 2014 __MyCompanyName__. All rights reserved.
- *
+ *@author: cbongiorno.
  */
 
 #ifndef __MTEST_H

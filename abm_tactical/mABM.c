@@ -1,10 +1,7 @@
 /*
- *  mABM.c
- *  ElsaABM_v1
- *
- *  Created by Christian Bongiorno on 08/03/14.
- *
+ *@author: cbongiorno.
  */
+ 
 #include "mQuery.h"
 #include "mUtility.h"
 #include "mSector.h"
