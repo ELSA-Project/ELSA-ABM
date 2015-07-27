@@ -2654,9 +2654,18 @@ def build_traffic_network(trajectories, fmt_in='(x, y, z, t)'):
     """
     Build a networkx object which has the points of the trajectories as nodes,
     an edge between one point and another if there is at least one flight 
-    flying between them. The edges are weighted with the  
+    flying between them. The edges are weighted with the number of flights going from
+    one node to the other.
+
+    The input format contains some labels for the trajectories, they will be used 
+    for the nodes of the network as they are. If the format contains coordinates
+    only, the function will detect the closest points and make them nodes, using a
+    threshold. This is done by the trajectory converter in the general_tools library.
     """ 
-    pass
+    
+    accepted_formats = ['(x, y, z, t)', '(x, y, z, t, s)', '(n, z), t', '(n), t']
+    
+    #for 
 # def _test_build_network_based_on_shapes():
 #     G, shapes = build_network_based_on_shapes('4ksut79f', 334, 'LF', 350.)
 

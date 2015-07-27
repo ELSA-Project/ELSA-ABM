@@ -945,8 +945,12 @@ class TrajConverter(object):
                     
         elif fmt_in in ['(x, y, z, t)', '(x, y, z, t, s)']:
             if fmt_out in ['(n), t', '(n, z), t']:
-                print "Converting coordinate-based to nav-based trajectories can result in errors."
+                print "Warning: Converting coordinate-based to nav-based trajectories can result in errors."
                 print "Check the value of the threshold."
+
+                # Beware, this function returns also the network !
+                return self._convert_trajectories_x_to_n(trajs, fmt_in=fmt_in, **kwargs)
+
             elif fmt_out in ['(x, y, z, t)', '(x, y, z, t, s)']:
                 if fmt_in=='(x, y, z, t)':
                     print "I am just adding dummy sectors (0)"
@@ -955,14 +959,87 @@ class TrajConverter(object):
                     x, y, z, t, s = tuple(zip(*trajs))
                     return list(zip(x, y, z, t))
 
-    def _convert_trajectories_x_to_n(self, trajectories, fmt_in='(x, y, z, t)', **kwargs):
+    def _convert_trajectories_x_to_n(self, trajs, fmt_in='(x, y, z, t)', fmt_out='(n), t',\
+        keyword_times='weight', keyword_coord='coord', **kwargs):
         """
         Convert coordinate-based to nav-based trajectories using spatial proximity with 
         nodes of the network self.G
         """
 
-        print "I am using the existing network to guess the navpoint."
-        raise Exception("Not implemented yet.") #TODO
+        # Make the list of all the coordinates
+        #coords_list = [(point[0], point[1]) for traj in trajs for point in traj]
+        points_list = [point for traj in trajs for point in traj]
+        
+        assigments = self._cluster_points([(p[0], p[1]) for p in points_list], **kwargs)
+        print "Found", len(set(assigments.values())), "nodes."
+
+        # Generate '(n), t' and compute the times of flight between nodes
+        times = {}
+        new_trajs = []
+        idx = 0
+        for traj in trajs:
+            new_traj = []
+            for i, point in enumerate(traj):
+                if fmt_out=='(n), t':
+                    new_traj.append(assigments[idx])
+                elif fmt_out=='(n, z), t':
+                    new_traj.append((assigments[idx], point[2]))
+                if i<len(traj)-1:
+                    key = (assigments[idx], assigments[idx+1])
+                    times[key] = times.get(key, []) + [delay(traj[i+1][3]) - delay(point[3])]
+                idx += 1
+            new_trajs.append((new_traj, traj[0][3]))
+
+        # Do the average of times.
+        for k, list_v in times.items():
+            times[k] = np.mean(list_v)
+
+        # Build the edges of the network
+        G = nx.Graph()
+        for (n1, n2), t in times.items():
+            G.add_edge(n1, n2)
+            G[n1][n2][keyword_times] = t/60.
+
+        # Compute the coordinates of the nodes
+        nodes_coords = {}
+        nodes_pop = {}
+        for idx, node in assigments.items():
+            nodes_coords[node] = nodes_coords.get(node, np.array((0., 0.))) + np.array([points_list[idx][0], points_list[idx][1]])
+            nodes_pop[node] = nodes_pop.get(node, 0.) + 1.
+        for node, coords in nodes_coords.items():
+            G.node[node][keyword_coord] = tuple(coords/nodes_pop[node])
+
+        self.G = G
+
+        return new_trajs
+
+    def _cluster_points(self, coords_list, thr=10**(-4.)):
+        """
+        This procedure is a quick hack. It might fail completely if the points 
+        are too homogeneously distributed or if the threshold is too high.
+        """
+
+        n_nodes = 0
+        assignements = {}
+        for i, cc1 in enumerate(coords_list):
+            for j, cc2 in enumerate(coords_list):
+                if j>i:
+                    if np.linalg.norm((np.array(cc1) - np.array(cc2)))<thr:
+                        if not i in assignements.keys() and not j in assignements.keys():
+                            assignements[i] = n_nodes
+                            assignements[j] = n_nodes
+                            n_nodes += 1
+                        elif i in assignements.keys() and not j in assignements.keys():
+                            assignements[j] = assignements[i]
+                        elif not i in assignements.keys() and j in assignements.keys():
+                            assignements[i] = assignements[j]
+
+        for i in range(len(coords_list)):
+            if not i in assignements.keys():
+                assignements[i] = n_nodes
+                n_nodes += 1
+
+        return assignements
 
     def _convert_trajectories_n_to_x(self, trajectories, fmt_in='(n), t', **kwargs):
         """
