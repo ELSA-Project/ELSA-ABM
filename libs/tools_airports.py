@@ -2650,7 +2650,7 @@ def numberize_trajs(trajs, mapping, fmt='(n, z), t'):
 def infer_navpoints_from_trajectories(trajectories, fmt='(n, z), t'):
     pass 
 
-def build_traffic_network(trajectories, fmt_in='(x, y, z, t)'):
+def build_traffic_network(trajectories, fmt_in='(x, y, z, t)', G=None, keyword_edge='weight'):
     """
     Build a networkx object which has the points of the trajectories as nodes,
     an edge between one point and another if there is at least one flight 
@@ -2662,9 +2662,40 @@ def build_traffic_network(trajectories, fmt_in='(x, y, z, t)'):
     only, the function will detect the closest points and make them nodes, using a
     threshold. This is done by the trajectory converter in the general_tools library.
     """ 
+
+    G_traff = nx.Graph()
+
+    converter = TrajConverter()
     
     accepted_formats = ['(x, y, z, t)', '(x, y, z, t, s)', '(n, z), t', '(n), t']
     
+    try:
+        assert fmt_in in accepted_formats
+    except AssertionError:
+        print "Unrecognized format:", fmt_in
+        raise
+
+    trajectories = converter.convert(trajectories, fmt_in, '(n), t')
+    if fmt_in in ['(x, y, z, t)', '(x, y, z, t, s)']:
+        G = converter.G
+    else:
+        if G==None:
+            raise Exception("You gave some label-based trajectories but did not provide the corresponding network.")
+        
+    for node in G.nodes():
+        G_traff.add_node(node, coord=G.node[node]['coord'])
+
+    for nodes, t  in trajectories:
+        for i in range(len(nodes)-1):
+            if G_traff.has_edge(nodes[i], nodes[i+1]):
+                G_traff[nodes[i]][nodes[i+1]][keyword_edge] += 1
+            else:
+                G_traff.add_edge(nodes[i], nodes[i+1])
+                G_traff[nodes[i]][nodes[i+1]][keyword_edge] = 1
+
+    return G_traff
+
+
     #for 
 # def _test_build_network_based_on_shapes():
 #     G, shapes = build_network_based_on_shapes('4ksut79f', 334, 'LF', 350.)

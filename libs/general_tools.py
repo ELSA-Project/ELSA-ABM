@@ -948,14 +948,14 @@ class TrajConverter(object):
                 print "Warning: Converting coordinate-based to nav-based trajectories can result in errors."
                 print "Check the value of the threshold."
 
-                # Beware, this function returns also the network !
                 return self._convert_trajectories_x_to_n(trajs, fmt_in=fmt_in, **kwargs)
 
             elif fmt_out in ['(x, y, z, t)', '(x, y, z, t, s)']:
                 if fmt_in=='(x, y, z, t)':
-                    print "I am just adding dummy sectors (0)"
                     raise Exception("Not implemented yet.")
+                    print "I am just adding dummy sectors (0)"
                 else:
+                    # That's completetely wrong. TODO
                     x, y, z, t, s = tuple(zip(*trajs))
                     return list(zip(x, y, z, t))
 
