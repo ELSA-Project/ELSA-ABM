@@ -20,8 +20,8 @@ from string import split
 from random import choice
 from copy import deepcopy
 
-from libs.general_tools import  delay, date_human, date_st, flip_polygon
-from libs.tools_airports import bet_OD
+from libs.general_tools import  delay, date_human, date_st, flip_polygon, nice_colors
+from libs.tools_airports import bet_OD, build_traffic_network
 from libs.efficiency import rectificate_trajectories_network
 
 version = '2.9.1'
@@ -37,9 +37,12 @@ _colors = ['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','Dark
 
 def draw_network_map(G_init, title='Network map', trajectories=[], rep='./', airports=True, 
     load=False, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
-    colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
+    colors=[nice_colors[0]], figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20., save_file=None,
+    dpi=300, already_in_degree=False, alpha=1.):
     """
     Utility used to plot a network and possibly trajectories, sectors, etc.
+
+    Trajectories format: '(n)'
 
     """
 
@@ -53,58 +56,67 @@ def draw_network_map(G_init, title='Network map', trajectories=[], rep='./', air
             polygons_copy=[flip_polygon(pol) for pol in polygons_copy]
 
     nodes = G.nodes()[:]
-    if type(colors)!=type('n'):
+    if len(colors)==1:
+        colors = [colors[0] for i in range(len(nodes))]
+    else:
         colors = [colors[n] for n in nodes]
-    if type(sizes)!=type(20.):
+    if type(sizes) not in [float, int]:
         sizes = [sizes[n] for n in nodes]
 
-    x_min=min([G.node[n]['coord'][0]/60. for n in G.nodes()])-0.5
-    x_max=max([G.node[n]['coord'][0]/60. for n in G.nodes()])+0.5
-    y_min=min([G.node[n]['coord'][1]/60. for n in G.nodes()])-0.5
-    y_max=max([G.node[n]['coord'][1]/60. for n in G.nodes()])+0.5
-    
+    if not already_in_degree:
+        x_min = min([G.node[n]['coord'][0]/60. for n in G.nodes()])-0.5
+        x_max = max([G.node[n]['coord'][0]/60. for n in G.nodes()])+0.5
+        y_min = min([G.node[n]['coord'][1]/60. for n in G.nodes()])-0.5
+        y_max = max([G.node[n]['coord'][1]/60. for n in G.nodes()])+0.5
+    else:
+        x_min = min([G.node[n]['coord'][0] for n in G.nodes()])-0.5
+        x_max = max([G.node[n]['coord'][0] for n in G.nodes()])+0.5
+        y_min = min([G.node[n]['coord'][1] for n in G.nodes()])-0.5
+        y_max = max([G.node[n]['coord'][1] for n in G.nodes()])+0.5
 
-    #(x_min,y_min,x_max,y_max),G,airports,max_wei,zone_geo = rest
-    fig=plt.figure(figsize=figsize)#*(y_max-y_min)/(x_max-x_min)))#,dpi=600)
-    #gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
+    # #print x_min,y_min,x_max,y_max
+    
+    fig = plt.figure(figsize=figsize)#*(y_max-y_min)/(x_max-x_min)))#,dpi=600)
     gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
     ax = plt.subplot(gs[0])
-    #ax.set_aspect(1./0.8)
+    # #ax.set_aspect(1./0.8)
     ax.set_aspect(figsize[0]/float(figsize[1]))
 
     
     if generated:
         def m(a,b):
             return a,b
-        y,x=[G.node[n]['coord'][0] for n in nodes], [G.node[n]['coord'][1] for n in nodes]
+        y, x = [G.node[n]['coord'][0] for n in nodes], [G.node[n]['coord'][1] for n in nodes]
     else:
-        m=draw_zonemap(x_min,y_min,x_max,y_max,'i')
-        x,y=split_coords(G, nodes, r=0.08)
+        m = draw_zonemap(x_min,y_min,x_max,y_max,'i')
+        x, y = list(zip(*[G.node[n]['coord'] for n in nodes]))
+        #x, y = split_coords(G, nodes, r=0.08)
     
     for i,pol in enumerate(polygons_copy):
         patch = PolygonPatch(pol,alpha=0.5, zorder=2, color=_colors[i%len(_colors)])
         ax.add_patch(patch) 
 
     if load:
-        sze=[(np.average([G.node[n]['load'][i][1] for i in range(len(G.node[n]['load'])-1)],\
+        sze = [(np.average([G.node[n]['load'][i][1] for i in range(len(G.node[n]['load'])-1)],\
         weights=[(G.node[n]['load'][i+1][0] - G.node[n]['load'][i][0]) for i in range(len(G.node[n]['load'])-1)])
         /float(G.node[n]['capacity'])*800 + 5) for n in nodes]
     else:
-        sze=sizes
+        sze = sizes
         
-    coords={n:m(y[i],x[i]) for i,n in enumerate(nodes)}
+    coords = {n:m(y[i], x[i]) for i,n in enumerate(nodes)}
     
     ax.set_title(title)
-    sca=ax.scatter([coords[n][0] for n in nodes],[coords[n][1] for n in nodes], marker='o', zorder=6, s=sze, c=colors)#,s=snf,lw=0,c=[0.,0.45,0.,1])
+    sca = ax.scatter([coords[n][0] for n in nodes],[coords[n][1] for n in nodes], marker='o', zorder=100, s=sze, c=colors, lw=0, alpha=alpha)#,s=snf,lw=0,c=[0.,0.45,0.,1])
+    #sca = ax.scatter([coords[n][0] for n in nodes],[coords[n][1] for n in nodes], marker='o', zorder=100, s=200, c=colors)#,s=snf,lw=0,c=[0.,0.45,0.,1])
     if airports:
-        scairports=ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o', zorder=6, s=20., c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
+        scairports = ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o', zorder=6, s=20., c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
 
-    if 1:
-        for e in G.edges():
-            plt.plot([coords[e[0]][0],coords[e[1]][0]],[coords[e[0]][1],coords[e[1]][1]],'k-',lw=0.5)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
+    # if 1:
+    #     for e in G.edges():
+    #         plt.plot([coords[e[0]][0],coords[e[1]][0]],[coords[e[0]][1],coords[e[1]][1]],'k-',lw=0.5)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
           
     #weights={n:{v:0. for v in G.neighbors(n)} for n in G.nodes()}
-    weights={n:{} for n in nodes}
+    weights = {n:{} for n in nodes}
     for path in trajectories:
         try:
             #path=f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p
@@ -118,26 +130,27 @@ def draw_network_map(G_init, title='Network map', trajectories=[], rep='./', air
             print "weights[path[i]]:", weights[path[i]]
             raise
     
-    max_w=np.max([w for vois in weights.values() for w in vois.values()])
+    max_w = np.max([w for vois in weights.values() for w in vois.values()])
      
     for n,vois in weights.items():
         for v,w in vois.items():
-           # if G.node[n]['m1'] and G.node[v]['m1']:
-                plt.plot([coords[n][0],coords[v][0]],[coords[n][1],coords[v][1]],'r-',lw=w/max_w*weight_scale)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
+            plt.plot([coords[n][0],coords[v][0]],[coords[n][1],coords[v][1]],'k-',lw=w/max_w*weight_scale)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
 
     if numbers:
         for n in G.nodes():
             plt.text(G.node[n]['coord'][0], G.node[n]['coord'][1], ster(n))
-       # if 0:
-       #     patch=PolygonPatch(adapt_shape_to_map(zone_geo,m),facecolor='grey', edgecolor='grey', alpha=0.08,zorder=3)#edgecolor='grey', alpha=0.08,zorder=3)
-       #     ax.add_patch(patch)
-           
-       # if 0:
-       #     patch=PolygonPatch(adapt_shape_to_map(expand(zone_geo,0.005),m),facecolor='brown', edgecolor='black', alpha=0.1,zorder=3)#edgecolor='grey', alpha=0.08,zorder=3)
-       #     ax.add_patch(patch)
-    plt.savefig(rep + 'network_flights' + add_to_title + '.png',dpi=300)
+
+    plt.grid(True)
+    if save_file!=None:
+        plt.savefig(save_file, dpi=dpi)# + 'network_flights' + add_to_title + '.png',dpi=300)
+    
     if show:
         plt.show()
+
+def draw_traffic_network(trajectories, fmt_in='(x, y, z, t, s)', thr=10**(-4.), **kwargs):
+    G, trajectories = build_traffic_network(trajectories, fmt_in, thr=thr)
+    only_nodes = list(zip(*trajectories)[0])
+    draw_network_map(G, trajectories=only_nodes, airports=False, title='Traffic network', **kwargs)
 
 def find_entry_exit(G_nav, f, names=False):
     """
@@ -689,6 +702,46 @@ def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.
             print >>f, ''
 
     print "Trajectories saved in", fil  
+
+def read_trajectories_for_tact(fil, fmt_out='(x, y, z, t, s)'):
+    """
+    Read a set of trajectories written on the disk in the format 
+    of the abm_tactical: (x, y, z, t) ot (x, y, z, t, s)
+    """
+
+    with open(fil, 'r') as f:
+        lines = f.readlines()
+
+    trajectories = []
+    for line in lines:
+        trajectory = []
+        points = line.split('\t')[2:]
+        if len(points)>0:
+            for point in points:
+                pouet = point.split(',')
+                if len(pouet)>3:
+                    x = float(pouet[0])
+                    y = float(pouet[1])
+                    z = float(pouet[2])
+                    full_time = pouet[3]
+                    date, hour = tuple(full_time.split(' '))
+                    date = date.split('-')
+                    hour = hour.split(':')[:3]
+                    t = []
+                    for p in date+hour:
+                        t.append(int(p))
+                    t = tuple(t)
+                    if fmt_out=='(x, y, z, t)':
+                        trajectory.append((x, y, z, t))
+                    if fmt_out=='(x, y, z, t, s)':
+                        if len(pouet)==5:
+                            s = int(pouet[4])
+                        else:
+                            s = 0
+                        trajectory.append((x, y, z, t, s))
+            trajectories.append(trajectory)
+
+    return trajectories
 
 def date_abm_tactic(date):
     """

@@ -2647,7 +2647,7 @@ def numberize_trajs(trajs, mapping, fmt='(n, z), t'):
     else:
         raise Exception("Format", fmt, "not implemented yet")
 
-def build_traffic_network(trajectories, fmt_in='(x, y, z, t)', G=None, keyword_edge='weight'):
+def build_traffic_network(trajectories, fmt_in='(x, y, z, t)', G=None, keyword_edge='weight', **kwargs):
     """
     Build a networkx object which has the points of the trajectories as nodes,
     an edge between one point and another if there is at least one flight 
@@ -2672,7 +2672,11 @@ def build_traffic_network(trajectories, fmt_in='(x, y, z, t)', G=None, keyword_e
         print "Unrecognized format:", fmt_in
         raise
 
-    trajectories = converter.convert(trajectories, fmt_in, '(n), t')
+    print "Converting trajectories..."
+
+    trajectories = converter.convert(trajectories, fmt_in, '(n), t', **kwargs)
+
+    print "Building traffic network..."
     if fmt_in in ['(x, y, z, t)', '(x, y, z, t, s)']:
         G = converter.G
     else:
@@ -2690,7 +2694,7 @@ def build_traffic_network(trajectories, fmt_in='(x, y, z, t)', G=None, keyword_e
                 G_traff.add_edge(nodes[i], nodes[i+1])
                 G_traff[nodes[i]][nodes[i+1]][keyword_edge] = 1
 
-    return G_traff
+    return G_traff, trajectories
 
 
     #for 
@@ -2863,22 +2867,24 @@ class TrajConverter(object):
         """
         This procedure is a quick hack. It might fail completely if the points 
         are too homogeneously distributed or if the threshold is too high.
+        This operation is very long as it is...
         """
-
         n_nodes = 0
         assignements = {}
-        for i, cc1 in enumerate(coords_list):
-            for j, cc2 in enumerate(coords_list):
-                if j>i:
-                    if np.linalg.norm((np.array(cc1) - np.array(cc2)))<thr:
-                        if not i in assignements.keys() and not j in assignements.keys():
-                            assignements[i] = n_nodes
-                            assignements[j] = n_nodes
-                            n_nodes += 1
-                        elif i in assignements.keys() and not j in assignements.keys():
-                            assignements[j] = assignements[i]
-                        elif not i in assignements.keys() and j in assignements.keys():
-                            assignements[i] = assignements[j]
+        if thr>0.:
+            for i, cc1 in enumerate(coords_list):
+                print i
+                for j, cc2 in enumerate(coords_list):
+                    if j>i:
+                        if np.linalg.norm((np.array(cc1) - np.array(cc2)))<thr:
+                            if not i in assignements.keys() and not j in assignements.keys():
+                                assignements[i] = n_nodes
+                                assignements[j] = n_nodes
+                                n_nodes += 1
+                            elif i in assignements.keys() and not j in assignements.keys():
+                                assignements[j] = assignements[i]
+                            elif not i in assignements.keys() and j in assignements.keys():
+                                assignements[i] = assignements[j]
 
         for i in range(len(coords_list)):
             if not i in assignements.keys():
@@ -3039,8 +3045,6 @@ class TrajConverter(object):
             print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
         return trajectories_coords
 
-def draw_traffic_network(G):
-    pass
 
 if __name__=='__main__':
     # paras = get_paras()
