@@ -16,8 +16,8 @@ from abm_strategic.interface_distance import trajectories_from_data
 from abm_tactical.generate_temporary_points import compute_temporary_points
 from abm_strategic.utilities import write_trajectories_for_tact, Paras
 
-from libs.general_tools import write_on_file, stdout_redirected, counter, clock_time, TrajConverter
-from libs.tools_airports import numberize_nodes, numberize_trajs
+from libs.general_tools import write_on_file, stdout_redirected, counter, clock_time
+from libs.tools_airports import numberize_nodes, numberize_trajs, TrajConverter
 from libs.efficiency import rectificate_trajectories_network_with_time_and_alt
 
 main_dir = os.path.abspath(__file__)

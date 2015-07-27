@@ -34,8 +34,8 @@ from simAirSpaceO import AirCompany, Network_Manager
 from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
     compute_M1_trajectories, insert_altitudes, convert_distance_trajectories_coords
 
-from general_tools import TrajConverter, draw_network_and_patches, header, delay, clock_time, silence, date_st
-from tools_airports import extract_flows_from_data
+from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
+from tools_airports import extract_flows_from_data, TrajConverter
 from efficiency import rectificate_trajectories_network_with_time, compute_efficiency
 from libs.paths import result_dir
 
