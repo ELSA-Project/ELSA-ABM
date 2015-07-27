@@ -23,7 +23,15 @@ if __name__ == '__main__':
 	print "Parsing the trajectories..."
 	trajectories = read_trajectories_for_tact(traj_file)
 
-	draw_traffic_network(trajectories, thr=0., already_in_degree=True,\
-		sizes=15, save_file=save_file, show=False, weight_scale=0.25, alpha=0.7)
+	#
+	draw_traffic_network(trajectories, already_in_degree=True,\
+										thr=0., # Threshold under which the points are considered to be the same
+												   # A non-null threshold takes much more time but gives a a much cleaner 
+												   # network.
+										sizes=15, 
+										save_file=save_file, 
+										show=True, 
+										weight_scale=0.25, 
+										alpha=0.7)
 
 

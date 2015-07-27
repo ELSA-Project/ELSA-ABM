@@ -2865,29 +2865,32 @@ class TrajConverter(object):
 
     def _cluster_points(self, coords_list, thr=10**(-4.)):
         """
-        This procedure is a quick hack. It might fail completely if the points 
-        are too homogeneously distributed or if the threshold is too high.
-        This operation is very long as it is...
+        This is a procedure to cluster points which are closer to each other than thr.
+
+        Parameters
+        ----------
+        coords_list: list of 2-tuples
+            coordinates of all the nodes of all the trajectories (flattened)
+        thr: float, optional
+            threshold under which the points are considered to be the same. 
+            Use the Euclidean distance for this.
         """
+
         n_nodes = 0
         assignements = {}
-        if thr>0.:
-            for i, cc1 in enumerate(coords_list):
-                print i
-                for j, cc2 in enumerate(coords_list):
-                    if j>i:
-                        if np.linalg.norm((np.array(cc1) - np.array(cc2)))<thr:
-                            if not i in assignements.keys() and not j in assignements.keys():
-                                assignements[i] = n_nodes
-                                assignements[j] = n_nodes
-                                n_nodes += 1
-                            elif i in assignements.keys() and not j in assignements.keys():
-                                assignements[j] = assignements[i]
-                            elif not i in assignements.keys() and j in assignements.keys():
-                                assignements[i] = assignements[j]
-
-        for i in range(len(coords_list)):
-            if not i in assignements.keys():
+        found=False
+        for i, cc1 in enumerate(coords_list):
+            #print "i=", i
+            if thr>0.:
+                found = False
+                for j, assignement in assignements.items():
+                    cc2 = coords_list[j]
+                    if np.linalg.norm((np.array(cc1) - np.array(cc2)))<thr:
+                        assignements[i] = assignement
+                        found = True
+                        break
+            
+            if not found:
                 assignements[i] = n_nodes
                 n_nodes += 1
 
