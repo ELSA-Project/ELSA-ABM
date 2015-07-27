@@ -13,7 +13,7 @@ from string import split
 from libs.tools_airports import get_set, __version__ as distance_version, build_path, build_network_based_on_shapes
 from libs.general_tools import date_generation
 
-from utilities import convert_trajectories, write_trajectories_for_tact
+from utilities import write_trajectories_for_tact
 from prepare_navpoint_network import prepare_hybrid_network
 
 

@@ -14,8 +14,9 @@ import libs
 from interface.abm_interface import do_ABM_tactical
 from abm_strategic.interface_distance import trajectories_from_data
 from abm_tactical.generate_temporary_points import compute_temporary_points
-from abm_strategic.utilities import write_trajectories_for_tact, Paras, convert_trajectories
-from libs.general_tools import write_on_file, stdout_redirected, counter, clock_time
+from abm_strategic.utilities import write_trajectories_for_tact, Paras
+
+from libs.general_tools import write_on_file, stdout_redirected, counter, clock_time, TrajConverter
 from libs.tools_airports import numberize_nodes, numberize_trajs
 from libs.efficiency import rectificate_trajectories_network_with_time_and_alt
 
@@ -219,7 +220,10 @@ def sweep_paras_shocks_rectificated(zone, paras, trajectories, input_file, shock
 	for i in range(n_iter_rect):
 		print "Iteration", i, "of rectification..."
 		trajs_rec, eff, G, groups_rec = rectificate_trajectories_network_with_time_and_alt(trajs, target_eff, G, remove_nodes=True)
-		trajs_rec = convert_trajectories(G, trajs_rec, fmt_in='(n, z), t', put_sectors=True, remove_flights_after_midnight=True, starting_date=starting_date, input_minutes=True)
+		Converter = TrajConverter()
+		Converter.set_G(G)
+		#trajs_rec = convert_trajectories(G, trajs_rec, fmt_in='(n, z), t', put_sectors=True, remove_flights_after_midnight=True, starting_date=starting_date, input_minutes=True)
+		trajs_rec = Converter.convert(trajs_rec, fmt_in='(n, z), t', fmt_out='(x, y, z, t, s)', remove_flights_after_midnight=True, starting_date=starting_date, input_minutes=True)
 		input_file_rec = input_file.split('.dat')[0] + '_rect' + str(target_eff) + '_' + str(i) + '.dat'
 		files_s = sweep_paras_shocks(zone, paras, trajs_rec, input_file_rec, shock_file_zone, bound_file_zone, tmp_navpoints_file_zone, **kwargs)
 		files += files_s

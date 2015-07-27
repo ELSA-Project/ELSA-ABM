@@ -882,6 +882,241 @@ def voronoi_finite_polygons_2d(vor, radius=None):
  
     return new_regions, np.asarray(new_vertices)
 
+class TrajConverter(object):
+    """
+    General Trajectory converter.
+    The formats can essentially be:
+     -- (x, y, z, t) : trajectories are made of 4-tuples with lat, lon, altitude and 
+    time
+     -- (x, y, z, t, s) : same with sector as fifth element.
+     -- (n), t : trajectories are made ONE 2-tuple. The first one is a list of labels
+    of nodes, the second one is the time of entrance, i.e. the time of the first 
+    point
+     -- (n, z), t : same with altitude attached to each point.
+
+    The format of time can be either:
+     -- t : a float representing the number of minutes elapsed since the beginning of 
+    the day (which is stored somewhere else).
+     -- tt : a tuple (yy, mm, dd, h, m , s).
+    """
+
+    def __init__(self):
+        pass
+
+    def set_G(self, G):
+        self.G = G
+
+    def check_trajectories(self, trajectories):
+        """
+        Check that the trajectories are compliant with the nodes of the network.
+        """
+        # TODO
+        pass
+
+    def convert(self, trajs, fmt_in, fmt_out, **kwargs):
+        """
+        General converter. Some information can be lost in the 
+        conversion, depending on the input/output format.
+        """
+
+        accepted_fmts = ['(x, y, z, t)', '(x, y, z, t, s)', '(n), t', '(n, z), t']
+
+        try:
+            assert fmt_in in accepted_fmts and fmt_out in accepted_fmts
+        except AssertionError:
+            print "Unrecognized format." 
+            raise
+
+        if fmt_in==fmt_out:
+            return trajs
+
+        if fmt_in in ['(n), t', '(n, z), t']:
+            if fmt_out in ['(x, y, z, t)', '(x, y, z, t, s)']:
+                if fmt_out=='(x, y, z, t)':
+                    kwargs['put_sectors'] = False
+                elif fmt_out=='(x, y, z, t, s)':
+                    kwargs['put_sectors'] = True
+
+                return self._convert_trajectories_n_to_x(trajs, fmt_in=fmt_in, **kwargs)
+            else:
+                raise Exception("Not implemented yet.") #TODO
+                if fmt_in=='(n), t' and fmt_in=='(n, z), t':
+                    print "I will just add 0 for altitudes..."
+                    
+        elif fmt_in in ['(x, y, z, t)', '(x, y, z, t, s)']:
+            if fmt_out in ['(n), t', '(n, z), t']:
+                print "Converting coordinate-based to nav-based trajectories can result in errors."
+                print "Check the value of the threshold."
+            elif fmt_out in ['(x, y, z, t)', '(x, y, z, t, s)']:
+                if fmt_in=='(x, y, z, t)':
+                    print "I am just adding dummy sectors (0)"
+                    raise Exception("Not implemented yet.")
+                else:
+                    x, y, z, t, s = tuple(zip(*trajs))
+                    return list(zip(x, y, z, t))
+
+    def _convert_trajectories_x_to_n(self, trajectories, fmt_in='(x, y, z, t)', **kwargs):
+        """
+        Convert coordinate-based to nav-based trajectories using spatial proximity with 
+        nodes of the network self.G
+        """
+
+        print "I am using the existing network to guess the navpoint."
+        raise Exception("Not implemented yet.") #TODO
+
+    def _convert_trajectories_n_to_x(self, trajectories, fmt_in='(n), t', **kwargs):
+        """
+        General converter of format of trajectories. The output is meant to be 
+        compliant with the tactical ABM, i.e either (x, y, z, t) or (x, y, z, t, s).
+
+        Parameters
+        ----------
+        G : Net object
+            Needed in order to compute travel times between nodes.
+        trajectories : list
+            of trajectories in diverse format
+        fmt_in : string
+            Format of input.
+        kwargs : additional parameters
+            passed to other methods.
+
+        Returns
+        -------
+        trajectories : list
+            of converted trajectories with signature (x, y, z, t) or (x, y, z, t, s)
+        Notes
+        -----
+        Needs expansion to support other conversion. Maybe make a class.
+        Needs to specify format of output.
+
+        """
+        
+        if fmt_in=='(n), t':
+            return self._convert_trajectories_no_alt(trajectories, **kwargs)
+        elif fmt_in=='(n, z), t':
+            return self._convert_trajectories_alt(trajectories, **kwargs)
+        else:
+            raise Exception("format", fmt, "is not implemented")
+
+    def _convert_trajectories_no_alt(self, trajectories, put_sectors=False, input_minutes=False,
+        remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
+        """
+        Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+
+        trajectories signature in input:
+        (n), t
+        trajectories signature in output:
+        (x, y, 0, t) or (x, y, 0, t, s)
+
+        Altitudes in output are all set to 0.
+
+        Parameters
+        ----------
+        G : Net object
+            Used to have the coordinates of points and the travel times between nodes.
+        trajectories : list
+        put_sectors : boolean, optional
+            If True, output format is (x, y, 0, t, s)
+        input_minutes : boolean, optional
+            Used to cope with the fact that the coordinates stored in the network can be in 
+            degree or minutes of degree.
+        remove_flights_after_midnight : boolean, True
+            if True, remove from the list all flights landing ther day after starting_date
+        starting_date : list of tuple 
+            of format [yy, mm, dd, h, m , s]
+
+        Returns
+        -------
+        trajectories_coords : list
+            of trajectories with format (x, y, 0, t) or (x, y, 0, t, s)
+        
+        """ 
+
+        trajectories_coords = []
+        for i, (trajectory, d_t) in enumerate(trajectories):
+            traj_coords = []
+            for j, n in enumerate(trajectory):
+                if not input_minutes:
+                    x = self.G.node[n]['coord'][0]
+                    y = self.G.node[n]['coord'][1]
+                else:
+                    x = self.G.node[n]['coord'][0]/60.
+                    y = self.G.node[n]['coord'][1]/60.
+                t = d_t if j==0 else  list(date_st(delay(t) + 60.*self.G[n][trajectory[j-1]]['weight']))
+                if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
+                    break
+                if not put_sectors:
+                    traj_coords.append([x, y, 0., t])
+                else:
+                    traj_coords.append([x, y, 0., t, self.G.node[n]['sec']])
+            if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
+                trajectories_coords.append(traj_coords)
+
+        if remove_flights_after_midnight:
+            print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
+        return trajectories_coords
+
+    def _convert_trajectories_alt(self, trajectories, put_sectors=False, input_minutes=False,
+        remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
+        """
+        Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
+        
+        trajectories signature in input:
+        (n, z), t
+        trajectories signature in output:
+        (x, y, z, t) or (x, y, z, t, s)
+
+        Parameters
+        ----------
+        G : Net object
+            Used to have the coordinates of points and the travel times between nodes.
+        trajectories : list
+        put_sectors : boolean, optional
+            If True, output format is (x, y, z, t, s)
+        input_minutes : boolean, optional
+            Used to cope with the fact that the coordinates stored in the network can be in 
+            degree or minutes of degree.
+        remove_flights_after_midnight : boolean, True
+            if True, remove from the list all flights landing ther day after starting_date
+        starting_date : list of tuple 
+            of format [yy, mm, dd, h, m , s]
+
+        Returns
+        -------
+        trajectories_coords : list
+            of trajectories with format (x, y, z, t) or (x, y, z, t, s)
+
+        """ 
+
+        trajectories_coords = []
+        for i, (trajectory, d_t) in enumerate(trajectories):
+            traj_coords = []
+            for j, (n, z) in enumerate(trajectory):
+                if not input_minutes:
+                    x = self.G.node[n]['coord'][0]
+                    y = self.G.node[n]['coord'][1]
+                else:
+                    x = self.G.node[n]['coord'][0]/60.
+                    y = self.G.node[n]['coord'][1]/60.
+                t = d_t if j==0 else date_st(delay(t) + 60.*self.G[n][trajectory[j-1][0]]['weight'])
+                if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
+                    break
+                if not put_sectors:
+                    traj_coords.append([x, y, z, list(t)])
+                else:
+                    if 'sec' in self.G.node[n].keys():
+                        sec = self.G.node[n]['sec']
+                    else:
+                        sec = 0
+                    traj_coords.append([x, y, z, list(t), sec])
+            if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
+                trajectories_coords.append(traj_coords)
+
+        if remove_flights_after_midnight:
+            print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
+        return trajectories_coords
+
+
 if __name__=='__main__':
     #Tests-
     print 'n_days=', (delay([2011,3,1,0,0,0]) - delay([2010,12,1,0,0,0]))/(24*3600)

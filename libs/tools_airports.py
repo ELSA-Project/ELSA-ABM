@@ -27,7 +27,7 @@ from descartes.patch import PolygonPatch
 #import pandas as pd
 import datetime
 
-from general_tools import date_db, delay, date_human, date_st, cumulative, draw_network_and_patches, draw_zonemap
+from general_tools import date_db, delay, date_human, date_st, cumulative, draw_network_and_patches, draw_zonemap, TrajConverter
 
 __version__='5.8'
 
@@ -2647,22 +2647,31 @@ def numberize_trajs(trajs, mapping, fmt='(n, z), t'):
     else:
         raise Exception("Format", fmt, "not implemented yet")
 
+def infer_navpoints_from_trajectories(trajectories, fmt='(n, z), t'):
+    pass 
 
-def _test_build_network_based_on_shapes():
-    G, shapes = build_network_based_on_shapes('4ksut79f', 334, 'LF', 350.)
+def build_traffic_network(trajectories, fmt_in='(x, y, z, t)'):
+    """
+    Build a networkx object which has the points of the trajectories as nodes,
+    an edge between one point and another if there is at least one flight 
+    flying between them. The edges are weighted with the  
+    """ 
+    pass
+# def _test_build_network_based_on_shapes():
+#     G, shapes = build_network_based_on_shapes('4ksut79f', 334, 'LF', 350.)
 
-    draw_network_and_patches(G, None, shapes, draw_navpoints_edges=False, \
-    draw_sectors_edges=True, rep='.', save=False, name='network', \
-    show=True, flip_axes=True, trajectories=[], \
-    trajectories_type='navpoints', dpi = 100, figsize = None)
+#     draw_network_and_patches(G, None, shapes, draw_navpoints_edges=False, \
+#     draw_sectors_edges=True, rep='.', save=False, name='network', \
+#     show=True, flip_axes=True, trajectories=[], \
+#     trajectories_type='navpoints', dpi = 100, figsize = None)
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # for pol in shapes.values():
-    #     patch = PolygonPatch(pol,alpha=0.5, zorder=2)
-    #     ax.add_patch(patch) 
-    # plt.plot([46.],[1.])
-    # plt.show()
+#     # fig = plt.figure()
+#     # ax = fig.add_subplot(111)
+#     # for pol in shapes.values():
+#     #     patch = PolygonPatch(pol,alpha=0.5, zorder=2)
+#     #     ax.add_patch(patch) 
+#     # plt.plot([46.],[1.])
+#     # plt.show()
 
 def _test_select_layer_sector():
     sectors = select_layer_sector('4ksut79f', 334, 'LF', 350.)
