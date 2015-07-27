@@ -20,8 +20,8 @@ from string import split
 from random import choice
 from copy import deepcopy
 
-from libs.general_tools import  delay, date_human, date_st, flip_polygon
-from libs.tools_airports import bet_OD
+from libs.general_tools import  delay, date_human, date_st, flip_polygon, nice_colors
+from libs.tools_airports import bet_OD, build_traffic_network
 from libs.efficiency import rectificate_trajectories_network
 
 version = '2.9.1'
@@ -37,9 +37,12 @@ _colors = ['Blue','BlueViolet','Brown','CadetBlue','Crimson','DarkMagenta','Dark
 
 def draw_network_map(G_init, title='Network map', trajectories=[], rep='./', airports=True, 
     load=False, generated=False, add_to_title='', polygons=[], numbers=False, show=True,
-    colors='b', figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20.):
+    colors=[nice_colors[0]], figsize=(9, 6), flip_axes=False, weight_scale=4., sizes=20., save_file=None,
+    dpi=300, already_in_degree=False, alpha=1.):
     """
     Utility used to plot a network and possibly trajectories, sectors, etc.
+
+    Trajectories format: '(n)'
 
     """
 
@@ -53,58 +56,67 @@ def draw_network_map(G_init, title='Network map', trajectories=[], rep='./', air
             polygons_copy=[flip_polygon(pol) for pol in polygons_copy]
 
     nodes = G.nodes()[:]
-    if type(colors)!=type('n'):
+    if len(colors)==1:
+        colors = [colors[0] for i in range(len(nodes))]
+    else:
         colors = [colors[n] for n in nodes]
-    if type(sizes)!=type(20.):
+    if type(sizes) not in [float, int]:
         sizes = [sizes[n] for n in nodes]
 
-    x_min=min([G.node[n]['coord'][0]/60. for n in G.nodes()])-0.5
-    x_max=max([G.node[n]['coord'][0]/60. for n in G.nodes()])+0.5
-    y_min=min([G.node[n]['coord'][1]/60. for n in G.nodes()])-0.5
-    y_max=max([G.node[n]['coord'][1]/60. for n in G.nodes()])+0.5
-    
+    if not already_in_degree:
+        x_min = min([G.node[n]['coord'][0]/60. for n in G.nodes()])-0.5
+        x_max = max([G.node[n]['coord'][0]/60. for n in G.nodes()])+0.5
+        y_min = min([G.node[n]['coord'][1]/60. for n in G.nodes()])-0.5
+        y_max = max([G.node[n]['coord'][1]/60. for n in G.nodes()])+0.5
+    else:
+        x_min = min([G.node[n]['coord'][0] for n in G.nodes()])-0.5
+        x_max = max([G.node[n]['coord'][0] for n in G.nodes()])+0.5
+        y_min = min([G.node[n]['coord'][1] for n in G.nodes()])-0.5
+        y_max = max([G.node[n]['coord'][1] for n in G.nodes()])+0.5
 
-    #(x_min,y_min,x_max,y_max),G,airports,max_wei,zone_geo = rest
-    fig=plt.figure(figsize=figsize)#*(y_max-y_min)/(x_max-x_min)))#,dpi=600)
-    #gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
+    # #print x_min,y_min,x_max,y_max
+    
+    fig = plt.figure(figsize=figsize)#*(y_max-y_min)/(x_max-x_min)))#,dpi=600)
     gs = gridspec.GridSpec(1, 2, width_ratios=[6.,1.])
     ax = plt.subplot(gs[0])
-    #ax.set_aspect(1./0.8)
+    # #ax.set_aspect(1./0.8)
     ax.set_aspect(figsize[0]/float(figsize[1]))
 
     
     if generated:
         def m(a,b):
             return a,b
-        y,x=[G.node[n]['coord'][0] for n in nodes], [G.node[n]['coord'][1] for n in nodes]
+        y, x = [G.node[n]['coord'][0] for n in nodes], [G.node[n]['coord'][1] for n in nodes]
     else:
-        m=draw_zonemap(x_min,y_min,x_max,y_max,'i')
-        x,y=split_coords(G, nodes, r=0.08)
+        m = draw_zonemap(x_min,y_min,x_max,y_max,'i')
+        x, y = list(zip(*[G.node[n]['coord'] for n in nodes]))
+        #x, y = split_coords(G, nodes, r=0.08)
     
     for i,pol in enumerate(polygons_copy):
         patch = PolygonPatch(pol,alpha=0.5, zorder=2, color=_colors[i%len(_colors)])
         ax.add_patch(patch) 
 
     if load:
-        sze=[(np.average([G.node[n]['load'][i][1] for i in range(len(G.node[n]['load'])-1)],\
+        sze = [(np.average([G.node[n]['load'][i][1] for i in range(len(G.node[n]['load'])-1)],\
         weights=[(G.node[n]['load'][i+1][0] - G.node[n]['load'][i][0]) for i in range(len(G.node[n]['load'])-1)])
         /float(G.node[n]['capacity'])*800 + 5) for n in nodes]
     else:
-        sze=sizes
+        sze = sizes
         
-    coords={n:m(y[i],x[i]) for i,n in enumerate(nodes)}
+    coords = {n:m(y[i], x[i]) for i,n in enumerate(nodes)}
     
     ax.set_title(title)
-    sca=ax.scatter([coords[n][0] for n in nodes],[coords[n][1] for n in nodes], marker='o', zorder=6, s=sze, c=colors)#,s=snf,lw=0,c=[0.,0.45,0.,1])
+    sca = ax.scatter([coords[n][0] for n in nodes],[coords[n][1] for n in nodes], marker='o', zorder=100, s=sze, c=colors, lw=0, alpha=alpha)#,s=snf,lw=0,c=[0.,0.45,0.,1])
+    #sca = ax.scatter([coords[n][0] for n in nodes],[coords[n][1] for n in nodes], marker='o', zorder=100, s=200, c=colors)#,s=snf,lw=0,c=[0.,0.45,0.,1])
     if airports:
-        scairports=ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o', zorder=6, s=20., c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
+        scairports = ax.scatter([coords[n][0] for n in G.airports],[coords[n][1] for n in G.airports],marker='o', zorder=6, s=20., c='r')#,s=snf,lw=0,c=[0.,0.45,0.,1])
 
-    if 1:
-        for e in G.edges():
-            plt.plot([coords[e[0]][0],coords[e[1]][0]],[coords[e[0]][1],coords[e[1]][1]],'k-',lw=0.5)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
+    # if 1:
+    #     for e in G.edges():
+    #         plt.plot([coords[e[0]][0],coords[e[1]][0]],[coords[e[0]][1],coords[e[1]][1]],'k-',lw=0.5)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
           
     #weights={n:{v:0. for v in G.neighbors(n)} for n in G.nodes()}
-    weights={n:{} for n in nodes}
+    weights = {n:{} for n in nodes}
     for path in trajectories:
         try:
             #path=f.FPs[[fpp.accepted for fpp in f.FPs].index(True)].p
@@ -118,26 +130,27 @@ def draw_network_map(G_init, title='Network map', trajectories=[], rep='./', air
             print "weights[path[i]]:", weights[path[i]]
             raise
     
-    max_w=np.max([w for vois in weights.values() for w in vois.values()])
+    max_w = np.max([w for vois in weights.values() for w in vois.values()])
      
     for n,vois in weights.items():
         for v,w in vois.items():
-           # if G.node[n]['m1'] and G.node[v]['m1']:
-                plt.plot([coords[n][0],coords[v][0]],[coords[n][1],coords[v][1]],'r-',lw=w/max_w*weight_scale)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
+            plt.plot([coords[n][0],coords[v][0]],[coords[n][1],coords[v][1]],'k-',lw=w/max_w*weight_scale)#,lw=width(G[e[0]][e[1]]['weight'],max_wei),zorder=4)
 
     if numbers:
         for n in G.nodes():
             plt.text(G.node[n]['coord'][0], G.node[n]['coord'][1], ster(n))
-       # if 0:
-       #     patch=PolygonPatch(adapt_shape_to_map(zone_geo,m),facecolor='grey', edgecolor='grey', alpha=0.08,zorder=3)#edgecolor='grey', alpha=0.08,zorder=3)
-       #     ax.add_patch(patch)
-           
-       # if 0:
-       #     patch=PolygonPatch(adapt_shape_to_map(expand(zone_geo,0.005),m),facecolor='brown', edgecolor='black', alpha=0.1,zorder=3)#edgecolor='grey', alpha=0.08,zorder=3)
-       #     ax.add_patch(patch)
-    plt.savefig(rep + 'network_flights' + add_to_title + '.png',dpi=300)
+
+    plt.grid(True)
+    if save_file!=None:
+        plt.savefig(save_file, dpi=dpi)# + 'network_flights' + add_to_title + '.png',dpi=300)
+    
     if show:
         plt.show()
+
+def draw_traffic_network(trajectories, fmt_in='(x, y, z, t, s)', thr=10**(-4.), **kwargs):
+    G, trajectories = build_traffic_network(trajectories, fmt_in, thr=thr)
+    only_nodes = list(zip(*trajectories)[0])
+    draw_network_map(G, trajectories=only_nodes, airports=False, title='Traffic network', **kwargs)
 
 def find_entry_exit(G_nav, f, names=False):
     """
@@ -630,158 +643,6 @@ def compute_M1_trajectories(queue, starting_date):
 
     return trajectories_nav
 
-def convert_trajectories(G, trajectories, fmt_in='(n), t', **kwargs):
-    """
-    General converter of format of trajectories. The output is meant to be 
-    compliant with the tactical ABM, i.e either (x, y, z, t) or (x, y, z, t, s).
-
-    Parameters
-    ----------
-    G : Net object
-        Needed in order to compute travel times between nodes.
-    trajectories : list
-        of trajectories in diverse format
-    fmt_in : string
-        Format of input.
-    kwargs : additional parameters
-        passed to other methods.
-
-    Returns
-    -------
-    trajectories : list
-        of converted trajectories with signature (x, y, z, t) or (x, y, z, t, s)
-    Notes
-    -----
-    Needs expansion to support other conversion. Maybe make a class.
-    Needs to specify format of output.
-
-    """
-    
-    if fmt_in=='(n), t':
-        return convert_trajectories_no_alt(G, trajectories, **kwargs)
-    elif fmt_in=='(n, z), t':
-        return convert_trajectories_alt(G, trajectories, **kwargs)
-    else:
-        raise Exception("format", fmt, "is not implemented")
-
-def convert_trajectories_no_alt(G, trajectories, put_sectors=False, input_minutes=False,
-    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
-    """
-    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
-
-    trajectories signature in input:
-    (n), t
-    trajectories signature in output:
-    (x, y, 0, t) or (x, y, 0, t, s)
-
-    Altitudes in output are all set to 0.
-
-    Parameters
-    ----------
-    G : Net object
-        Used to have the coordinates of points and the travel times between nodes.
-    trajectories : list
-    put_sectors : boolean, optional
-        If True, output format is (x, y, 0, t, s)
-    input_minutes : boolean, optional
-        Used to cope with the fact that the coordinates stored in the network can be in 
-        degree or minutes of degree.
-    remove_flights_after_midnight : boolean, True
-        if True, remove from the list all flights landing ther day after starting_date
-    starting_date : list of tuple 
-        of format [yy, mm, dd, h, m , s]
-
-    Returns
-    -------
-    trajectories_coords : list
-        of trajectories with format (x, y, 0, t) or (x, y, 0, t, s)
-    
-    """ 
-
-    trajectories_coords = []
-    for i, (trajectory, d_t) in enumerate(trajectories):
-        traj_coords = []
-        for j, n in enumerate(trajectory):
-            if not input_minutes:
-                x = G.node[n]['coord'][0]
-                y = G.node[n]['coord'][1]
-            else:
-                x = G.node[n]['coord'][0]/60.
-                y = G.node[n]['coord'][1]/60.
-            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1]]['weight'])
-            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
-                break
-            if not put_sectors:
-                traj_coords.append([x, y, 0., t])
-            else:
-                traj_coords.append([x, y, 0., t, G.node[n]['sec']])
-        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
-            trajectories_coords.append(traj_coords)
-
-    if remove_flights_after_midnight:
-        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
-    return trajectories_coords
-
-def convert_trajectories_alt(G, trajectories, put_sectors=False, input_minutes=False,
-    remove_flights_after_midnight=False, starting_date=[2010, 5, 6, 0, 0, 0]):
-    """
-    Convert trajectories with navpoint names into trajectories with coordinate and time stamps.
-    
-    trajectories signature in input:
-    (n, z), t
-    trajectories signature in output:
-    (x, y, z, t) or (x, y, z, t, s)
-
-    Parameters
-    ----------
-    G : Net object
-        Used to have the coordinates of points and the travel times between nodes.
-    trajectories : list
-    put_sectors : boolean, optional
-        If True, output format is (x, y, z, t, s)
-    input_minutes : boolean, optional
-        Used to cope with the fact that the coordinates stored in the network can be in 
-        degree or minutes of degree.
-    remove_flights_after_midnight : boolean, True
-        if True, remove from the list all flights landing ther day after starting_date
-    starting_date : list of tuple 
-        of format [yy, mm, dd, h, m , s]
-
-    Returns
-    -------
-    trajectories_coords : list
-        of trajectories with format (x, y, z, t) or (x, y, z, t, s)
-
-    """ 
-
-    trajectories_coords = []
-    for i, (trajectory, d_t) in enumerate(trajectories):
-        traj_coords = []
-        for j, (n, z) in enumerate(trajectory):
-            if not input_minutes:
-                x = G.node[n]['coord'][0]
-                y = G.node[n]['coord'][1]
-            else:
-                x = G.node[n]['coord'][0]/60.
-                y = G.node[n]['coord'][1]/60.
-            t = d_t if j==0 else date_st(delay(t) + 60.*G[n][trajectory[j-1][0]]['weight'])
-            if remove_flights_after_midnight and list(t[:3])!=list(starting_date[:3]):
-                break
-            if not put_sectors:
-                traj_coords.append([x, y, z, t])
-            else:
-                if 'sec' in G.node[n].keys():
-                    sec = G.node[n]['sec']
-                else:
-                    sec = 0
-                traj_coords.append([x, y, z, t, sec])
-        if not remove_flights_after_midnight or list(t[:3])==list(starting_date[:3]):
-            trajectories_coords.append(traj_coords)
-
-    if remove_flights_after_midnight:
-        print "Dropped", len(trajectories) - len(trajectories_coords), "flights because they arrive after midnight."
-    return trajectories_coords
-
 def convert_distance_trajectories(G_nav, flights):
     """
     Convert trajectories from Distance library into trajectories for strategic model. 
@@ -796,6 +657,7 @@ def convert_distance_trajectories(G_nav, flights):
     Returns
     -------
     list of trajectories with format 
+    TODO: put times...
     """
 
     return [[G_nav.idx_nodes[nav] for nav, alt in flight['route_m1']] for flight in flights]
@@ -840,6 +702,46 @@ def write_trajectories_for_tact(trajectories, fil='../trajectories/trajectories.
             print >>f, ''
 
     print "Trajectories saved in", fil  
+
+def read_trajectories_for_tact(fil, fmt_out='(x, y, z, t, s)'):
+    """
+    Read a set of trajectories written on the disk in the format 
+    of the abm_tactical: (x, y, z, t) ot (x, y, z, t, s)
+    """
+
+    with open(fil, 'r') as f:
+        lines = f.readlines()
+
+    trajectories = []
+    for line in lines:
+        trajectory = []
+        points = line.split('\t')[2:]
+        if len(points)>0:
+            for point in points:
+                pouet = point.split(',')
+                if len(pouet)>3:
+                    x = float(pouet[0])
+                    y = float(pouet[1])
+                    z = float(pouet[2])
+                    full_time = pouet[3]
+                    date, hour = tuple(full_time.split(' '))
+                    date = date.split('-')
+                    hour = hour.split(':')[:3]
+                    t = []
+                    for p in date+hour:
+                        t.append(int(p))
+                    t = tuple(t)
+                    if fmt_out=='(x, y, z, t)':
+                        trajectory.append((x, y, z, t))
+                    if fmt_out=='(x, y, z, t, s)':
+                        if len(pouet)==5:
+                            s = int(pouet[4])
+                        else:
+                            s = 0
+                        trajectory.append((x, y, z, t, s))
+            trajectories.append(trajectory)
+
+    return trajectories
 
 def date_abm_tactic(date):
     """

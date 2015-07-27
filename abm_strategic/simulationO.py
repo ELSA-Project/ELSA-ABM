@@ -32,10 +32,10 @@ from copy import deepcopy
 
 from simAirSpaceO import AirCompany, Network_Manager
 from utilities import draw_network_map, read_paras, post_process_paras, write_trajectories_for_tact, \
-    compute_M1_trajectories, convert_trajectories, insert_altitudes, convert_distance_trajectories_coords
+    compute_M1_trajectories, insert_altitudes, convert_distance_trajectories_coords
 
 from general_tools import draw_network_and_patches, header, delay, clock_time, silence, date_st
-from tools_airports import extract_flows_from_data
+from tools_airports import extract_flows_from_data, TrajConverter
 from efficiency import rectificate_trajectories_network_with_time, compute_efficiency
 from libs.paths import result_dir
 
@@ -908,9 +908,16 @@ def generate_traffic(G, paras_file=None, save_file=None, simple_setup=True, star
         write_down_capacities(G, save_file=save_file_capacities)
     
     if coordinates:
-        trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, 
-                                                                          remove_flights_after_midnight=remove_flights_after_midnight,
-                                                                          starting_date=starting_date)
+        Converter = TrajConverter()
+        Converter.set_G(G.G_nav)
+        fmt_out = '(x, y, z, t, s)' if put_sectors else '(x, y, z, t)'
+        trajectories_coords = Converter.convert(trajectories, fmt_in='(n), t', fmt_out=fmt_out,
+                                                      #put_sectors=put_sectors, 
+                                                      remove_flights_after_midnight=remove_flights_after_midnight,
+                                                      starting_date=starting_date)
+        # trajectories_coords = convert_trajectories(G.G_nav, trajectories, put_sectors=put_sectors, 
+        #                                                                   remove_flights_after_midnight=remove_flights_after_midnight,
+        #                                                                   starting_date=starting_date)
         #signature at this point: (x, y, 0, tt) or (x, y, 0, tt, s)
         if generate_altitudes and paras['file_traffic']!=None: 
             print ("Generating synthetic altitudes...")

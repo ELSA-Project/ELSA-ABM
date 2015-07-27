@@ -882,6 +882,9 @@ def voronoi_finite_polygons_2d(vor, radius=None):
  
     return new_regions, np.asarray(new_vertices)
 
+
+
+
 if __name__=='__main__':
     #Tests-
     print 'n_days=', (delay([2011,3,1,0,0,0]) - delay([2010,12,1,0,0,0]))/(24*3600)
