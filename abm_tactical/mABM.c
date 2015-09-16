@@ -226,11 +226,16 @@ int _create_shock(SHOCK_t *sh,CONF_t conf){
 	int i,coin, niter= (int)((conf.end_datetime - conf.start_datetime)/ (conf.t_r*conf.t_w*conf.t_i));
 	for(i=0;i<(*sh).Nshock;i++){
 		coin=irand(conf.n_point_shock);
+		// Position
 		(*sh).shock[i][0]=conf.point_shock[coin][0];
 		(*sh).shock[i][1]=conf.point_shock[coin][1];
+		// Radius
 		(*sh).shock[i][2]=conf.radius;
+		// Start time
 		(*sh).shock[i][3]= conf.start_datetime + ((long double) irand(niter) )*(conf.t_r*conf.t_w*conf.t_i);
+		// Life time
 		(*sh).shock[i][4]= 1+((long double) irand(conf.lifetime-1) );
+		// Flight level
 		(*sh).shock[i][5]= conf.f_lvl[0] + (irand(((conf.f_lvl[1]-conf.f_lvl[0])/10) ))*10.;		
 	}
 	return 1;
@@ -887,10 +892,11 @@ int _checkShockareaRoute(long double **pos,int N,SHOCK_t shock,long double *d,lo
 	int i,j;
 	
 	for(j=0;j<shock.Nshock;j++) if( fabs(shock.shock[j][3]-t)<SGL ){
-			for(i=1;i<N;i++) if(pos[i][3]==1) if(pos[i][2]==shock.shock[j][5]){
-				 if(_isInsideCircle(pos[i],shock.shock[j])){
-					 d[i]=0;
-				}
+		// Test all active flights (?) on the same flight level than the shock 
+		for(i=1;i<N;i++) if(pos[i][3]==1) if(pos[i][2]==shock.shock[j][5]){
+			 if(_isInsideCircle(pos[i],shock.shock[j])){
+				 d[i]=0;
+			}
 		}
 	}
 	

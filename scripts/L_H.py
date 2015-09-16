@@ -113,6 +113,10 @@ def n_actions_rerouting((m1, m3), thre=10):
 	return n_acts
 
 def n_actions_tot((m1, hm1, m3, hm3), thre=10):
+	# This works well for the output of the model but
+	# not for real trajectories. Indeed, the former 
+	# have exactly one m3 point per action of the 
+	# controller after the first deviation. 
 	n_acts = 0
 	for i in range(min(len(m1), len(m3))):
 		x1, y1 = gall_pet(m1[i])
