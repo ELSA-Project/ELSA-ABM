@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.pylab import *
+from matplotlib.collections import PatchCollection
 import datetime as dt
 from mpl_toolkits.basemap import Basemap
 
@@ -16,18 +17,16 @@ time_res = 30# seconds
 y_min, y_max = 6, 15
 x_min, x_max = 36, 47
 
+altitudes = {alt:colors[i%len(colors)] for i, alt in enumerate(range(200, 450, 10))}
+
 m = Basemap(projection='gall', lon_0=0., llcrnrlon=y_min, llcrnrlat=x_min, urcrnrlon=y_max, urcrnrlat=x_max, resolution='i')
 
 def make_time(it, date=dt.datetime(2010, 5, 6, 0, 0, 0)):
 	current_date = date + dt.timedelta(seconds=time_res*it)
 	return current_date
 
-def find_active_flights(trajs, date):
-	return 
-
 class Flight:
-	def __init__(self, color, traj):
-		self.color = color
+	def __init__(self, traj):
 		self.traj = traj
 		self.p0 = None
 		self.p1 = None
@@ -36,6 +35,8 @@ class Flight:
 		# Transform the coordinates with Basemap projection
 		self.pos = [np.array(p) for p in zip(*m(*zip(*self.pos)))]
 		self.t = [dt.datetime(*t) for x, y, z, t, s in traj]
+
+		self.color = altitudes[int(self.traj[0][2])]
 
 	def update(self, date):
 		# Find the points just before and just after date.
@@ -66,35 +67,19 @@ class Flight:
 		return date > self.t[-1]
 
 	def plot(self):
-		return plot([self.r[0]], [self.r[1]], 'o', c=self.color)
+		circle = Circle(self.r, radius=30000, alpha=.4, color=self.color)
+		#return plot([self.r[0]], [self.r[1]], 'o', c=self.color)
+		#p = PatchCollection([circle], alpha=0.4)
+		#print circle
+		return [circle] 
 
 
 def prepare_flights(trajs):
 	flights = []
 	for i, traj in enumerate(trajs):
-		flights.append(Flight(colors[i%len(colors)], traj))
+		flights.append(Flight(traj))
 
 	return flights
-
-def init(it, flights, ttl, starting_date=dt.datetime(2010, 5, 6, 0, 0, 0)):
-	date = make_time(it, date=starting_date)
-	ttl.set_text(str(it))
-	#title('Iteration:' + str(it))
-	print it
-	#active_flights = find_active_flights(trajs, date)
-	objs = []
-	#for j, traj in enumerate(trajs):
-	for fl in (f for f in flights if f.is_active(date)):
-		fl.update(date)
-		
-		for line in fl.plot():
-		#for line in plot([0], [1], 'o', c='b'):
-			objs.append(line)
-
-	#for line in plot([40], [10], 'o', c='b'):
-	#	objs.append(line)		
-
-	return objs
 
 def init():
 	objs = []
@@ -108,31 +93,30 @@ def init():
 	#for ob in m.drawmapboundary(fill_color='white'):
 	#set a background colour
 	#	objs.append(ob)
-	#m.fillcontinents(color='white', lake_color='white')  # #85A6D9')
-	pouet = m.drawcoastlines(color='#6D5F47', linewidth=0.8)
-	objs.append(pouet)
-	#m.drawcountries(color='#6D5F47', linewidth=0.8)
-	#m.drawmeridians(np.arange(-180, 180, 5), color='#bbbbbb')
+
+	#objs.append(m.drawmapboundary(fill_color='white'))
+	#objs.append(m.fillcontinents(color='white', lake_color='white'))  # #85A6D9')
+	objs.append(m.drawcoastlines(color='#6D5F47', linewidth=0.8))
+	#objs.append(pouet)
+	objs.append(m.drawcountries(color='#6D5F47', linewidth=0.8))
+	#objs.append(m.drawmeridians(np.arange(-180, 180, 5), color='#bbbbbb'))
 	#m.drawparallels(np.arange(-90, 90, 5), color='#bbbbbb')
 
 	return objs
 
-def animate(it, flights, ttl, starting_date=dt.datetime(2010, 5, 6, 0, 0, 0)):
+def animate(it, flights, ttl, ax, starting_date=dt.datetime(2010, 5, 6, 0, 0, 0)):
 	date = make_time(it, date=starting_date)
 	ttl.set_text(str(it))
-	t = ax.annotate(date.strftime('%m/%d/%Y %H:%M'),(0.3,0.11), textcoords='figure fraction')
+	t = ax.annotate(date.strftime('%m/%d/%Y %H:%M'),(0.3, 0.11), textcoords='figure fraction')
 	#title('Iteration:' + str(it))
 	print it
 	objs = [t]
 
 	for fl in (f for f in flights if f.is_active(date)):
 		fl.update(date)
-		
 		for line in fl.plot():
-			objs.append(line)
-
-	#for line in plot([40], [10], 'o', c='b'):
-	#	objs.append(line)		
+			ax.add_patch(line)
+			objs.append(line)				
 
 	return objs
 
@@ -165,7 +149,11 @@ def animate(it, flights, ttl, starting_date=dt.datetime(2010, 5, 6, 0, 0, 0)):
 
 if __name__=='__main__':
 	if len(sys.argv)==2:
-		trajectories_file = sys.argv[1]
+		if sys.argv[1]!='test':
+			trajectories_file = sys.argv[1]
+		else:
+			# for test
+			trajectories_file = '/home/earendil/Documents/ELSA/ABM/results/trajectories/M1/trajs_Real_LI_v5.8_Strong_EXTLIRR_LIRR_2010-5-6+0_d2_cut240.0_directed_rej0.02_new_0.dat'
 	else:
 		Exception("Please provide a file name.")
 
@@ -180,7 +168,7 @@ if __name__=='__main__':
 
 	flights = prepare_flights(trajectories)
 
-	fig = plt.figure()
+	fig = plt.figure(figsize=(12, 15))
 	ax = plt.axes()
 	#ax.set_xlim([0,2*2*np.pi])
 	#ttl = ax.set_title('',animated=True)
@@ -188,7 +176,7 @@ if __name__=='__main__':
 	#ylim((8, 15))
 	#xlim((35, 45))
 	ani = animation.FuncAnimation(fig, animate, frames=1000, interval=200, blit=True, repeat_delay=3000,
-									 fargs=(flights, ttl, starting_date),
+									 fargs=(flights, ttl, ax, starting_date),
 									 init_func=init)
 	#im_ani.save('im.mp4', metadata={'artist':'Guido'})
 	show()
