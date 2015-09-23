@@ -2157,35 +2157,35 @@ def build_path(paras,version,full=True, prefix=None, suffix=None):
     else:
         return rep
     
-# def loading_network(rep,airports=False,nav_sec=False):
-#     assert not (airports and nav_sec)
-#     #big_filtre, period, rep = build_path(paras,version,airports=airports)
-#     print 'Loading Network...'
+def loading_network(rep,airports=False,nav_sec=False):
+    assert not (airports and nav_sec)
+    #big_filtre, period, rep = build_path(paras,version,airports=airports)
+    print 'Loading Network...'
     
-#     if not airports and not nav_sec:
-#         stri='data_results_m1_absolute'
-#         compress=False
-#         if not os.path.exists(rep + '/' + stri + '.pic'):
-#             compress=True
-#             os.system('cd ' + rep + ' && tar -xzf ' + stri + '.tar.gz')
+    if not airports and not nav_sec:
+        stri='data_results_m1_absolute'
+        compress=False
+        if not os.path.exists(rep + '/' + stri + '.pic'):
+            compress=True
+            os.system('cd ' + rep + ' && tar -xzf ' + stri + '.tar.gz')
         
-#         f=open(rep + '/' + stri + '.pic','r')
-#         seth=pickle.load(f)
-#         f.close()
+        f=open(rep + '/' + stri + '.pic','r')
+        seth=pickle.load(f)
+        f.close()
         
-#         if compress:
-#             os.system('rm ' + rep + '/' + stri + '.pic')
-#         G=seth.G.copy()
-#     elif airports:
-#         f=open(rep + '/airport_network.pic','r')
-#         G=pickle.load(f)
-#         f.close()
-#     elif nav_sec:
-#         f=open(rep + '/nav_sec_network.pic','r')
-#         G=pickle.load(f)
-#         f.close()
-#         #G=G.subgraph([n for n in G.nodes() if G.degree(n)!=0])
-#     return G
+        if compress:
+            os.system('rm ' + rep + '/' + stri + '.pic')
+        G=seth.G.copy()
+    elif airports:
+        f=open(rep + '/airport_network.pic','r')
+        G=pickle.load(f)
+        f.close()
+    elif nav_sec:
+        f=open(rep + '/nav_sec_network.pic','r')
+        G=pickle.load(f)
+        f.close()
+        #G=G.subgraph([n for n in G.nodes() if G.degree(n)!=0])
+    return G
     
 def filter_graph(G, airports=False, m1=True, m3=False, nonzero=True):
     if not airports:
@@ -2518,11 +2518,15 @@ def select_layer_sector(password_db, airac, zone, layer):
     return bounds
 
 def map_of_net(G, colors='r', num=0, limits=(0,0,0,0), title='', size_nodes=1., size_edges=2., nodes=[], zone_geo=[], edges=True, fmt='svg', dpi=100, \
-    save_file = None, show=True, figsize=(9,6), background_color='white', key_word_weight='weight', z_order_nodes=6, diff_edges=False):
+    save_file=None, show=True, figsize=(9,6), background_color='white', key_word_weight='weight', z_order_nodes=6, diff_edges=False, lw_map=0.8,\
+    draw_mer_par=True):
     """
     Draw a net. TODO: maximum width.
+    limits : latmin, lonmin, latmax, longmax)
     """
     restrict_nodes = True
+    if nodes == []:
+        nodes = G.nodes()
     if limits==(0,0,0,0):
         limits = (min([G.node[n]['coord'][0]/60. for n in nodes]) - 0.2,
                 min([G.node[n]['coord'][1]/60. for n in nodes]) - 0.2,
@@ -2563,11 +2567,13 @@ def map_of_net(G, colors='r', num=0, limits=(0,0,0,0), title='', size_nodes=1., 
     ax = plt.subplot(gs[0])
     #ax.set_aspect(1./0.8)
     ax.set_aspect(figsize[0]/figsize[1])
-    m = draw_zonemap(x_min,y_min,x_max,y_max,'i', sea_color=background_color, continents_color=background_color, lake_color=background_color)
+    m = draw_zonemap(x_min,y_min,x_max,y_max,'i', sea_color=background_color, continents_color=background_color, lake_color=background_color,\
+                                                    lw=lw_map, draw_mer_par=draw_mer_par)
     x,y = split_coords(G,nodes, r=0.1)
     x,y = m(y,x)
     ax.set_title(title)
-    sca = ax.scatter(x, y, marker='o', zorder=z_order_nodes, s=size_nodes, lw=0, c=colors)#,cmap=my_cmap)
+    #sca = ax.scatter(x, y, marker='o', zorder=z_order_nodes, s=size_nodes, lw=0, c=colors)#,cmap=my_cmap)
+    sca = ax.scatter(x, y, marker='o', zorder=z_order_nodes, s=size_nodes, c=colors, lw=1., edgecolor='w')#,cmap=my_cmap)
     max_wei = max([abs(G[e[0]][e[1]][key_word_weight]) for e in G.edges() if e[0] in nodes and e[1] in nodes])
     if edges:
         for e in G.edges():

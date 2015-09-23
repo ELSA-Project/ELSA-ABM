@@ -345,14 +345,16 @@ def hyper_test(X, K, n, N):
     """
     return (1 - sum([comb(K,x)*comb(N-K,n-x)/float(comb(N,n)) for x in range(X)]))
     
-def draw_zonemap(x_min,y_min,x_max,y_max,res, continents_color='white', lake_color='white', sea_color='white'):
+def draw_zonemap(x_min,y_min,x_max,y_max,res, continents_color='white', lake_color='white', sea_color='white',\
+     lw=0.8, draw_mer_par=True):
     m = Basemap(projection='gall',lon_0=0.,llcrnrlon=y_min,llcrnrlat=x_min,urcrnrlon=y_max,urcrnrlat=x_max,resolution=res)
     m.drawmapboundary(fill_color=sea_color) #set a background colour
-    m.fillcontinents(color=continents_color,lake_color=lake_color)  # #85A6D9')
-    m.drawcoastlines(color='#6D5F47', linewidth=0.8)
-    m.drawcountries(color='#6D5F47', linewidth=0.8)
-    m.drawmeridians(np.arange(-180, 180, 5), color='#bbbbbb')
-    m.drawparallels(np.arange(-90, 90, 5), color='#bbbbbb')
+    m.fillcontinents(color=continents_color, lake_color=lake_color)  # #85A6D9')
+    m.drawcoastlines(color='#6D5F47', linewidth=lw)
+    m.drawcountries(color='#6D5F47', linewidth=lw)
+    if draw_mer_par:
+        m.drawmeridians(np.arange(-180, 180, 5), color='#bbbbbb')
+        m.drawparallels(np.arange(-90, 90, 5), color='#bbbbbb')
     return m
     
 def save(stuff, name='stuff.pic', rep='.'): # why did I make this function? I am so lazy.
@@ -882,7 +884,14 @@ def voronoi_finite_polygons_2d(vor, radius=None):
  
     return new_regions, np.asarray(new_vertices)
 
-
+def simple_color_map_function(color1, color2, min_value=0., max_value=1.):
+    """
+    Build a function for simple linear interpolation between two colors.
+    """
+    def f(value):
+        norm_value = (float(max_value)-float(value))/(float(max_value)-float(min_value))
+        return np.average(np.array([color1, color2]), axis=0, weights=[norm_value, 1. - norm_value])
+    return f
 
 
 if __name__=='__main__':
