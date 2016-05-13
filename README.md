@@ -10,6 +10,10 @@ More information about the ELSA project and its results can be found here:
 
 [http://complexworld.eu/wiki/ELSA](http://complexworld.eu/wiki/ELSA)
 
+![Organization of the model](model_new.png Organization of the model)
+
+![Snapshot](Image_ABM_Italie_Zoom.png Snapshot of the model player)
+
 ## Getting started
 
 First, create a directory where you see fit to host the code. Then download the code

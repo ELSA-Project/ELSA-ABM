@@ -18,7 +18,6 @@ import pickle
 import os
 from string import split
 import numpy as np
-import sys
 from multiprocessing import Process, Pipe
 from itertools import izip
 from time import time, gmtime, strftime

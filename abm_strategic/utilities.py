@@ -652,7 +652,7 @@ def convert_distance_trajectories(G_nav, flights):
     ----------
     G_nav : NavpointNet object
     flights : list 
-        of dictionnary having the 'route_m1' key. 
+        of dictionaries having the 'route_m1' key. 
 
     Returns
     -------

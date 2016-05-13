@@ -199,6 +199,9 @@ def build_net_distance(zone='LF', data_version=None, layer=350., checks=True, sh
 	return G
 
 def trajectories_from_data(zone='LF', fmt='(n, z, t)', data_version=None, save_file=None, **kwargs_distance):
+	"""
+	Produce some trajectories with signature ['(n, z, t)', '(n, z), t', '(n), t', or '(n, t)'
+	"""
 	try:
 		assert fmt in ['(n, z, t)', '(n, z), t', '(n), t', '(n, t)']#, ('n', 'z', 'timeint'), (('n', 'z'), 'timeint')]
 	except:
@@ -224,10 +227,14 @@ def trajectories_from_data(zone='LF', fmt='(n, z, t)', data_version=None, save_f
 	return trajectories, G_nav
 
 def produce_M1_trajs_from_data(zone='LF', data_version=None, put_fake_sectors=False, save_file=None, **kwargs_distance):
+	"""
+	Produce some trajectories with signature (x, y, z, t) from data.
+
+	"""
 	# Get navpoint network
 	paras_nav = paras_strategic(zone=zone, mode='navpoints', data_version=data_version, **kwargs_distance)
 	seth = get_set(paras_nav, force=False)
-	G_nav, flights_nav = seth.G, seth.flights
+	G_nav, flights_nav = seth.G, seth.flights # G is a network from Distance library, not from the ABM.
 
 	trajectories = []
 	for f in seth.flights.values():

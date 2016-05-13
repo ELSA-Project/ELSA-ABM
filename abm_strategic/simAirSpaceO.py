@@ -6,8 +6,6 @@ sys.path.insert(1, '..')
 sys.path.insert(1, '../libs/YenKSP')
 
 import networkx as nx
-import sys
-
 from random import sample, uniform, gauss, shuffle, choice
 import numpy as np
 from numpy.random import lognormal
@@ -821,11 +819,14 @@ class Flight:
     def shift_desired_time(self, shift):
         """
         Shift the desired time of all flight plans of the flight.
+
         Parameters
         ----------
         shift : float
             Amount of time in minutes.
+
         """
+        
         shift = int(shift)
         self.pref_time += shift
         for fp in self.FPs:
@@ -1178,7 +1179,7 @@ class Net(nx.Graph):
 
         """
 
-        assert typ in ['constant', 'gauss', 'uniform', 'time', 'lognormal', 'areas']
+        assert typ in ['constant', 'gauss', 'uniform', 'lognormal', 'areas']
         self.C, self.typ_capacities, self.par_capacities = C, typ, par
         if typ=='constant':
             for n in self.nodes():
@@ -1708,6 +1709,7 @@ class Net(nx.Graph):
         """
         Gather several methods to ensure a consistency between navpoints and sectors.
         Obsolete ? TODO
+        Used by netman for shutting down sectors. TO UPDATE.
         """
         if verb:
             print 'Computing shortest paths for sectors...'

@@ -235,7 +235,7 @@ if __name__=='__main__':
 		patch = PolygonPatch(pol, alpha=0.2, zorder=+10, fill=False, fc='k', ec=(0.9, 0.9, 0.9), lw=5)
         ax.add_patch(patch) 
 		
-	ani = animation.FuncAnimation(fig, animate, frames=15, interval=200, blit=True, repeat=False, repeat_delay=3000,
+	ani = animation.FuncAnimation(fig, animate, frames=15, interval=200, blit=True, repeat=True, repeat_delay=3000,
 									 fargs=(flights, ttl, ax, paras, starting_date),
 									 init_func=init)
 	show()

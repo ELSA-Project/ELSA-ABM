@@ -200,7 +200,6 @@ class Simulation:
                 self.ACs[k].fill_FPs(self.t0sp[k], self.tau, self.G)
                 k+=1
 
-
     def build_ACs_from_flows(self): 
         """
         Build the list of ACs from the flows. 
@@ -596,8 +595,8 @@ def extract_aggregate_values_on_network(G):
         values are averages over all nodes and all times of the loads of the network.
 
     """
-    coin1=[]
-    coin2=[]
+    coin1 = []
+    coin2 = []
     for n in G.nodes():
         if len(G.node[n]['load'])>2:
             avg=np.average(G.node[n]['load'])
