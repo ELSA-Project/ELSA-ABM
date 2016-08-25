@@ -339,7 +339,7 @@ def check_everybody_has_one_cc(G, repair=False):
     for s in G.nodes():
         nodes_in_s = [n for n in G.G_nav.nodes() if G.G_nav.node[n]['sec']==s]
         H_nav_s = G.G_nav.subgraph(nodes_in_s)
-        cc = nx.connected_components(H_nav_s)
+        cc = list(nx.connected_components(H_nav_s))
         problem_here = len(cc)>1
         while len(cc)>1 and repair:
             print 'Problem: sector', s, 'has more than one connected component (' + str(len(cc)) + ' exactly).'
@@ -352,7 +352,7 @@ def check_everybody_has_one_cc(G, repair=False):
                 n1_selected, n2_selected = pairs[np.argmin(distances)]
                 G.G_nav.add_edge(n1_selected,n2_selected)#, weight=w)
                 H_nav_s.add_edge(n1_selected,n2_selected)#, weight=w)
-            cc = nx.connected_components(H_nav_s)
+            cc = list(nx.connected_components(H_nav_s))
         problem = problem or problem_here
     return G, problem
 
